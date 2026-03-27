@@ -196,6 +196,8 @@ def fetch_contacts_for_scoring(force: bool = False) -> List[Dict]:
             body["start_cursor"] = next_cursor
 
         rate_limiter.wait()
+        cursor_retries = 0
+        max_cursor_retries = 3
         try:
             resp = notion_request(
                 "POST",
@@ -213,10 +215,15 @@ def fetch_contacts_for_scoring(force: bool = False) -> List[Dict]:
             break
 
         if not data or "results" not in data:
-            if data and data.get("code") == "validation_error":
-                logger.warning(f"Validation error at {len(all_contacts)} contacts, retrying without cursor...")
+            error_code = data.get("code", "") if data else ""
+            error_msg = data.get("message", "") if data else ""
+            if ("validation_error" in error_code or "start_cursor" in error_msg) and cursor_retries < max_cursor_retries:
+                cursor_retries += 1
+                logger.warning(f"Cursor invalid at {len(all_contacts)} contacts (attempt {cursor_retries}), resetting cursor...")
                 next_cursor = None
                 continue
+            if data:
+                logger.warning(f"API error at {len(all_contacts)} contacts: {error_code} — {error_msg}")
             break
 
         for page in data.get("results", []):
