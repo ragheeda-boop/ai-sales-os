@@ -1,0 +1,140 @@
+name: "🔄 Apollo → Notion Daily Pipeline"
+
+on:
+  # Daily at 7 AM KSA (UTC+3 = 04:00 UTC)
+  schedule:
+    - cron: '0 4 * * *'
+
+  # Manual trigger with mode selection
+  workflow_dispatch:
+    inputs:
+      sync_mode:
+        description: 'Sync Mode'
+        required: true
+        default: 'incremental'
+        type: choice
+        options:
+          - incremental    # Last 24 hours (default daily)
+          - backfill_week  # Last 7 days with checkpoint
+          - backfill_month # Last 30 days with checkpoint
+          - full           # Complete rebuild (slow)
+      run_lead_score:
+        description: 'Run Lead Score after sync?'
+        required: true
+        default: 'yes'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+      run_action_engine:
+        description: 'Run Action Engine after scoring?'
+        required: true
+        default: 'yes'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+
+jobs:
+  sync-and-score:
+    name: "Sync → Score → Action Pipeline"
+    runs-on: ubuntu-latest
+    timeout-minutes: 180  # Full mode can take hours
+
+    env:
+      APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      NOTION_DATABASE_ID_CONTACTS: ${{ secrets.NOTION_DATABASE_ID_CONTACTS }}
+      NOTION_DATABASE_ID_COMPANIES: ${{ secrets.NOTION_DATABASE_ID_COMPANIES }}
+      NOTION_DATABASE_ID_TASKS: ${{ secrets.NOTION_DATABASE_ID_TASKS }}
+
+    steps:
+      # ─── 1. Checkout ─────────────────────────────────────────────────────
+      - name: "⬇️ Checkout Repository"
+        uses: actions/checkout@v4
+
+      # ─── 2. Python Setup ─────────────────────────────────────────────────
+      - name: "🐍 Setup Python 3.11"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # ─── 3. Install Dependencies ─────────────────────────────────────────
+      - name: "📦 Install Dependencies"
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        run: pip install -r requirements.txt
+
+      # ─── 4. Run Sync (daily_sync.py v2.1) ────────────────────────────────
+      - name: "🚀 Run Sync"
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        run: |
+          MODE="${{ github.event.inputs.sync_mode || 'incremental' }}"
+          echo "🔄 Sync mode: $MODE"
+
+          case $MODE in
+            incremental)    python daily_sync.py --mode incremental --hours 26 ;;
+            backfill_week)  python daily_sync.py --mode backfill --days 7 ;;
+            backfill_month) python daily_sync.py --mode backfill --days 30 ;;
+            full)           python daily_sync.py --mode full ;;
+          esac
+
+      # ─── 5. Run Lead Score ───────────────────────────────────────────────
+      - name: "🎯 Run Lead Score"
+        if: ${{ github.event.inputs.run_lead_score != 'no' }}
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        run: |
+          echo "🎯 Running Lead Score..."
+          python lead_score.py
+
+      # ─── 6. Update Action Ready ─────────────────────────────────────────
+      - name: "✅ Update Action Ready"
+        if: ${{ github.event.inputs.run_lead_score != 'no' }}
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        run: |
+          echo "✅ Updating Action Ready flags..."
+          python action_ready_updater.py
+
+      # ─── 7. Run Action Engine ────────────────────────────────────────────
+      - name: "⚡ Run Action Engine"
+        if: ${{ github.event.inputs.run_action_engine != 'no' }}
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        continue-on-error: true  # Don't fail pipeline if tasks fail
+        run: |
+          echo "⚡ Running Action Engine..."
+          python auto_tasks.py
+
+      # ─── 8. Health Check ─────────────────────────────────────────────────
+      - name: "🏥 Health Check"
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        run: |
+          echo "🏥 Running health check..."
+          python health_check.py
+
+      # ─── 9. Upload Logs ──────────────────────────────────────────────────
+      - name: "📋 Upload Logs"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-logs-${{ github.run_number }}
+          path: |
+            💻 CODE/Phase 3 - Sync/daily_sync.log
+            💻 CODE/Phase 3 - Sync/lead_score.log
+            💻 CODE/Phase 3 - Sync/action_ready.log
+            💻 CODE/Phase 3 - Sync/auto_tasks.log
+            💻 CODE/Phase 3 - Sync/health_check.log
+            💻 CODE/Phase 3 - Sync/last_sync_stats.json
+            💻 CODE/Phase 3 - Sync/last_action_stats.json
+          retention-days: 30
+
+      # ─── 10. Notify on Failure ───────────────────────────────────────────
+      - name: "❌ Notify on Failure"
+        if: failure()
+        run: |
+          echo "::error::Pipeline failed! Check logs for details."
+          echo "=== Last 30 lines of sync log ==="
+          tail -30 "💻 CODE/Phase 3 - Sync/daily_sync.log" 2>/dev/null || echo "No sync log"
+          echo "=== Last 30 lines of score log ==="
+          tail -30 "💻 CODE/Phase 3 - Sync/lead_score.log" 2>/dev/null || echo "No score log"
+          echo "=== Last 30 lines of action log ==="
+          tail -30 "💻 CODE/Phase 3 - Sync/auto_tasks.log" 2>/dev/null || echo "No action log"

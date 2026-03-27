@@ -1,0 +1,48 @@
+# ═══════════════════════════════════════════════════════════
+# AI Sales OS — .gitignore
+# ═══════════════════════════════════════════════════════════
+
+# ─── Credentials & Secrets ─────────────────────────────────
+.env
+.env.local
+.env.production
+*.pem
+*.key
+credentials.json
+
+# ─── Python ────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# ─── Logs ──────────────────────────────────────────────────
+*.log
+logs/
+last_sync_stats.json
+last_action_stats.json
+backfill_checkpoint.json
+
+# ─── OS Files ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+~$*
+desktop.ini
+
+# ─── IDE ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─── Temp files ────────────────────────────────────────────
+test_write.txt
+*.tmp

@@ -1,0 +1,911 @@
+#!/usr/bin/env python3
+"""
+Apollo → Notion Sync (v2.0)
+
+Three sync modes:
+    incremental  – Pull recently updated records (default: last 24h)
+    backfill     – Pull a wider historical range with checkpoint logging
+    full         – Pull ALL records from Apollo (no date filter), full rebuild
+
+Usage:
+    python daily_sync.py --mode incremental --days 7
+    python daily_sync.py --mode backfill --days 365
+    python daily_sync.py --mode full
+    python daily_sync.py                          # defaults to incremental --hours 24
+"""
+import os
+import sys
+import json
+import logging
+import requests
+import time
+import argparse
+from typing import Dict, List, Optional, Tuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv
+
+load_dotenv()
+
+sys.path.insert(0, os.path.dirname(__file__))
+from notion_helpers import (
+    NOTION_DATABASE_ID_CONTACTS,
+    NOTION_DATABASE_ID_COMPANIES,
+    preload_companies,
+    preload_contacts,
+    create_page,
+    update_page,
+    rate_limiter,
+    notion_request,
+    NOTION_BASE_URL,
+)
+
+# ─── Config ──────────────────────────────────────────────────────────────────
+
+APOLLO_API_KEY = os.getenv("APOLLO_API_KEY")
+APOLLO_BASE_URL = "https://api.apollo.io/v1"
+MAX_WORKERS = 3
+
+# Apollo pagination limits
+APOLLO_MAX_PAGES = 500
+APOLLO_PAGE_SIZE = 100
+APOLLO_WINDOW_LIMIT = APOLLO_MAX_PAGES * APOLLO_PAGE_SIZE  # 50,000
+
+# Checkpoint file for backfill mode
+CHECKPOINT_FILE = os.path.join(os.path.dirname(__file__), "backfill_checkpoint.json")
+
+# ─── Logging ─────────────────────────────────────────────────────────────────
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("daily_sync.log", encoding="utf-8"),
+        logging.StreamHandler(sys.stdout),
+    ],
+)
+logger = logging.getLogger(__name__)
+
+
+# ─── Sync Stats Tracker ─────────────────────────────────────────────────────
+
+class SyncStats:
+    """Track detailed sync statistics for enhanced logging."""
+
+    def __init__(self):
+        self.apollo_fetched_contacts = 0
+        self.apollo_fetched_accounts = 0
+        self.notion_created_contacts = 0
+        self.notion_updated_contacts = 0
+        self.notion_created_companies = 0
+        self.notion_updated_companies = 0
+        self.skipped_unchanged = 0
+        self.duplicates_prevented = 0
+        self.failed_contacts = 0
+        self.failed_companies = 0
+        self.earliest_updated_at: Optional[str] = None
+        self.latest_updated_at: Optional[str] = None
+
+    def track_updated_at(self, updated_at: Optional[str]):
+        """Track earliest and latest updated_at timestamps."""
+        if not updated_at:
+            return
+        if self.earliest_updated_at is None or updated_at < self.earliest_updated_at:
+            self.earliest_updated_at = updated_at
+        if self.latest_updated_at is None or updated_at > self.latest_updated_at:
+            self.latest_updated_at = updated_at
+
+    def summary(self) -> str:
+        lines = [
+            "─── SYNC SUMMARY ───────────────────────────────────────",
+            f"  Apollo fetched:     {self.apollo_fetched_contacts} contacts, {self.apollo_fetched_accounts} accounts",
+            f"  Notion created:     {self.notion_created_contacts} contacts, {self.notion_created_companies} companies",
+            f"  Notion updated:     {self.notion_updated_contacts} contacts, {self.notion_updated_companies} companies",
+            f"  Duplicates prevented: {self.duplicates_prevented}",
+            f"  Failed:             {self.failed_contacts} contacts, {self.failed_companies} companies",
+            f"  Earliest updated_at: {self.earliest_updated_at or 'N/A'}",
+            f"  Latest updated_at:   {self.latest_updated_at or 'N/A'}",
+            "────────────────────────────────────────────────────────",
+        ]
+        return "\n".join(lines)
+
+
+# ─── Apollo Helpers ──────────────────────────────────────────────────────────
+
+def apollo_headers() -> Dict[str, str]:
+    return {
+        "Content-Type": "application/json",
+        "X-Api-Key": APOLLO_API_KEY,
+    }
+
+
+def apollo_request(url: str, body: dict, max_retries: int = 5) -> Optional[dict]:
+    """
+    Make an Apollo API request with retry logic for connection errors.
+    Returns parsed JSON or None on permanent failure.
+    """
+    for attempt in range(max_retries):
+        try:
+            resp = requests.post(url, json=body, headers=apollo_headers(), timeout=30)
+            resp.raise_for_status()
+            return resp.json()
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            if attempt < max_retries - 1:
+                wait = min(2 ** attempt, 30)
+                logger.warning(f"Apollo connection error (attempt {attempt + 1}/{max_retries}): {type(e).__name__}, retrying in {wait}s")
+                time.sleep(wait)
+                continue
+            logger.error(f"Apollo connection error after {max_retries} retries: {e}")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Apollo API error: {e}")
+            return None
+
+
+# ─── Fetch Functions: Date-Filtered (incremental / backfill) ─────────────────
+
+def _fetch_with_date_filter(
+    endpoint: str,
+    record_key: str,
+    date_range_key: str,
+    sort_field: str,
+    since: datetime,
+    stats: SyncStats,
+    label: str = "records",
+) -> List[Dict]:
+    """
+    Generic date-filtered fetch with time-window splitting.
+    Used by both incremental and backfill modes.
+    """
+    all_records = []
+    seen_ids = set()
+    current_since = since.strftime("%Y-%m-%d")
+
+    logger.info(f"Fetching Apollo {label} updated since {current_since}...")
+
+    while True:
+        page = 1
+        window_records = []
+
+        while page <= APOLLO_MAX_PAGES:
+            body = {
+                "page": page,
+                "per_page": APOLLO_PAGE_SIZE,
+                date_range_key: {"min": current_since},
+                "sort_by_field": sort_field,
+                "sort_ascending": True,
+            }
+
+            data = apollo_request(f"{APOLLO_BASE_URL}/{endpoint}", body)
+            if data is None:
+                break
+
+            records = data.get(record_key, [])
+            if not records:
+                break
+
+            window_records.extend(records)
+            logger.info(f"  Page {page}: {len(records)} {label} (window: {len(window_records)}, total: {len(all_records) + len(window_records)})")
+            page += 1
+            time.sleep(0.1)
+
+        # Deduplicate and track updated_at
+        new_in_window = 0
+        for r in window_records:
+            rid = r.get("id")
+            if rid and rid not in seen_ids:
+                seen_ids.add(rid)
+                all_records.append(r)
+                new_in_window += 1
+                stats.track_updated_at(r.get("updated_at"))
+            elif rid:
+                stats.duplicates_prevented += 1
+
+        logger.info(f"  Window done: {len(window_records)} fetched, {new_in_window} new, {len(window_records) - new_in_window} duplicates skipped")
+
+        # Time-window splitting if we hit the pagination ceiling
+        if len(window_records) >= APOLLO_WINDOW_LIMIT:
+            last_updated = window_records[-1].get("updated_at")
+            if last_updated:
+                new_since = last_updated[:10]  # "YYYY-MM-DD"
+                if new_since == current_since:
+                    dt = datetime.strptime(new_since, "%Y-%m-%d") + timedelta(days=1)
+                    new_since = dt.strftime("%Y-%m-%d")
+                logger.info(f"  Hit {APOLLO_WINDOW_LIMIT} limit, advancing window from {current_since} → {new_since}")
+                current_since = new_since
+                continue
+            else:
+                logger.warning(f"  Could not find updated_at on last record, stopping window split")
+                break
+        else:
+            break
+
+    logger.info(f"Fetched {len(all_records)} {label} from Apollo (deduplicated from {len(all_records) + stats.duplicates_prevented})")
+    return all_records
+
+
+def fetch_updated_contacts(since: datetime, stats: SyncStats) -> List[Dict]:
+    """Fetch contacts updated since a given datetime (incremental/backfill)."""
+    results = _fetch_with_date_filter(
+        endpoint="contacts/search",
+        record_key="contacts",
+        date_range_key="contact_updated_at_range",
+        sort_field="contact_updated_at",
+        since=since,
+        stats=stats,
+        label="contacts",
+    )
+    stats.apollo_fetched_contacts = len(results)
+    return results
+
+
+def fetch_updated_accounts(since: datetime, stats: SyncStats) -> List[Dict]:
+    """Fetch accounts updated since a given datetime (incremental/backfill)."""
+    results = _fetch_with_date_filter(
+        endpoint="accounts/search",
+        record_key="accounts",
+        date_range_key="account_updated_at_range",
+        sort_field="account_updated_at",
+        since=since,
+        stats=stats,
+        label="accounts",
+    )
+    stats.apollo_fetched_accounts = len(results)
+    return results
+
+
+# ─── Fetch Functions: Full Mode (NO date filter) ────────────────────────────
+
+def _fetch_all_paginated(
+    endpoint: str,
+    record_key: str,
+    sort_field: str,
+    stats: SyncStats,
+    label: str = "records",
+) -> List[Dict]:
+    """
+    Fetch ALL records from Apollo without any date filter.
+    Uses alphabetical partitioning (A-Z + other) to bypass the 500-page limit.
+    Each partition is sorted by updated_at ascending with time-window splitting.
+    """
+    all_records = []
+    seen_ids = set()
+
+    # Partitioning strategy: first letter of name (A-Z) + catch-all
+    # This distributes ~45k contacts across 27 partitions (~1,700 each = well under 50k)
+    partitions = list("abcdefghijklmnopqrstuvwxyz") + ["other"]
+
+    logger.info(f"Full mode: fetching ALL {label} using {len(partitions)} alphabetical partitions...")
+
+    for pi, partition in enumerate(partitions, 1):
+        page = 1
+        partition_count = 0
+        partition_dupes = 0
+
+        while page <= APOLLO_MAX_PAGES:
+            body = {
+                "page": page,
+                "per_page": APOLLO_PAGE_SIZE,
+                "sort_by_field": sort_field,
+                "sort_ascending": True,
+            }
+
+            # Add name filter for alphabetical partitioning
+            if partition != "other":
+                if record_key == "contacts":
+                    body["q_person_name"] = f"{partition}*"
+                else:
+                    body["q_organization_name"] = f"{partition}*"
+            else:
+                # "other" = names starting with numbers/symbols
+                # Use a broad query that catches non-alpha starts
+                if record_key == "contacts":
+                    body["q_person_name"] = "[0-9]*"
+                else:
+                    body["q_organization_name"] = "[0-9]*"
+
+            data = apollo_request(f"{APOLLO_BASE_URL}/{endpoint}", body)
+            if data is None:
+                logger.warning(f"  Partition '{partition}': API failure on page {page}, moving on")
+                break
+
+            records = data.get(record_key, [])
+            if not records:
+                break
+
+            for r in records:
+                rid = r.get("id")
+                if rid and rid not in seen_ids:
+                    seen_ids.add(rid)
+                    all_records.append(r)
+                    partition_count += 1
+                    stats.track_updated_at(r.get("updated_at"))
+                elif rid:
+                    partition_dupes += 1
+                    stats.duplicates_prevented += 1
+
+            total_entries = data.get("pagination", {}).get("total_entries", "?")
+            if page == 1:
+                logger.info(f"  Partition [{pi}/{len(partitions)}] '{partition}': {total_entries} total entries in Apollo")
+
+            page += 1
+            time.sleep(0.1)
+
+        if partition_count > 0 or partition_dupes > 0:
+            logger.info(f"  Partition '{partition}' done: {partition_count} new, {partition_dupes} duplicates")
+
+    logger.info(f"Full fetch complete: {len(all_records)} {label} (deduplicated)")
+    return all_records
+
+
+def fetch_all_contacts(stats: SyncStats) -> List[Dict]:
+    """Fetch ALL contacts from Apollo (full mode, no date filter)."""
+    results = _fetch_all_paginated(
+        endpoint="contacts/search",
+        record_key="contacts",
+        sort_field="contact_updated_at",
+        stats=stats,
+        label="contacts",
+    )
+    stats.apollo_fetched_contacts = len(results)
+    return results
+
+
+def fetch_all_accounts(stats: SyncStats) -> List[Dict]:
+    """Fetch ALL accounts from Apollo (full mode, no date filter)."""
+    results = _fetch_all_paginated(
+        endpoint="accounts/search",
+        record_key="accounts",
+        sort_field="account_updated_at",
+        stats=stats,
+        label="accounts",
+    )
+    stats.apollo_fetched_accounts = len(results)
+    return results
+
+
+# ─── Checkpoint (backfill mode) ──────────────────────────────────────────────
+
+def load_checkpoint() -> Optional[Dict]:
+    """Load backfill checkpoint if it exists."""
+    if os.path.exists(CHECKPOINT_FILE):
+        try:
+            with open(CHECKPOINT_FILE, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            logger.warning(f"Could not load checkpoint: {e}")
+    return None
+
+
+def save_checkpoint(data: Dict):
+    """Save backfill checkpoint."""
+    try:
+        with open(CHECKPOINT_FILE, "w") as f:
+            json.dump(data, f, indent=2, default=str)
+        logger.info(f"Checkpoint saved: {data}")
+    except Exception as e:
+        logger.warning(f"Could not save checkpoint: {e}")
+
+
+def clear_checkpoint():
+    """Remove checkpoint file after successful completion."""
+    if os.path.exists(CHECKPOINT_FILE):
+        os.remove(CHECKPOINT_FILE)
+        logger.info("Backfill checkpoint cleared (sync complete)")
+
+
+# ─── Formatting (Apollo API format → Notion) ─────────────────────────────────
+
+def _rt(value: str) -> dict:
+    return {"rich_text": [{"text": {"content": str(value)[:2000]}}]}
+
+
+def _safe_int(val) -> Optional[int]:
+    if val is None:
+        return None
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return None
+
+
+def map_employee_size(count: Optional[int]) -> Optional[str]:
+    if not count: return None
+    if count <= 10: return "1-10"
+    elif count <= 50: return "11-50"
+    elif count <= 200: return "51-200"
+    elif count <= 500: return "201-500"
+    elif count <= 1000: return "501-1000"
+    elif count <= 5000: return "1001-5000"
+    else: return "5001+"
+
+
+def format_company_from_api(account: Dict) -> Dict:
+    """Format Apollo API account data for Notion."""
+    props = {}
+
+    name = account.get("name", "Unknown Company")
+    props["Company Name"] = {"title": [{"text": {"content": name[:300]}}]}
+
+    text_map = {
+        "Domain": account.get("domain"),
+        "Company Address": account.get("raw_address"),
+        "Company City": account.get("city"),
+        "Company State": account.get("state"),
+        "Company Country": account.get("country"),
+        "Industry": account.get("industry"),
+        "Keywords": ", ".join(account.get("keywords") or []),
+        "Technologies": ", ".join(account.get("technologies") or []),
+        "Apollo Account Id": account.get("id"),
+        "Short Description": account.get("short_description"),
+        "Record Source": "Apollo",
+        "Data Status": "Raw",
+    }
+    for prop_name, value in text_map.items():
+        if value and str(value).strip():
+            props[prop_name] = _rt(str(value).strip())
+
+    url_map = {
+        "Website": account.get("website_url"),
+        "Company Linkedin Url": account.get("linkedin_url"),
+        "Facebook Url": account.get("facebook_url"),
+        "Twitter Url": account.get("twitter_url"),
+    }
+    for prop_name, value in url_map.items():
+        if value:
+            props[prop_name] = {"url": value}
+
+    phone = account.get("phone")
+    if phone:
+        props["Company Phone"] = {"phone_number": phone}
+
+    emp = _safe_int(account.get("num_employees"))
+    if emp:
+        props["Employees"] = {"number": emp}
+        es = map_employee_size(emp)
+        if es:
+            props["Employee Size"] = _rt(es)
+
+    rev = account.get("annual_revenue")
+    if rev:
+        props["Annual Revenue"] = {"number": rev}
+
+    rev_range = account.get("estimated_annual_revenue")
+    if rev_range and str(rev_range).strip():
+        props["Revenue Range"] = _rt(str(rev_range).strip())
+
+    funding = account.get("total_funding")
+    if funding:
+        props["Total Funding"] = {"number": funding}
+
+    latest_funding = account.get("latest_funding_amount")
+    if latest_funding:
+        props["Latest Funding Amount"] = {"number": latest_funding}
+
+    last_raised = account.get("last_funding_date") or account.get("latest_funding_date")
+    if last_raised:
+        props["Last Raised At"] = {"date": {"start": str(last_raised)[:10]}}
+
+    account_stage = account.get("stage")
+    if account_stage and str(account_stage).strip():
+        props["Account Stage"] = {"select": {"name": str(account_stage).strip().title()}}
+
+    return props
+
+
+def _normalize_seniority(raw: str) -> str:
+    """Normalize seniority to consistent Notion select values.
+    Fixes: 'C suite' vs 'C-Suite', 'Vp' vs 'VP', etc.
+    """
+    from constants import SENIORITY_NORMALIZE
+    key = raw.strip().lower()
+    if key in SENIORITY_NORMALIZE:
+        return SENIORITY_NORMALIZE[key]
+    # Fallback: title-case but preserve known patterns
+    return raw.strip().title()
+
+
+def format_contact_from_api(contact: Dict, company_page_id: Optional[str] = None) -> Dict:
+    """Format Apollo API contact data for Notion.
+    v2.1 — Now writes: Stage, Last Contacted, Do Not Call, engagement booleans,
+    Departments, Outreach Status (8 fields that were previously missing).
+    """
+    props = {}
+
+    first = contact.get("first_name", "")
+    last = contact.get("last_name", "")
+    full = contact.get("name", f"{first} {last}".strip()) or "Unknown"
+
+    props["Full Name"] = {"title": [{"text": {"content": full[:300]}}]}
+
+    text_map = {
+        "First Name": first,
+        "Last Name": last,
+        "Title": contact.get("title"),
+        "City": contact.get("city"),
+        "State": contact.get("state"),
+        "Country": contact.get("country"),
+        "Apollo Contact Id": contact.get("id"),
+        "Apollo Account Id": contact.get("account_id"),
+        "Company Name for Emails": contact.get("organization_name"),
+    }
+
+    # NEW: Departments (Apollo sends as list)
+    departments = contact.get("departments")
+    if departments and isinstance(departments, list):
+        text_map["Departments"] = ", ".join(departments)
+
+    for prop_name, value in text_map.items():
+        if value and str(value).strip():
+            props[prop_name] = _rt(str(value).strip())
+
+    email = contact.get("email")
+    if email:
+        props["Email"] = {"email": email}
+
+    linkedin = contact.get("linkedin_url")
+    if linkedin:
+        props["Person Linkedin Url"] = {"url": linkedin}
+
+    # Seniority — normalized to fix "C suite" vs "C-Suite" bug
+    seniority = contact.get("seniority")
+    if seniority:
+        props["Seniority"] = {"select": {"name": _normalize_seniority(seniority)}}
+
+    email_status = contact.get("email_status")
+    if email_status:
+        props["Email Status"] = {"select": {"name": email_status.title()}}
+
+    # NEW: Stage (Lead / Prospect / Customer etc.)
+    stage = contact.get("stage")
+    if stage and str(stage).strip():
+        props["Stage"] = {"select": {"name": str(stage).strip().title()}}
+
+    # NEW: Outreach Status
+    outreach_status = contact.get("outreach_status")
+    if outreach_status and str(outreach_status).strip():
+        props["Outreach Status"] = {"select": {"name": str(outreach_status).strip().title()}}
+
+    props["Record Source"] = {"select": {"name": "Apollo"}}
+    props["Data Status"] = {"select": {"name": "Raw"}}
+
+    # NEW: Engagement booleans — SAFE: only writes if Apollo actually returns the field
+    # Does NOT write False for missing fields (prevents overwriting True with False)
+    bool_fields = {
+        "Email Sent": "email_sent",
+        "Email Opened": "email_open",
+        "Email Bounced": "email_bounced",
+        "Replied": "replied",
+        "Meeting Booked": "meeting_booked",
+        "Demoed": "demoed",
+        "Do Not Call": "do_not_call",
+    }
+    for notion_field, apollo_key in bool_fields.items():
+        if apollo_key in contact and contact[apollo_key] is not None:
+            props[notion_field] = {"checkbox": bool(contact[apollo_key])}
+
+    # NEW: Last Contacted (date field)
+    last_activity = contact.get("last_activity_date")
+    if last_activity:
+        props["Last Contacted"] = {"date": {"start": str(last_activity)[:10]}}
+
+    # Phone numbers
+    for phone_obj in (contact.get("phone_numbers") or []):
+        ptype = (phone_obj.get("type") or "").lower()
+        number = phone_obj.get("sanitized_number")
+        if not number:
+            continue
+        type_map = {
+            "work_hq": "Corporate Phone",
+            "work": "Work Direct Phone",
+            "direct": "Work Direct Phone",
+            "mobile": "Mobile Phone",
+            "cell": "Mobile Phone",
+            "home": "Home Phone",
+        }
+        prop_name = type_map.get(ptype, "Other Phone")
+        if prop_name not in props:  # first occurrence only
+            props[prop_name] = {"phone_number": number}
+
+    # Company relation
+    if company_page_id:
+        props["Company"] = {"relation": [{"id": company_page_id}]}
+
+    return props
+
+
+# ─── Sync Logic ───────────────────────────────────────────────────────────────
+
+def sync_companies(accounts: List[Dict], company_lookup: Dict, stats: SyncStats) -> Dict:
+    """Sync companies to Notion. Returns updated company_lookup."""
+
+    def process(account):
+        aid = account.get("id", "")
+        existing = company_lookup.get(f"aid:{aid}")
+        props = format_company_from_api(account)
+
+        try:
+            if existing:
+                update_page(existing, props)
+                return "updated", aid, existing
+            else:
+                page_id = create_page(NOTION_DATABASE_ID_COMPANIES, props)
+                return "created", aid, page_id
+        except Exception as e:
+            logger.error(f"Error syncing company {account.get('name', '?')}: {e}")
+            return "error", aid, None
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(process, a): a for a in accounts}
+        for i, fut in enumerate(as_completed(futures), 1):
+            status, aid, page_id = fut.result()
+            if status == "created":
+                stats.notion_created_companies += 1
+                if page_id:
+                    company_lookup[f"aid:{aid}"] = page_id
+            elif status == "updated":
+                stats.notion_updated_companies += 1
+            else:
+                stats.failed_companies += 1
+            if i % 100 == 0:
+                logger.info(f"  Companies progress: {i}/{len(accounts)} (created: {stats.notion_created_companies}, updated: {stats.notion_updated_companies}, failed: {stats.failed_companies})")
+
+    logger.info(f"Company sync done: {stats.notion_created_companies} created, {stats.notion_updated_companies} updated, {stats.failed_companies} failed")
+    return company_lookup
+
+
+def sync_contacts(contacts: List[Dict], company_lookup: Dict, contact_lookup: Dict, stats: SyncStats):
+    """Sync contacts to Notion."""
+
+    # Deduplicate
+    seen = set()
+    unique = []
+    for c in contacts:
+        cid = c.get("id", "")
+        if cid and cid not in seen:
+            seen.add(cid)
+            unique.append(c)
+        elif cid:
+            stats.duplicates_prevented += 1
+
+    logger.info(f"Contacts to sync: {len(unique)} unique (from {len(contacts)}, {len(contacts) - len(unique)} duplicates removed)")
+
+    def process(contact):
+        cid = contact.get("id", "")
+        email = (contact.get("email") or "").lower()
+
+        existing = contact_lookup.get(f"aid:{cid}")
+        if not existing and email:
+            existing = contact_lookup.get(f"email:{email}")
+
+        # Find company
+        aid = contact.get("account_id", "")
+        company_page_id = company_lookup.get(f"aid:{aid}") if aid else None
+
+        props = format_contact_from_api(contact, company_page_id)
+
+        try:
+            if existing:
+                update_page(existing, props)
+                return "updated", cid
+            else:
+                page_id = create_page(NOTION_DATABASE_ID_CONTACTS, props)
+                if page_id:
+                    contact_lookup[f"aid:{cid}"] = page_id
+                    if email:
+                        contact_lookup[f"email:{email}"] = page_id
+                return "created", cid
+        except Exception as e:
+            logger.error(f"Error syncing contact {contact.get('name', '?')}: {e}")
+            return "error", cid
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {executor.submit(process, c): c for c in unique}
+        for i, fut in enumerate(as_completed(futures), 1):
+            status, cid = fut.result()
+            if status == "created":
+                stats.notion_created_contacts += 1
+            elif status == "updated":
+                stats.notion_updated_contacts += 1
+            else:
+                stats.failed_contacts += 1
+            if i % 100 == 0:
+                logger.info(f"  Contacts progress: {i}/{len(unique)} (created: {stats.notion_created_contacts}, updated: {stats.notion_updated_contacts}, failed: {stats.failed_contacts})")
+
+    logger.info(f"Contact sync done: {stats.notion_created_contacts} created, {stats.notion_updated_contacts} updated, {stats.failed_contacts} failed")
+
+
+# ─── Mode Runners ────────────────────────────────────────────────────────────
+
+def run_incremental(since: datetime, stats: SyncStats):
+    """
+    Incremental mode: fetch records updated since `since` and sync to Notion.
+    Designed for daily/hourly runs (GitHub Actions, cron).
+    """
+    logger.info(f"MODE: INCREMENTAL — syncing changes since {since.strftime('%Y-%m-%d %H:%M')} UTC")
+
+    # Pre-load Notion data
+    logger.info("Step 1: Pre-loading Notion data...")
+    company_lookup = preload_companies()
+    contact_lookup = preload_contacts()
+
+    # Fetch from Apollo
+    logger.info("Step 2: Fetching updated records from Apollo...")
+    accounts = fetch_updated_accounts(since, stats)
+    contacts = fetch_updated_contacts(since, stats)
+
+    if not accounts and not contacts:
+        logger.info("No updates found in Apollo. Done!")
+        return
+
+    # Sync companies first (contacts reference them)
+    if accounts:
+        logger.info(f"Step 3: Syncing {len(accounts)} companies to Notion...")
+        company_lookup = sync_companies(accounts, company_lookup, stats)
+
+    # Sync contacts
+    if contacts:
+        logger.info(f"Step 4: Syncing {len(contacts)} contacts to Notion...")
+        sync_contacts(contacts, company_lookup, contact_lookup, stats)
+
+
+def run_backfill(since: datetime, stats: SyncStats):
+    """
+    Backfill mode: same as incremental but designed for large historical ranges.
+    Saves checkpoints so interrupted runs can be resumed.
+    """
+    logger.info(f"MODE: BACKFILL — syncing changes since {since.strftime('%Y-%m-%d %H:%M')} UTC")
+
+    # Check for existing checkpoint
+    checkpoint = load_checkpoint()
+    if checkpoint:
+        logger.info(f"Resuming from checkpoint: {checkpoint}")
+        # If we completed companies, skip to contacts
+        if checkpoint.get("companies_done"):
+            logger.info("Companies already synced in previous run, skipping to contacts")
+
+    # Pre-load Notion data
+    logger.info("Step 1: Pre-loading Notion data...")
+    company_lookup = preload_companies()
+    contact_lookup = preload_contacts()
+
+    # Fetch and sync companies
+    if not (checkpoint and checkpoint.get("companies_done")):
+        logger.info("Step 2: Fetching ALL updated accounts from Apollo...")
+        accounts = fetch_updated_accounts(since, stats)
+
+        if accounts:
+            logger.info(f"Step 3: Syncing {len(accounts)} companies to Notion...")
+            company_lookup = sync_companies(accounts, company_lookup, stats)
+
+        # Save checkpoint: companies done
+        save_checkpoint({
+            "since": since.isoformat(),
+            "companies_done": True,
+            "companies_count": len(accounts) if accounts else 0,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
+    else:
+        logger.info("Step 2-3: Skipped (companies already synced)")
+
+    # Fetch and sync contacts
+    logger.info("Step 4: Fetching ALL updated contacts from Apollo...")
+    contacts = fetch_updated_contacts(since, stats)
+
+    if contacts:
+        logger.info(f"Step 5: Syncing {len(contacts)} contacts to Notion...")
+        sync_contacts(contacts, company_lookup, contact_lookup, stats)
+
+    # Clear checkpoint on success
+    clear_checkpoint()
+
+
+def run_full(stats: SyncStats):
+    """
+    Full mode: fetch ALL records from Apollo (no date filter) and sync everything.
+    Uses alphabetical partitioning to bypass pagination limits.
+    Complete rebuild of Notion data from Apollo.
+    """
+    logger.info("MODE: FULL — complete sync of ALL Apollo records to Notion")
+    logger.info("WARNING: This will take a long time. Estimated: 2-4 hours for ~45k contacts + ~15k companies.")
+
+    # Pre-load Notion data (for dedup / update-vs-create decisions)
+    logger.info("Step 1: Pre-loading Notion data...")
+    company_lookup = preload_companies()
+    contact_lookup = preload_contacts()
+    logger.info(f"  Notion index: {len(company_lookup)} company keys, {len(contact_lookup)} contact keys")
+
+    # Fetch ALL accounts
+    logger.info("Step 2: Fetching ALL accounts from Apollo (no date filter)...")
+    accounts = fetch_all_accounts(stats)
+
+    if accounts:
+        logger.info(f"Step 3: Syncing {len(accounts)} companies to Notion...")
+        company_lookup = sync_companies(accounts, company_lookup, stats)
+
+    # Fetch ALL contacts
+    logger.info("Step 4: Fetching ALL contacts from Apollo (no date filter)...")
+    contacts = fetch_all_contacts(stats)
+
+    if contacts:
+        logger.info(f"Step 5: Syncing {len(contacts)} contacts to Notion...")
+        sync_contacts(contacts, company_lookup, contact_lookup, stats)
+
+
+# ─── Main ─────────────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Apollo → Notion Sync (v2.0)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Modes:
+  incremental  Pull recently updated records (default: last 24h)
+  backfill     Pull a wider historical range with checkpoint support
+  full         Pull ALL records from Apollo (no date filter)
+
+Examples:
+  python daily_sync.py --mode incremental --days 7
+  python daily_sync.py --mode backfill --days 365
+  python daily_sync.py --mode full
+  python daily_sync.py                          # defaults to incremental --hours 24
+        """,
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["incremental", "backfill", "full"],
+        default="incremental",
+        help="Sync mode (default: incremental)",
+    )
+    parser.add_argument("--hours", type=int, default=None, help="Sync records updated in the last N hours")
+    parser.add_argument("--days", type=int, default=None, help="Sync records updated in the last N days")
+    args = parser.parse_args()
+
+    # Validate args
+    if args.mode == "full" and (args.hours or args.days):
+        logger.warning("--hours/--days ignored in full mode (fetches everything)")
+
+    if args.mode in ("incremental", "backfill"):
+        if args.days:
+            since = datetime.now(timezone.utc) - timedelta(days=args.days)
+        elif args.hours:
+            since = datetime.now(timezone.utc) - timedelta(hours=args.hours)
+        else:
+            since = datetime.now(timezone.utc) - timedelta(hours=24)
+
+    if not APOLLO_API_KEY:
+        logger.error("APOLLO_API_KEY not set")
+        sys.exit(1)
+
+    stats = SyncStats()
+    start_time = time.time()
+
+    logger.info("=" * 80)
+    if args.mode == "full":
+        logger.info(f"APOLLO → NOTION SYNC v2.0 | Mode: FULL")
+    else:
+        logger.info(f"APOLLO → NOTION SYNC v2.0 | Mode: {args.mode.upper()} | Since: {since.strftime('%Y-%m-%d %H:%M')} UTC")
+    logger.info("=" * 80)
+
+    try:
+        if args.mode == "incremental":
+            run_incremental(since, stats)
+        elif args.mode == "backfill":
+            run_backfill(since, stats)
+        elif args.mode == "full":
+            run_full(stats)
+    except KeyboardInterrupt:
+        logger.warning("Sync interrupted by user")
+    except Exception as e:
+        logger.error(f"Sync failed with error: {e}", exc_info=True)
+
+    elapsed = time.time() - start_time
+
+    logger.info("")
+    logger.info(stats.summary())
+    logger.info(f"Total time: {elapsed / 60:.1f} minutes")
+    logger.info("=" * 80)
+
+
+if __name__ == "__main__":
+    main()

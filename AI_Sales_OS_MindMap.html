@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Sales OS - Mind Map v5.0</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Calibri','Arial',sans-serif;background:#FFFFFF;color:#1A1A1A;min-height:100vh;overflow-x:hidden}
+
+  body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:
+    radial-gradient(ellipse at 20% 50%, rgba(232,119,26,.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(232,119,26,.02) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(232,119,26,.02) 0%, transparent 50%);
+    pointer-events:none;z-index:0}
+
+  .header{text-align:center;padding:40px 20px 16px;position:relative;z-index:1}
+  .header h1{font-size:3em;font-weight:800;color:#1A1A1A;font-family:'Montserrat',sans-serif;letter-spacing:-1px}
+  .header .muhide-brand{font-size:0.6em;color:#E8771A;font-weight:700;letter-spacing:2px;margin-bottom:8px}
+  .header .tagline{font-size:0.75em;color:#E8771A;font-weight:600;margin-top:4px}
+  .header .subtitle{color:#4A4A4A;font-size:1.1em;margin-top:4px}
+  .header .version-badge{display:inline-block;background:#E8771A;color:#fff;padding:4px 14px;border-radius:20px;font-size:.75em;font-weight:600;margin-top:8px}
+  .header .date{color:#4A4A4A;font-size:.85em;margin-top:8px}
+
+  .legend{display:flex;justify-content:center;gap:20px;margin:16px 0 28px;flex-wrap:wrap;position:relative;z-index:1}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:.85em;color:#4A4A4A}
+  .legend-dot{width:10px;height:10px;border-radius:50%}
+
+  .container{max-width:1280px;margin:0 auto;padding:0 16px 50px;position:relative;z-index:1}
+
+  /* Architecture */
+  .arch-flow{display:flex;align-items:center;justify-content:center;gap:0;margin:20px 0 28px;flex-wrap:wrap}
+  .arch-node{background:#F0F0F0;border:2px solid #E8771A;border-radius:12px;padding:14px 20px;text-align:center;min-width:140px}
+  .arch-node .node-icon{font-size:1.8em}
+  .arch-node .node-label{font-size:.85em;font-weight:600;margin-top:4px;color:#1A1A1A}
+  .arch-node .node-sub{font-size:.7em;color:#4A4A4A}
+  .arch-node.apollo{border-color:#E8771A}
+  .arch-node.python{border-color:#E8771A}
+  .arch-node.notion{border-color:#E8771A}
+  .arch-node.github{border-color:#E8771A}
+  .arch-node.odoo{border-color:#E8771A}
+  .arch-arrow{font-size:1.4em;color:#E8771A;padding:0 8px;animation:arrowPulse 1.5s infinite}
+  @keyframes arrowPulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+  /* Progress */
+  .progress-section{text-align:center;margin-bottom:32px;background:#F0F0F0;border:2px solid #E8771A;border-radius:16px;padding:28px}
+  .progress-pct{font-size:3em;font-weight:800;color:#E8771A}
+  .progress-label{font-size:.95em;color:#4A4A4A;margin-bottom:10px}
+  .progress-bar-bg{width:100%;height:22px;background:#EBEBEB;border-radius:12px;overflow:hidden;border:1px solid #E8771A}
+  .progress-bar-fill{height:100%;border-radius:12px;background:#E8771A;position:relative;transition:width 1.5s ease}
+  .progress-bar-fill::after{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 2s infinite}
+  @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+  .progress-phases{display:flex;justify-content:space-between;margin-top:8px;font-size:.7em;color:#4A4A4A}
+  .progress-phases span{text-align:center;flex:1}
+  .progress-phases .active-phase{color:#E8771A;font-weight:700}
+  .progress-phases .done-phase{color:#1A1A1A}
+
+  /* Stats */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:20px 0 32px}
+  .stat-card{background:#F0F0F0;border:2px solid #E8771A;border-radius:12px;padding:16px;text-align:center;transition:all .3s}
+  .stat-card:hover{transform:translateY(-3px);border-color:#E8771A;box-shadow:0 8px 30px rgba(232,119,26,.15)}
+  .stat-card .icon{font-size:1.4em;margin-bottom:4px}
+  .stat-card .value{font-size:1.7em;font-weight:800;color:#E8771A}
+  .stat-card .label{font-size:.75em;color:#4A4A4A;margin-top:2px}
+  .stat-card.highlight{border-color:#E8771A;background:#EBEBEB}
+  .stat-card.highlight .value{color:#E8771A}
+
+  /* Section title */
+  .section-title{text-align:center;font-size:1.5em;font-weight:700;color:#1A1A1A;margin:36px 0 18px;padding-bottom:10px;border-bottom:3px solid #E8771A;position:relative;font-family:'Montserrat',sans-serif}
+  .section-title::after{content:'';position:absolute;bottom:-3px;right:50%;transform:translateX(50%);width:60px;height:3px}
+  .section-title.green::after{background:#E8771A}
+  .section-title.yellow::after{background:#E8771A}
+  .section-title.blue::after{background:#E8771A}
+  .section-title.purple::after{background:#E8771A}
+  .section-title.red::after{background:#E8771A}
+  .section-title.cyan::after{background:#E8771A}
+  .section-title.orange::after{background:#E8771A}
+
+  /* Phase card */
+  .phase{background:#F0F0F0;border-radius:16px;padding:22px;border:1px solid #EBEBEB;margin-bottom:16px;position:relative;overflow:hidden;transition:all .3s}
+  .phase:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(232,119,26,.15)}
+  .phase::before{content:'';position:absolute;top:0;right:0;width:4px;height:100%;border-radius:0 16px 16px 0}
+  .phase.done::before{background:#1A1A1A}
+  .phase.partial::before{background:#E8771A}
+  .phase.active::before{background:#E8771A;animation:glowPulse 2s infinite}
+  .phase.future::before{background:#4A4A4A}
+  @keyframes glowPulse{0%,100%{box-shadow:0 0 8px rgba(232,119,26,.4)}50%{box-shadow:0 0 20px rgba(232,119,26,.8)}}
+
+  .phase-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+  .phase-title h3{font-size:1.15em;font-weight:700;color:#1A1A1A}
+  .phase-num{font-size:2.4em;font-weight:800;opacity:.08;position:absolute;top:8px;left:14px;color:#4A4A4A}
+
+  .status-badge{padding:4px 14px;border-radius:20px;font-size:.72em;font-weight:600;white-space:nowrap}
+  .badge-done{background:rgba(26,26,26,.1);color:#1A1A1A;border:1px solid rgba(26,26,26,.3)}
+  .badge-partial{background:rgba(232,119,26,.12);color:#E8771A;border:1px solid rgba(232,119,26,.3)}
+  .badge-active{background:rgba(232,119,26,.12);color:#E8771A;border:1px solid rgba(232,119,26,.3);animation:pulse 2s infinite}
+  .badge-future{background:rgba(74,74,74,.1);color:#4A4A4A;border:1px solid rgba(74,74,74,.3)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+  /* Tasks */
+  .tasks{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:3px 18px}
+  @media(max-width:600px){.tasks{grid-template-columns:1fr}}
+  .tasks li{padding:6px 0;display:flex;align-items:center;gap:8px;font-size:.85em;color:#1A1A1A;border-bottom:1px solid rgba(26,26,26,.1)}
+  .tasks li:last-child{border-bottom:none}
+  .done-t{color:#1A1A1A}.partial-t{color:#E8771A}.pending-t{color:#4A4A4A}
+
+  /* Verdict box */
+  .verdict{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+  .verdict-item{flex:1;min-width:140px;background:#EBEBEB;border-radius:10px;padding:12px;text-align:center;border:1px solid #E8771A}
+  .verdict-item .v-label{font-size:.7em;color:#4A4A4A}
+  .verdict-item .v-val{font-size:.95em;font-weight:700;margin-top:3px;color:#1A1A1A}
+  .v-done{color:#1A1A1A}.v-miss{color:#E8771A}.v-warn{color:#E8771A}.v-ready{color:#1A1A1A}
+
+  /* Code block */
+  .code-block{background:#1A1A1A;border:1px solid #E8771A;border-radius:10px;padding:14px 18px;font-family:'Courier New',monospace;font-size:.8em;color:#E8771A;margin:10px 0;direction:ltr;text-align:left;overflow-x:auto}
+  .code-block .comment{color:#4A4A4A}
+  .code-block .cmd{color:#FFFFFF}
+  .code-block .flag{color:#E8771A}
+
+  /* Script inventory */
+  .script-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0}
+  .script-card{background:#F0F0F0;border:1px solid #E8771A;border-radius:10px;padding:12px;font-size:.8em}
+  .script-card .s-name{font-weight:700;color:#E8771A;font-family:'Courier New',monospace;font-size:.9em}
+  .script-card .s-desc{color:#4A4A4A;margin-top:4px}
+  .script-card .s-lines{color:#4A4A4A;font-size:.75em;margin-top:4px}
+
+  /* Day plan */
+  .day-plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:18px 0}
+  .day-card{background:#F0F0F0;border:1px solid #EBEBEB;border-radius:12px;padding:18px;position:relative;overflow:hidden;transition:all .3s}
+  .day-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(232,119,26,.15)}
+  .day-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px}
+  .day-card.d1::before{background:#E8771A}
+  .day-card.d2::before{background:#E8771A}
+  .day-card.d3::before{background:#E8771A}
+  .day-card.d4::before{background:#E8771A}
+  .day-card h4{font-size:.95em;margin-bottom:10px;color:#1A1A1A}
+  .day-card ul{list-style:none;font-size:.8em;color:#4A4A4A}
+  .day-card ul li{padding:3px 0}
+
+  /* Comparison */
+  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+  @media(max-width:600px){.compare-grid{grid-template-columns:1fr}}
+  .compare-box{border-radius:14px;padding:18px}
+  .compare-box h4{margin-bottom:12px;font-size:1em;color:#1A1A1A}
+  .compare-box ul{list-style:none;font-size:.85em}
+  .compare-box ul li{padding:5px 0}
+  .compare-good{background:rgba(232,119,26,.05);border:2px solid #E8771A}
+  .compare-good h4{color:#E8771A}
+  .compare-good ul{color:#4A4A4A}
+  .compare-bad{background:#F0F0F0;border:1px solid #EBEBEB}
+  .compare-bad h4{color:#1A1A1A}
+  .compare-bad ul{color:#4A4A4A}
+
+  /* Decision log */
+  .decision-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:16px 0}
+  .decision-card{background:#F0F0F0;border:1px solid #EBEBEB;border-radius:12px;padding:16px;transition:all .3s}
+  .decision-card:hover{border-color:#E8771A}
+  .decision-card .d-title{font-weight:700;color:#E8771A;font-size:.9em;margin-bottom:6px}
+  .decision-card .d-reason{color:#4A4A4A;font-size:.78em;line-height:1.5}
+  .decision-card .d-status{display:inline-block;margin-top:8px;padding:2px 10px;border-radius:10px;font-size:.68em;font-weight:600;background:rgba(232,119,26,.12);color:#E8771A;border:1px solid rgba(232,119,26,.3)}
+
+  /* Score formula */
+  .formula-box{background:#F0F0F0;border:2px solid #E8771A;border-radius:14px;padding:20px;margin:16px 0;text-align:center}
+  .formula-box .formula{font-family:'Courier New',monospace;font-size:1.1em;color:#E8771A;font-weight:700;letter-spacing:.5px}
+  .formula-box .weights{display:flex;justify-content:center;gap:20px;margin-top:14px;flex-wrap:wrap}
+  .formula-box .weight-item{text-align:center}
+  .formula-box .weight-pct{font-size:1.4em;font-weight:800;color:#E8771A}
+  .formula-box .weight-label{font-size:.72em;color:#4A4A4A;margin-top:2px}
+
+  /* Calibration */
+  .calibration-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.85em}
+  .calibration-table th{background:rgba(232,119,26,.15);color:#E8771A;padding:10px;text-align:center;border:1px solid #E8771A}
+  .calibration-table td{padding:10px;text-align:center;border:1px solid #EBEBEB;color:#4A4A4A}
+  .calibration-table .hot{color:#E8771A;font-weight:700}
+  .calibration-table .warm{color:#E8771A;font-weight:700}
+  .calibration-table .cold{color:#1A1A1A;font-weight:700}
+
+  .footer{text-align:center;padding:32px;color:#4A4A4A;font-size:.75em;border-top:2px solid #E8771A;margin-top:24px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="muhide-brand">MUHIDE</div>
+  <div class="tagline">Trust in Every Transaction</div>
+  <h1>AI Sales OS</h1>
+  <p class="subtitle">Apollo --> Python --> Notion --> Revenue | Execution-First Approach</p>
+  <span class="version-badge">v5.0 -- 27 March 2026</span>
+  <p class="date">EXECUTION_PLAN v3.1 -- 4 Phases -- No Middleware -- Run What Exists First</p>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#00e676"></div>Complete</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ffd740"></div>Built - Not Run</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#00d2ff"></div>Current Phase</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#536dfe"></div>Next Phase</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7c4dff"></div>Future</div>
+</div>
+
+<div class="container">
+
+<!-- ARCHITECTURE -->
+<div class="arch-flow">
+  <div class="arch-node apollo">
+    <div class="node-icon">🚀</div>
+    <div class="node-label">Apollo.io</div>
+    <div class="node-sub">Data Source + Intent Scores</div>
+  </div>
+  <div class="arch-arrow">&#10132;</div>
+  <div class="arch-node python">
+    <div class="node-icon">🐍</div>
+    <div class="node-label">Python Scripts</div>
+    <div class="node-sub">Sync + Score + Action + Health</div>
+  </div>
+  <div class="arch-arrow">&#10132;</div>
+  <div class="arch-node notion">
+    <div class="node-icon">📋</div>
+    <div class="node-label">Notion</div>
+    <div class="node-sub">CRM Hub + Views + Actions</div>
+  </div>
+  <div class="arch-arrow">&#10132;</div>
+  <div class="arch-node github">
+    <div class="node-icon">⚙️</div>
+    <div class="node-label">GitHub Actions</div>
+    <div class="node-sub">Daily Cron Automation</div>
+  </div>
+  <div class="arch-arrow" style="opacity:.3">&#10132;</div>
+  <div class="arch-node odoo" style="opacity:.4">
+    <div class="node-icon">🏭</div>
+    <div class="node-label">Odoo</div>
+    <div class="node-sub">Phase 4 -- Future</div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-section">
+  <div class="progress-pct">75%</div>
+  <div class="progress-label">Phase 1 Complete | Phase 2 Code Complete | Action Engine Built | Phase 3 Next</div>
+  <div class="progress-bar-bg">
+    <div class="progress-bar-fill" style="width:75%"></div>
+  </div>
+  <div class="progress-phases">
+    <span class="done-phase">Notion Setup</span>
+    <span class="done-phase">Data Load</span>
+    <span class="done-phase">Apollo API</span>
+    <span class="done-phase">Sync Engine</span>
+    <span class="done-phase">Lead Score</span>
+    <span class="done-phase">ACTIVATE ✓</span>
+    <span class="active-phase">&#9654; ACTION</span>
+    <span>ENRICH</span>
+    <span>OPTIMIZE</span>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-grid">
+  <div class="stat-card highlight"><div class="icon">🏢</div><div class="value">15,407</div><div class="label">Companies in Notion</div></div>
+  <div class="stat-card highlight"><div class="icon">👤</div><div class="value">44,875</div><div class="label">Contacts in Notion</div></div>
+  <div class="stat-card"><div class="icon">📜</div><div class="value">10</div><div class="label">Scripts Active</div></div>
+  <div class="stat-card"><div class="icon">🔄</div><div class="value">3</div><div class="label">Sync Modes</div></div>
+  <div class="stat-card"><div class="icon">🎯</div><div class="value">4</div><div class="label">Score Components</div></div>
+  <div class="stat-card"><div class="icon">📊</div><div class="value">3</div><div class="label">Lead Views (HOT/WARM/COLD)</div></div>
+  <div class="stat-card"><div class="icon">🛡️</div><div class="value">3x</div><div class="label">Dedup Strategy</div></div>
+  <div class="stat-card"><div class="icon">📝</div><div class="value">8</div><div class="label">Architecture Decisions</div></div>
+</div>
+
+<!-- COMPLETED PHASES -->
+<div class="section-title green">Completed -- Infrastructure Ready</div>
+
+<div class="phase done">
+  <span class="phase-num">1A</span>
+  <div class="phase-header">
+    <div class="phase-title"><h3>🏗️ Notion Setup (Phase 1A)</h3></div>
+    <span class="status-badge badge-done">100% Complete</span>
+  </div>
+  <ul class="tasks">
+    <li>✅ <span class="done-t">7 Databases: Companies, Contacts, Opportunities, Tasks, Meetings, Activities, Email Hub</span></li>
+    <li>✅ <span class="done-t">Bi-directional Relations between all databases</span></li>
+    <li>✅ <span class="done-t">Blueprint Architecture v2.0</span></li>
+    <li>✅ <span class="done-t">Test import 100 records -- passed</span></li>
+  </ul>
+</div>
+
+<div class="phase done">
+  <span class="phase-num">1B</span>
+  <div class="phase-header">
+    <div class="phase-title"><h3>📥 Data Load (Phase 1B)</h3></div>
+    <span class="status-badge badge-done">100% Complete</span>
+  </div>
+  <div class="verdict">
+    <div class="verdict-item"><div class="v-label">Companies</div><div class="v-val v-done">15,407</div></div>
+    <div class="verdict-item"><div class="v-label">Contacts</div><div class="v-val v-done">44,875</div></div>
+    <div class="verdict-item"><div class="v-label">Success Rate</div><div class="v-val v-done">99.96%</div></div>
+    <div class="verdict-item"><div class="v-label">Errors</div><div class="v-val v-done">4 only</div></div>
+  </div>
+  <ul class="tasks">
+    <li>✅ <span class="done-t">initial_load_from_csv.py -- 106.8 minutes runtime</span></li>
+    <li>✅ <span class="done-t">sync_companies.py -- 15,407 companies loaded</span></li>
+    <li>✅ <span class="done-t">Pre-loading + Dedup + Multi-threading (3 workers)</span></li>
+    <li>✅ <span class="done-t">Auto-linking via Apollo Account ID during creation</span></li>
+  </ul>
+</div>
+
+<div class="phase done">
+  <span class="phase-num">02</span>
+  <div class="phase-header">
+    <div class="phase-title"><h3>🔗 Apollo API Integration (Phase 2)</h3></div>
+    <span class="status-badge badge-done">100% Complete</span>
+  </div>
+  <ul class="tasks">
+    <li>✅ <span class="done-t">Apollo API connected (Key + contacts/search + accounts/search)</span></li>
+    <li>✅ <span class="done-t">Field Mapping: 47+ fields with correct Notion names</span></li>
+    <li>✅ <span class="done-t">notion_helpers.py -- RateLimiter + retry + preload + CRUD</span></li>
+    <li>✅ <span class="done-t">CSV Import pipeline complete</span></li>
+  </ul>
+</div>
+
+<div class="phase done">
+  <span class="phase-num">03</span>
+  <div class="phase-header">
+    <div class="phase-title"><h3>🔄 Sync Engine v2.1 (Phase 3)</h3></div>
+    <span class="status-badge badge-done">100% Complete</span>
+  </div>
+  <div class="verdict">
+    <div class="verdict-item"><div class="v-label">daily_sync.py</div><div class="v-val v-done">v2.1 -- 3 Modes</div></div>
+    <div class="verdict-item"><div class="v-label">Pagination</div><div class="v-val v-done">500p + Window Split</div></div>
+    <div class="verdict-item"><div class="v-label">Retry</div><div class="v-val v-done">5x Exp. Backoff</div></div>
+    <div class="verdict-item"><div class="v-label">Dedup</div><div class="v-val v-done">Triple Strategy</div></div>
+  </div>
+  <ul class="tasks">
+    <li>✅ <span class="done-t">daily_sync.py v2.1 -- incremental / backfill / full modes</span></li>
+    <li>✅ <span class="done-t">Seniority Normalization -- unifies C-suite variants across Apollo data</span></li>
+    <li>✅ <span class="done-t">Safe Boolean Writing -- only writes engagement checkboxes if Apollo returns field</span></li>
+    <li>✅ <span class="done-t">Time-window splitting -- bypasses 50K record limit</span></li>
+    <li>✅ <span class="done-t">Alphabetical partitioning -- Full mode (A-Z + numbers = 27 partitions)</span></li>
+    <li>✅ <span class="done-t">SyncStats -- detailed logging (fetched, created, updated, duplicates, failed)</span></li>
+    <li>✅ <span class="done-t">Backfill checkpoint -- save/resume interrupted syncs</span></li>
+    <li>✅ <span class="done-t">Triple dedup: Apollo ID + Email + seen_ids set</span></li>
+  </ul>
+</div>
+
+<div class="phase done">
+  <span class="phase-num">S1</span>
+  <div class="phase-header">
+    <div class="phase-title"><h3>🎯 Lead Score Engine (Built)</h3></div>
+    <span class="status-badge badge-partial">Built -- Not Run</span>
+  </div>
+  <ul class="tasks">
+    <li>✅ <span class="done-t">lead_score.py -- full scoring script with CLI (--force, --dry-run)</span></li>
+    <li>✅ <span class="done-t">Formula: Intent(40%) + Engagement(35%) + Size(15%) + Seniority(10%)</span></li>
+    <li>✅ <span class="done-t">Seniority mapping: C-suite(100) down to Intern(15)</span></li>
+    <li>✅ <span class="done-t">Engagement scoring: Meeting(+40), Reply(+30), Open(+10), Sent(+5)</span></li>
+    <li>✅ <span class="done-t">Notion Views configured: HOT(>=80), WARM(50-79), COLD(&lt;50)</span></li>
+    <li>✅ <span class="done-t">COMPLETE -- 49 HOT | 10,073 WARM | 27,173 COLD (37,295 scored)</span></li>
+  </ul>
+</div>
+
+<!-- LEAD SCORE FORMULA -->
+<div class="formula-box">
+  <div class="formula">Lead Score = (Size x 0.45) + (Seniority x 0.35) + (Intent x 0.10) + (Engagement x 0.10)</div>
+  <div class="weights">
+    <div class="weight-item"><div class="weight-pct" style="color:#00d2ff">45%</div><div class="weight-label">Company Size<br>(Employees)</div></div>
+    <div class="weight-item"><div class="weight-pct" style="color:#b388ff">35%</div><div class="weight-label">Seniority<br>(Job Level)</div></div>
+    <div class="weight-item"><div class="weight-pct" style="color:#ff5252">10%</div><div class="weight-label">Intent Score<br>(Apollo)</div></div>
+    <div class="weight-item"><div class="weight-pct" style="color:#ffd740">10%</div><div class="weight-label">Engagement<br>(Outreach Activity)</div></div>
+  </div>
+  <p style="font-size:.85em;color:#4A4A4A;margin-top:12px">Now writes <strong>Lead Tier</strong> (HOT/WARM/COLD) alongside Lead Score in single update</p>
+</div>
+
+<!-- SYNC MODES -->
+<div class="section-title blue">Three Sync Modes</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:24px">
+  <div style="background:linear-gradient(135deg,#0a1a10,#111640);border:1px solid rgba(0,230,118,.2);border-radius:14px;padding:18px">
+    <h4 style="color:#00e676;margin-bottom:8px">&#9889; Incremental</h4>
+    <p style="font-size:.8em;color:#a5d6a7;margin-bottom:8px">Daily use -- GitHub Actions cron</p>
+    <ul style="list-style:none;font-size:.78em;color:#81c784">
+      <li>&#8226; Date filter (last N hours/days)</li>
+      <li>&#8226; Time-window splitting if >50K</li>
+      <li>&#8226; Fast -- minutes only</li>
+    </ul>
+    <div class="code-block" style="font-size:.72em;margin-top:8px">--mode incremental --days 1</div>
+  </div>
+  <div style="background:linear-gradient(135deg,#1a1500,#111640);border:1px solid rgba(255,215,64,.2);border-radius:14px;padding:18px">
+    <h4 style="color:#ffd740;margin-bottom:8px">📦 Backfill</h4>
+    <p style="font-size:.8em;color:#ffe082;margin-bottom:8px">Historical re-sync with checkpoint</p>
+    <ul style="list-style:none;font-size:.78em;color:#ffd54f">
+      <li>&#8226; Same logic + progress saved to file</li>
+      <li>&#8226; Resumes from where it stopped</li>
+      <li>&#8226; For large time ranges (365 days)</li>
+    </ul>
+    <div class="code-block" style="font-size:.72em;margin-top:8px">--mode backfill --days 365</div>
+  </div>
+  <div style="background:linear-gradient(135deg,#0a0e27,#1a1040);border:1px solid rgba(123,47,247,.2);border-radius:14px;padding:18px">
+    <h4 style="color:#b388ff;margin-bottom:8px">🔄 Full</h4>
+    <p style="font-size:.8em;color:#ce93d8;margin-bottom:8px">Complete rebuild -- no date filter</p>
+    <ul style="list-style:none;font-size:.78em;color:#b39ddb">
+      <li>&#8226; Alphabetical partitioning (A-Z + numbers)</li>
+      <li>&#8226; Pulls every record from Apollo</li>
+      <li>&#8226; 2-4 hours -- rare use</li>
+    </ul>
+    <div class="code-block" style="font-size:.72em;margin-top:8px">--mode full</div>
+  </div>
+</div>
+
+<!-- ══════ EXECUTION PLAN v3.0 ══════ -->
+<div class="section-title red">EXECUTION PLAN v3.0 -- 4 Phases</div>
+
+<!-- PHASE 1: ACTIVATE -->
+<div class="phase done">
+  <span class="phase-num">P1</span>
+  <div class="phase-header">
+    <div class="phase-title"><h3>🔥 Phase 1: ACTIVATE -- Run What Exists</h3></div>
+    <span class="status-badge badge-done">✅ COMPLETE</span>
+  </div>
+  <div class="verdict">
+    <div class="verdict-item"><div class="v-label">Full Sync</div><div class="v-val v-done">COMPLETE ✅</div></div>
+    <div class="verdict-item"><div class="v-label">Lead Score</div><div class="v-val v-done">COMPLETE ✅</div></div>
+    <div class="verdict-item"><div class="v-label">Notion Views</div><div class="v-val v-done">Configured</div></div>
+    <div class="verdict-item"><div class="v-label">GitHub Actions</div><div class="v-val v-warn">Needs Update</div></div>
+  </div>
+  <ul class="tasks">
+    <li>✅ <span class="done-t">GitHub Actions workflow updated to use --mode syntax (v2.1)</span></li>
+    <li>✅ <span class="done-t">Full Sync: python daily_sync.py --mode full executed</span></li>
+    <li>✅ <span class="done-t">Calibrated: 37,295 contacts scored (HOT: 49, WARM: 10,073, COLD: 27,173)</span></li>
+    <li>✅ <span class="done-t">Code pushed to GitHub + Secrets added</span></li>
+    <li>✅ <span class="done-t">Daily incremental + Lead Score active</span></li>
+    <li>✅ <span class="done-t">Action Ready evaluator + Health Check deployed</span></li>
+  </ul>
+
+  <div style="margin-top:14px;font-size:.82em;color:#8892b0;background:rgba(0,0,0,.2);border-radius:10px;padding:14px">
+    <strong style="color:#ff5252">CALIBRATION TARGETS:</strong>
+    <table class="calibration-table" style="margin-top:8px">
+      <tr><th>Category</th><th>Score</th><th>Expected %</th><th>Expected Count</th></tr>
+      <tr><td class="hot">HOT</td><td>>= 80</td><td>0.5% - 2%</td><td>200 - 900</td></tr>
+      <tr><td class="warm">WARM</td><td>50 - 79</td><td>10% - 20%</td><td>4,500 - 9,000</td></tr>
+      <tr><td class="cold">COLD</td><td>&lt; 50</td><td>80%+</td><td>35,000+</td></tr>
+    </table>
+    <p style="margin-top:8px;font-size:.9em;color:#5a6080">80%+ COLD is normal for Apollo data with no outreach history. This is correct behavior.</p>
+  </div>
+</div>
+
+<!-- PHASE 2: ACTION -->
+<div class="phase active" style="border-color:rgba(232,119,26,.2)">
+  <span class="phase-num">P2</span>
+  <div class="phase-header">
+    <div class="phase-title"><h3>⚡ Phase 2: ACTION -- Priority Engine</h3></div>
+    <span class="status-badge badge-active">CODE COMPLETE</span>
+  </div>
+  <p style="font-size:.85em;color:#8892b0;margin-bottom:12px">Convert Lead Score into revenue-generating actions. Pure Python -- no n8n/Make.</p>
+  <ul class="tasks">
+    <li>✅ <span class="done-t">Built auto_tasks.py -- SLA-based task creator (436 lines)</span></li>
+    <li>✅ <span class="done-t">HOT (>=80): CALL task + 24-hour SLA | WARM (>=50): FOLLOW-UP + 48h SLA</span></li>
+    <li>✅ <span class="done-t">Built constants.py -- unified field names, thresholds, SLA hours (167 lines)</span></li>
+    <li>✅ <span class="done-t">Built action_ready_updater.py -- 5-condition gating logic (209 lines)</span></li>
+    <li>✅ <span class="done-t">Built health_check.py -- post-pipeline health validator (148 lines)</span></li>
+    <li>✅ <span class="done-t">Updated daily_sync.yml -- 10-step GitHub Actions pipeline</span></li>
+    <li>⏳ <span class="pending-t">First run: execute auto_tasks.py with pending contacts</span></li>
+    <li>⏳ <span class="pending-t">Create Notion task views for sales workflow</span></li>
+  </ul>
+  <div class="code-block">
+    <span class="comment"># Daily Pipeline (GitHub Actions - 10 Steps):</span><br>
+    <span class="cmd">1. daily_sync.py</span> <span class="flag">--mode incremental</span>      <span class="comment"># Sync</span><br>
+    <span class="cmd">2. lead_score.py</span>                                 <span class="comment"># Score + Tier</span><br>
+    <span class="cmd">3. action_ready_updater.py</span>                      <span class="comment"># Evaluate readiness</span><br>
+    <span class="cmd">4. auto_tasks.py</span>                                <span class="comment"># Create tasks</span><br>
+    <span class="cmd">5. health_check.py</span>                              <span class="comment"># Validate pipeline</span>
+  </div>
+</div>
+
+<!-- PHASE 3: ENRICH -->
+<div class="phase future">
+  <span class="phase-num">P3</span>
+  <div class="phase-header">
+    <div class="phase-title"><h3>📡 Phase 3: ENRICH -- Signals Layer</h3></div>
+    <span class="status-badge badge-future">After Phase 2</span>
+  </div>
+  <p style="font-size:.85em;color:#8892b0;margin-bottom:12px">Add real-time sales signals. Only what Apollo API actually supports.</p>
+  <ul class="tasks">
+    <li>⬜ <span class="pending-t">3A: Job Postings -- apollo_organizations_job_postings endpoint</span></li>
+    <li>⬜ <span class="pending-t">  New fields: Active Jobs Count, Last Job Posted, Hiring Departments</span></li>
+    <li>⬜ <span class="pending-t">3B: Job Change Detection -- compare title/org between syncs</span></li>
+    <li>⬜ <span class="pending-t">  New fields: Job Changed (checkbox), Previous Title, Previous Company</span></li>
+    <li>⬜ <span class="pending-t">3C: Intent Trend -- compare Intent Score between syncs</span></li>
+    <li>⬜ <span class="pending-t">  New field: Intent Trend (Rising / Stable / Falling)</span></li>
+  </ul>
+  <div style="margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:.78em">
+    <div style="background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.15);border-radius:8px;padding:10px;text-align:center">
+      <div style="color:#00e676;font-weight:700">Job Postings</div>
+      <div style="color:#81c784">Direct API endpoint</div>
+      <div style="color:#5a6080;margin-top:4px">HIGH feasibility</div>
+    </div>
+    <div style="background:rgba(255,215,64,.05);border:1px solid rgba(255,215,64,.15);border-radius:8px;padding:10px;text-align:center">
+      <div style="color:#ffd740;font-weight:700">Job Change</div>
+      <div style="color:#ffe082">Build detection logic</div>
+      <div style="color:#5a6080;margin-top:4px">MEDIUM feasibility</div>
+    </div>
+    <div style="background:rgba(0,210,255,.05);border:1px solid rgba(0,210,255,.15);border-radius:8px;padding:10px;text-align:center">
+      <div style="color:#00d2ff;font-weight:700">Intent Trend</div>
+      <div style="color:#80d8ff">Simple comparison</div>
+      <div style="color:#5a6080;margin-top:4px">HIGH feasibility</div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 4: OPTIMIZE -->
+<div class="phase future">
+  <span class="phase-num">P4</span>
+  <div class="phase-header">
+    <div class="phase-title"><h3>🚀 Phase 4: OPTIMIZE -- Score v2 + Odoo</h3></div>
+    <span class="status-badge badge-future">After Signals Data</span>
+  </div>
+  <p style="font-size:.85em;color:#8892b0;margin-bottom:12px">Only after 2+ weeks of signals data. Update scoring formula then connect Odoo.</p>
+  <ul class="tasks">
+    <li>⬜ <span class="pending-t">Lead Score v2: Intent(30%) + Engagement(25%) + Signals(25%) + Size(10%) + Seniority(10%)</span></li>
+    <li>⬜ <span class="pending-t">Signal bonuses: Job Change(+20), Job Postings(+5-15), Intent Rising(+10)</span></li>
+    <li>⬜ <span class="pending-t">Odoo Integration: Opportunities --> Odoo CRM Pipeline</span></li>
+    <li>⬜ <span class="pending-t">Bi-directional sync: Notion &lt;--&gt; Odoo</span></li>
+    <li>⬜ <span class="pending-t">Revenue Tracking + Quarterly forecasts</span></li>
+  </ul>
+</div>
+
+<!-- SCRIPTS INVENTORY -->
+<div class="section-title blue">Scripts Inventory</div>
+
+<div class="script-grid">
+  <div class="script-card" style="border-color:rgba(0,230,118,.2)">
+    <div class="s-name">daily_sync.py</div>
+    <div class="s-desc">Main sync engine -- 3 modes</div>
+    <div class="s-lines">~520 lines | v2.1 | <span class="done-t">&#10003; Active</span></div>
+  </div>
+  <div class="script-card" style="border-color:rgba(0,230,118,.2)">
+    <div class="s-name">lead_score.py</div>
+    <div class="s-desc">Lead Score + Lead Tier calculator</div>
+    <div class="s-lines">~350 lines | v1.1 | <span class="done-t">&#10003; Active</span></div>
+  </div>
+  <div class="script-card" style="border-color:rgba(0,230,118,.2)">
+    <div class="s-name">constants.py</div>
+    <div class="s-desc">Unified field names & thresholds</div>
+    <div class="s-lines">167 lines | <span class="done-t">&#10003; Active</span></div>
+  </div>
+  <div class="script-card" style="border-color:rgba(0,230,118,.2)">
+    <div class="s-name">auto_tasks.py</div>
+    <div class="s-desc">Action Engine -- SLA-based task creator</div>
+    <div class="s-lines">436 lines | <span class="done-t">&#10003; Active</span></div>
+  </div>
+  <div class="script-card" style="border-color:rgba(0,230,118,.2)">
+    <div class="s-name">action_ready_updater.py</div>
+    <div class="s-desc">5-condition Action Ready evaluator</div>
+    <div class="s-lines">209 lines | <span class="done-t">&#10003; Active</span></div>
+  </div>
+  <div class="script-card" style="border-color:rgba(0,230,118,.2)">
+    <div class="s-name">health_check.py</div>
+    <div class="s-desc">Pipeline health validator</div>
+    <div class="s-lines">148 lines | <span class="done-t">&#10003; Active</span></div>
+  </div>
+  <div class="script-card">
+    <div class="s-name">notion_helpers.py</div>
+    <div class="s-desc">RateLimiter + Retry + CRUD</div>
+    <div class="s-lines">~210 lines | <span class="done-t">&#10003; Active</span></div>
+  </div>
+  <div class="script-card">
+    <div class="s-name">webhook_server.py</div>
+    <div class="s-desc">Apollo webhook receiver</div>
+    <div class="s-lines">~490 lines | v2.0 | <span class="done-t">&#10003; Ready</span></div>
+  </div>
+  <div class="script-card">
+    <div class="s-name">verify_links.py</div>
+    <div class="s-desc">Verify contact-company links</div>
+    <div class="s-lines">~290 lines | <span class="done-t">&#10003; Utility</span></div>
+  </div>
+  <div class="script-card">
+    <div class="s-name">initial_load_from_csv.py</div>
+    <div class="s-desc">One-time CSV import</div>
+    <div class="s-lines">~480 lines | <span class="done-t">&#10003; Completed</span></div>
+  </div>
+  <div class="script-card" style="border-color:rgba(255,215,64,.2)">
+    <div class="s-name">job_postings_sync.py</div>
+    <div class="s-desc">Company job postings enrichment</div>
+    <div class="s-lines">Phase 3 | <span class="partial-t">&#9888; Planned</span></div>
+  </div>
+</div>
+
+<!-- EXECUTION TIMELINE -->
+<div class="section-title red">Execution Timeline</div>
+
+<div class="day-plan">
+  <div class="day-card d1">
+    <h4 style="color:#ff6e40">🔥 Week 1 -- ACTIVATE</h4>
+    <ul>
+      <li>✅ Full Sync (daily_sync.py --mode full) — DONE</li>
+      <li>✅ Lead Score (lead_score.py) — COMPLETE</li>
+      <li>&#9654; Calibrate HOT/WARM/COLD</li>
+      <li>&#9654; GitHub Actions live</li>
+    </ul>
+  </div>
+  <div class="day-card d2">
+    <h4 style="color:#ffd740">&#9889; Week 2-3 -- ACTION</h4>
+    <ul>
+      <li>&#9744; Build auto_tasks.py</li>
+      <li>&#9744; Priority rules (HOT/WARM)</li>
+      <li>&#9744; Duplicate prevention</li>
+      <li>&#9744; Daily pipeline running</li>
+    </ul>
+  </div>
+  <div class="day-card d3">
+    <h4 style="color:#00e676">📡 Week 3-4 -- ENRICH</h4>
+    <ul>
+      <li>&#9744; Job Postings sync</li>
+      <li>&#9744; Job Change detection</li>
+      <li>&#9744; Intent Trend tracking</li>
+      <li>&#9744; New Notion fields</li>
+    </ul>
+  </div>
+  <div class="day-card d4">
+    <h4 style="color:#b388ff">🚀 Week 5-8 -- OPTIMIZE</h4>
+    <ul>
+      <li>&#9744; Lead Score v2 (with signals)</li>
+      <li>&#9744; Odoo integration</li>
+      <li>&#9744; Revenue tracking</li>
+      <li>&#9744; Pipeline management</li>
+    </ul>
+  </div>
+</div>
+
+<!-- DECISION LOG -->
+<div class="section-title orange">Decision Log -- Architecture Choices</div>
+
+<div class="decision-grid">
+  <div class="decision-card">
+    <div class="d-title">No n8n / Make.com / Zapier</div>
+    <div class="d-reason">Python + GitHub Actions + Notion MCP provides the same automation with zero cost, full control, and no middleware to maintain.</div>
+    <div class="d-status">FINAL</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">Embed Signals in Existing Schema</div>
+    <div class="d-reason">Instead of a separate Signals database, signal data is added as fields in existing Companies and Contacts tables. 90% value at 30% complexity.</div>
+    <div class="d-status">FINAL</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">Lead Score v1 Before v2</div>
+    <div class="d-reason">Don't change weights until signals data exists. Giving 25% weight to zero-value fields weakens the formula. Run v1 first, evaluate, then iterate.</div>
+    <div class="d-status">FINAL</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">Run Existing Code First</div>
+    <div class="d-reason">daily_sync.py and lead_score.py are built but never executed. Any new development before running these is a distraction from revenue.</div>
+    <div class="d-status">FINAL</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">4 Phases, Not 7</div>
+    <div class="d-reason">Phase inflation creates illusion of progress. Multiple "phases" were actually steps within a single day's work. Reduced to 4 actionable phases.</div>
+    <div class="d-status">FINAL</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">80%+ COLD is Expected</div>
+    <div class="d-reason">Cold Apollo data with no outreach history will score low. This is correct behavior, not a bug. Calibration validates this.</div>
+    <div class="d-status">FINAL</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">No Claude AI Layer Yet</div>
+    <div class="d-reason">Claude integration for automated analysis is valuable but premature. Need real data flowing first. Deferred to post-Phase 4.</div>
+    <div class="d-status">REVISIT</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">News API Not Worth It</div>
+    <div class="d-reason">Apollo has no news endpoint. External API (Google News, Crunchbase) adds complexity without proven ROI. Deferred indefinitely.</div>
+    <div class="d-status">FINAL</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">Safe Boolean Writing</div>
+    <div class="d-reason">Only write engagement checkboxes (Email Sent, Replied, etc.) if Apollo explicitly returns the field. Prevents overwriting manually-set True with False.</div>
+    <div class="d-status">FINAL</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">Unified Constants File</div>
+    <div class="d-reason">All field names, thresholds, and SLA hours in constants.py -- single source of truth. No hardcoded strings scattered across scripts.</div>
+    <div class="d-status">FINAL</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">Action Ready 5-Condition Gating</div>
+    <div class="d-reason">Before any task creation: Score >= 50, DNC = False, Outreach Status OK, Stage not Customer/Churned, has contact method. Prevents tasks for bad leads.</div>
+    <div class="d-status">FINAL</div>
+  </div>
+</div>
+
+<!-- STRENGTHS VS GAPS -->
+<div class="section-title yellow">Strengths vs Gaps</div>
+
+<div class="compare-grid">
+  <div class="compare-box compare-good">
+    <h4>&#10003; Strong</h4>
+    <ul>
+      <li>&#10022; 44,875 contacts + 15,407 companies (99.96% success)</li>
+      <li>&#10022; Sync Engine v2.0 -- 3 modes (incremental/backfill/full)</li>
+      <li>&#10022; Lead Score formula built and tested</li>
+      <li>&#10022; Notion Views configured (HOT/WARM/COLD)</li>
+      <li>&#10022; Triple dedup + SyncStats + Checkpoint</li>
+      <li>&#10022; EXECUTION_PLAN v3.0 documented (14-page DOCX)</li>
+      <li>&#10022; 8 architecture decisions documented</li>
+      <li>&#10022; No external dependencies (pure Python)</li>
+    </ul>
+  </div>
+  <div class="compare-box compare-bad">
+    <h4>&#10008; Gaps</h4>
+    <ul>
+      <li>&#10022; Full Sync COMPLETE ✅ (492 contacts, 15,208 companies updated, 237 dupes prevented)</li>
+      <li>&#10022; Lead Score COMPLETE ✅ (49 HOT, 10,073 WARM, 27,173 COLD — 0 errors)</li>
+      <li>&#10022; GitHub Actions workflow outdated (old CLI syntax)</li>
+      <li>&#10022; Sync engine proven: 0 failures, 131.8 min runtime, production-grade</li>
+      <li>&#10022; No auto-tasks (auto_tasks.py not built)</li>
+      <li>&#10022; No signals data (Job Postings, Job Change)</li>
+      <li>&#10022; No unit tests</li>
+      <li>&#10022; Odoo integration not started</li>
+    </ul>
+  </div>
+</div>
+
+<!-- FUTURE ROADMAP -->
+<div class="section-title purple">Future Roadmap (Post Phase 4)</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:24px">
+  <div style="background:#F0F0F0;border:1px solid #EBEBEB;border-radius:12px;padding:16px">
+    <h4 style="color:#E8771A;font-size:.9em;margin-bottom:8px">🤖 Claude AI Analysis</h4>
+    <p style="font-size:.78em;color:#4A4A4A">Automated pattern analysis, weekly insights, anomaly detection. Needs 6+ weeks of score data.</p>
+  </div>
+  <div style="background:#F0F0F0;border:1px solid #EBEBEB;border-radius:12px;padding:16px">
+    <h4 style="color:#E8771A;font-size:.9em;margin-bottom:8px">📧 Apollo Sequences</h4>
+    <p style="font-size:.78em;color:#4A4A4A">Auto-add HOT leads to Apollo email sequences. Needs sequences designed and tested manually first.</p>
+  </div>
+  <div style="background:#F0F0F0;border:1px solid #EBEBEB;border-radius:12px;padding:16px">
+    <h4 style="color:#E8771A;font-size:.9em;margin-bottom:8px">📊 Live Dashboard</h4>
+    <p style="font-size:.78em;color:#4A4A4A">Real-time pipeline metrics, scoring distribution, signal activity. Needs 3+ months of data.</p>
+  </div>
+  <div style="background:#F0F0F0;border:1px solid #EBEBEB;border-radius:12px;padding:16px">
+    <h4 style="color:#E8771A;font-size:.9em;margin-bottom:8px">👥 Multi-User Tasks</h4>
+    <p style="font-size:.78em;color:#4A4A4A">Round-robin assignment, workload balancing. Needs sales team > 1 person.</p>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  AI Sales OS Mind Map v5.0 -- Ragheed Almadani -- Claude AI -- 27 March 2026<br>
+  EXECUTION_PLAN v3.0 | 4 Phases | 44,875 Contacts | 15,407 Companies | 11 Scripts | No Middleware
+</div>
+
+</body>
+</html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
