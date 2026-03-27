@@ -39,7 +39,7 @@ jobs:
   sync-and-score:
     name: "Sync → Score → Action Pipeline"
     runs-on: ubuntu-latest
-    timeout-minutes: 180  # Full mode can take hours
+    timeout-minutes: 360  # 6 hours — Full mode + scoring can take time
 
     env:
       APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
