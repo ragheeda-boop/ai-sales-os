@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python link_companies_contacts.py)",
+      "Bash(pip install:*)",
+      "Bash(python -m pip install requests)",
+      "Bash(python3 -c \":*)",
+      "Bash(head -1 \"/c/Users/PC/Downloads/apollo-contacts-export \\(16\\).csv\")",
+      "Bash(ls *.py)",
+      "Bash(ls -la \"💻 CODE/Phase 3 - Sync/\"*.log \"💻 CODE/Phase 3 - Sync/logs/\"*.log)",
+      "Bash(grep Contacts:.*/ '💻 CODE/Phase 3 - Sync/initial_load.log')",
+      "Bash(python lead_score.py)",
+      "Bash(cmd //c \"for /L %i in \\(1,1,30\\) do @echo Run %i... && python lead_score.py && timeout /t 5\")"
+    ]
+  }
+}

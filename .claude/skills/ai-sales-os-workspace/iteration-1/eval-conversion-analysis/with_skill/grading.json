@@ -1,0 +1,23 @@
+{
+  "eval_id": 4,
+  "eval_name": "conversion-analysis-hot-vs-warm",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "References the baseline data: HOT 24% meetings, 36% replies",
+      "passed": true,
+      "evidence": "Response explicitly states: 'من الـ baseline data (أول 100 HOT lead): HOT: 24% meeting booked | 36% replied' and in the table: 'Meeting Booked: 24 | 24%' and 'Contact Responded: 36 | 36%'"
+    },
+    {
+      "text": "Compares HOT vs WARM conversion metrics",
+      "passed": true,
+      "evidence": "Response provides comparison table with HOT baseline (24% meetings, 36% replies) and WARM forecasts: 'Meeting Booked: 8-12% (compared to 24% for HOT)' and 'Replied: 15-20% (compared to 36% for HOT)'"
+    },
+    {
+      "text": "Suggests querying Notion or provides analysis methodology",
+      "passed": true,
+      "evidence": "Section '2. منهجية التحليل' provides detailed Python query methodology for Notion data with specific code for analyzing each tier by conversion rates and score ranges."
+    }
+  ],
+  "overall_pass_rate": 1.0
+}

@@ -1,0 +1,33 @@
+{
+  "eval_id": 6,
+  "eval_name": "sequence-ceo-construction-saudi",
+  "configuration": "without_skill",
+  "expectations": [
+    {
+      "text": "Creates exactly 5 touches over 2 weeks",
+      "passed": true,
+      "evidence": "Response provides 5 touches labeled 'اللمسة الأولى' through 'اللمسة الخامسة' on days 1, 3, 5, 9, and 12, spanning 2-week timeframe."
+    },
+    {
+      "text": "Uses executive/CEO-appropriate tone",
+      "passed": true,
+      "evidence": "Response uses professional, concise tone appropriate for CEOs: 'لا أريد أن أخذ وقتك الطويل' and focuses on business impact with respect for executive time constraints."
+    },
+    {
+      "text": "References Saudi/GCC business context",
+      "passed": true,
+      "evidence": "Response mentions 'شركات البناء السعودية' and includes Saudi-specific business references like 'المشاريع الحكومية' (government projects)."
+    },
+    {
+      "text": "Includes at least 2 different channels (email + LinkedIn or call)",
+      "passed": true,
+      "evidence": "Sequence includes email (touches 1, 3, 5), phone call (touch 3 mentioned as 'اتصال هاتفي'), and implies LinkedIn based on document context. All three channels are represented."
+    },
+    {
+      "text": "Each touch has specific copy (subject + body or message text)",
+      "passed": true,
+      "evidence": "All 5 touches include specific copy with subjects and message content. Touch 1 has subject 'فرصة لتحسين كفاءة المشاريع', Touch 3 has phone call script, Touch 4 has subject 'دراسة حالة', Touch 5 has subject 'فرصة محدودة - استشارة مجانية'."
+    }
+  ],
+  "overall_pass_rate": 1.0
+}

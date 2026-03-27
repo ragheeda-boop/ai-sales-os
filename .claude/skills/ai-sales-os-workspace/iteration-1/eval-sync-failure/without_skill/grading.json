@@ -1,0 +1,28 @@
+{
+  "eval_id": 1,
+  "eval_name": "sync-failure-429-troubleshooting",
+  "configuration": "without_skill",
+  "expectations": [
+    {
+      "text": "References apollo_request() retry logic with exponential backoff",
+      "passed": false,
+      "evidence": "Response mentions general retry logic concepts but does not reference the specific 'apollo_request()' function or specific '5x exponential backoff' implementation. States 'معظم أدوات Sync الحديثة تتضمن Exponential Backoff' but without technical specificity."
+    },
+    {
+      "text": "Suggests waiting before retry or using backfill mode",
+      "passed": true,
+      "evidence": "Response recommends: 'انتظر 2-5 دقائق على الأقل قبل إعادة تشغيل الـ Sync' and mentions backfill: 'python daily_sync.py --mode backfill --days 7'"
+    },
+    {
+      "text": "Mentions rate limiting as the cause of 429 errors",
+      "passed": true,
+      "evidence": "Response explains: 'الخطأ 429 من Apollo يعني أنك تجاوزت حد معدل الطلبات (Rate Limiting)'"
+    },
+    {
+      "text": "Provides a concrete command to re-run the sync",
+      "passed": true,
+      "evidence": "Provides command: 'python daily_sync.py --mode incremental --hours 24' and discusses incremental vs full modes"
+    }
+  ],
+  "overall_pass_rate": 0.75
+}

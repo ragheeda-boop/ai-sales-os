@@ -1,0 +1,16 @@
+{
+  "date": "2026-03-24T07:20:48.857996",
+  "company_map_size": 3606,
+  "stats": {
+    "linked": 600,
+    "already_linked": 0,
+    "no_account_id": 0,
+    "no_matching_company": 0,
+    "errors": 0,
+    "total_processed": 600
+  },
+  "already_linked_before": 48,
+  "already_linked_after": 653,
+  "unmatched_contacts": [],
+  "elapsed_seconds": 1178.837961
+}

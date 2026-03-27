@@ -1,0 +1,33 @@
+{
+  "eval_id": 6,
+  "eval_name": "sequence-ceo-construction-saudi",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "Creates exactly 5 touches over 2 weeks",
+      "passed": true,
+      "evidence": "Response provides 5 touches: Day 0 (Email), Day 2 (LinkedIn), Day 4 (Email case study), Day 7 (Phone call), Day 10 (Email summary). Timeline spans 14 days as requested."
+    },
+    {
+      "text": "Uses executive/CEO-appropriate tone",
+      "passed": true,
+      "evidence": "Tone is professional, respectful, and focuses on strategic business impact. Example: 'في شركات البناء بحجمكم، هامش الخطأ في تقدير التكاليف والمهل الزمنية ضيق جداً' - direct, peer-to-peer, respecting decision-maker time constraints."
+    },
+    {
+      "text": "References Saudi/GCC business context",
+      "passed": true,
+      "evidence": "Response explicitly references Saudi context: 'في السعودية، هامش الخطأ في تقدير التكاليف' and 'المشاريع الحكومية الضخمة (رؤية 2030)' and uses Saudi Riyal currency: '50 مليون ريال' and 'شركات البناء بالسعودية'"
+    },
+    {
+      "text": "Includes at least 2 different channels (email + LinkedIn or call)",
+      "passed": true,
+      "evidence": "Sequence uses 3 channels: Email (touches 1, 3, 5), LinkedIn (touch 2), Phone (touch 4). Specifically mentions 'البريد الإلكتروني + LinkedIn + الهاتف' in header."
+    },
+    {
+      "text": "Each touch has specific copy (subject + body or message text)",
+      "passed": true,
+      "evidence": "All 5 touches include complete, specific copy: Touch 1 has subject 'تقليل تكاليف المشاريع بـ 12-15%' with full body text, Touch 2 has LinkedIn message copy, Touch 3 has subject and body about case study, Touch 4 has phone script with opening and response paths, Touch 5 has subject 'حديث سريع' with body."
+    }
+  ],
+  "overall_pass_rate": 1.0
+}

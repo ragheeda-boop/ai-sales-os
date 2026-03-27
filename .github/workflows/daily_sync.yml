@@ -1,4 +1,4 @@
-name: "🔄 Apollo → Notion Daily Pipeline"
+name: "🔄 Apollo → Notion Daily Pipeline v2.0"
 
 on:
   # Daily at 7 AM KSA (UTC+3 = 04:00 UTC)
@@ -34,12 +34,20 @@ on:
         options:
           - 'yes'
           - 'no'
+      run_sequences:
+        description: 'Run Auto Sequence enrollment?'
+        required: true
+        default: 'yes'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
 
 jobs:
-  sync-and-score:
-    name: "Sync → Score → Action Pipeline"
+  daily-pipeline:
+    name: "Sync → Enrich → Score → Action → Sequence → Learn"
     runs-on: ubuntu-latest
-    timeout-minutes: 360  # 6 hours — Full mode + scoring can take time
+    timeout-minutes: 360  # 6 hours — Full mode + all steps
 
     env:
       APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
@@ -79,7 +87,16 @@ jobs:
             full)           python daily_sync.py --mode full ;;
           esac
 
-      # ─── 5. Run Lead Score ───────────────────────────────────────────────
+      # ─── 5. Job Postings Enricher (Intent Proxy) ─────────────────────────
+      - name: "🏗️ Job Postings Enricher"
+        if: ${{ github.event.inputs.run_lead_score != 'no' }}
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        continue-on-error: true
+        run: |
+          echo "🏗️ Enriching companies with job postings intent..."
+          python job_postings_enricher.py --limit 50
+
+      # ─── 6. Run Lead Score ───────────────────────────────────────────────
       - name: "🎯 Run Lead Score"
         if: ${{ github.event.inputs.run_lead_score != 'no' }}
         working-directory: "💻 CODE/Phase 3 - Sync"
@@ -87,7 +104,7 @@ jobs:
           echo "🎯 Running Lead Score..."
           python lead_score.py
 
-      # ─── 6. Update Action Ready ─────────────────────────────────────────
+      # ─── 7. Update Action Ready ──────────────────────────────────────────
       - name: "✅ Update Action Ready"
         if: ${{ github.event.inputs.run_lead_score != 'no' }}
         working-directory: "💻 CODE/Phase 3 - Sync"
@@ -95,23 +112,48 @@ jobs:
           echo "✅ Updating Action Ready flags..."
           python action_ready_updater.py
 
-      # ─── 7. Run Action Engine ────────────────────────────────────────────
+      # ─── 8. Run Action Engine ────────────────────────────────────────────
       - name: "⚡ Run Action Engine"
         if: ${{ github.event.inputs.run_action_engine != 'no' }}
         working-directory: "💻 CODE/Phase 3 - Sync"
-        continue-on-error: true  # Don't fail pipeline if tasks fail
+        continue-on-error: true
         run: |
           echo "⚡ Running Action Engine..."
           python auto_tasks.py
 
-      # ─── 8. Health Check ─────────────────────────────────────────────────
+      # ─── 9. Auto Sequence Enrollment ─────────────────────────────────────
+      - name: "📧 Auto Sequence Enrollment"
+        if: ${{ github.event.inputs.run_sequences != 'no' }}
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        continue-on-error: true
+        run: |
+          echo "📧 Enrolling contacts in sequences..."
+          python auto_sequence.py --limit 50
+
+      # ─── 10. Analytics Tracker ───────────────────────────────────────────
+      - name: "📊 Analytics Tracker"
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        continue-on-error: true
+        run: |
+          echo "📊 Syncing analytics and engagement..."
+          python analytics_tracker.py --days 7
+
+      # ─── 11. Health Check ────────────────────────────────────────────────
       - name: "🏥 Health Check"
         working-directory: "💻 CODE/Phase 3 - Sync"
         run: |
           echo "🏥 Running health check..."
           python health_check.py
 
-      # ─── 9. Upload Logs ──────────────────────────────────────────────────
+      # ─── 12. Morning Brief ──────────────────────────────────────────────
+      - name: "☀️ Morning Brief"
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        continue-on-error: true
+        run: |
+          echo "☀️ Generating morning brief..."
+          python morning_brief.py --output file
+
+      # ─── 13. Upload Logs ────────────────────────────────────────────────
       - name: "📋 Upload Logs"
         if: always()
         uses: actions/upload-artifact@v4
@@ -122,12 +164,20 @@ jobs:
             💻 CODE/Phase 3 - Sync/lead_score.log
             💻 CODE/Phase 3 - Sync/action_ready.log
             💻 CODE/Phase 3 - Sync/auto_tasks.log
+            💻 CODE/Phase 3 - Sync/auto_sequence.log
+            💻 CODE/Phase 3 - Sync/job_postings.log
+            💻 CODE/Phase 3 - Sync/analytics_tracker.log
+            💻 CODE/Phase 3 - Sync/morning_brief.log
             💻 CODE/Phase 3 - Sync/health_check.log
             💻 CODE/Phase 3 - Sync/last_sync_stats.json
             💻 CODE/Phase 3 - Sync/last_action_stats.json
+            💻 CODE/Phase 3 - Sync/last_sequence_stats.json
+            💻 CODE/Phase 3 - Sync/last_job_postings_stats.json
+            💻 CODE/Phase 3 - Sync/last_analytics_stats.json
+            💻 CODE/Phase 3 - Sync/morning_brief_*.md
           retention-days: 30
 
-      # ─── 10. Notify on Failure ───────────────────────────────────────────
+      # ─── 14. Notify on Failure ──────────────────────────────────────────
       - name: "❌ Notify on Failure"
         if: failure()
         run: |
@@ -138,3 +188,50 @@ jobs:
           tail -30 "💻 CODE/Phase 3 - Sync/lead_score.log" 2>/dev/null || echo "No score log"
           echo "=== Last 30 lines of action log ==="
           tail -30 "💻 CODE/Phase 3 - Sync/auto_tasks.log" 2>/dev/null || echo "No action log"
+          echo "=== Last 30 lines of sequence log ==="
+          tail -30 "💻 CODE/Phase 3 - Sync/auto_sequence.log" 2>/dev/null || echo "No sequence log"
+
+  # ─── Weekly Score Calibration (Sundays only) ───────────────────────────
+  weekly-calibration:
+    name: "📐 Weekly Score Calibration"
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 4 * * 0' || github.event_name == 'workflow_dispatch'
+    needs: daily-pipeline
+    timeout-minutes: 30
+
+    env:
+      APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      NOTION_DATABASE_ID_CONTACTS: ${{ secrets.NOTION_DATABASE_ID_CONTACTS }}
+      NOTION_DATABASE_ID_COMPANIES: ${{ secrets.NOTION_DATABASE_ID_COMPANIES }}
+
+    steps:
+      - name: "⬇️ Checkout"
+        uses: actions/checkout@v4
+
+      - name: "🐍 Setup Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: "📦 Install Dependencies"
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        run: pip install -r requirements.txt
+
+      - name: "📐 Score Calibration (Review Only)"
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        run: |
+          echo "📐 Running weekly score calibration analysis..."
+          python score_calibrator.py --days 30 --export
+
+      - name: "📋 Upload Calibration Report"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: calibration-${{ github.run_number }}
+          path: |
+            💻 CODE/Phase 3 - Sync/score_calibrator.log
+            💻 CODE/Phase 3 - Sync/calibration_analysis_*.json
+            💻 CODE/Phase 3 - Sync/calibration_history.json
+          retention-days: 90

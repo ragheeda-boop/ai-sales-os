@@ -3,12 +3,15 @@
 ## Architecture
 
 ```
-┌──────────────┐     ┌──────────────────┐     ┌──────────────┐     ┌───────────────┐
-│  Apollo.io   │────►│  Python Scripts   │────►│   Notion     │────►│ GitHub Actions│
-│  (Data)      │     │  (Sync + Score)   │     │  (CRM Hub)   │     │ (Daily Cron)  │
-└──────────────┘     └──────────────────┘     └──────────────┘     └───────────────┘
- 44,875 contacts      daily_sync.py            7 Databases          7 AM KSA daily
- 15,407 companies     lead_score.py            HOT/WARM/COLD Views  Sync + Score
+┌──────────────┐     ┌──────────────────────────┐     ┌──────────────┐     ┌───────────────┐
+│  Apollo.io   │────►│  Python Scripts           │────►│   Notion     │────►│ GitHub Actions│
+│  (Data)      │     │  (Sync + Score + Action)  │     │  (CRM Hub)   │     │ (Daily Cron)  │
+└──────────────┘     └──────────────────────────┘     └──────────────┘     └───────────────┘
+ 44,875 contacts      daily_sync.py v2.1               7 Databases          7 AM KSA daily
+ 15,407 companies     lead_score.py v1.1               HOT/WARM/COLD Views  10-step pipeline
+                     action_ready_updater.py
+                     auto_tasks.py
+                     health_check.py
 ```
 
 ## Data Pipeline
@@ -17,9 +20,10 @@
 Apollo API
     │
     ▼
-daily_sync.py (v2.0)
+daily_sync.py (v2.1)
     ├─ Fetch contacts (contacts/search)
     │  ├─ Triple dedup (Apollo ID + Email + seen_ids)
+    │  ├─ Normalize seniority & engagement booleans
     │  ├─ Link to Company (by Apollo Account ID)
     │  └─ Create or Update in Notion
     │
@@ -33,17 +37,45 @@ daily_sync.py (v2.0)
        └─ full (all records, alphabetical partitioning)
     │
     ▼
-lead_score.py
-    ├─ Intent Score × 40% (from Apollo)
-    ├─ Engagement × 35% (email/meeting activity)
-    ├─ Company Size × 15% (employee count)
-    └─ Seniority × 10% (job level)
+lead_score.py (v1.1)
+    ├─ Intent Score × 10% (from Apollo)
+    ├─ Engagement × 10% (email/meeting activity)
+    ├─ Company Size × 45% (employee count)
+    └─ Seniority × 35% (job level)
+    │
+    ├─ Output: Lead Score (0-100) + Lead Tier (HOT/WARM/COLD)
+    │
+    ▼
+action_ready_updater.py
+    ├─ Evaluate 5 conditions:
+    │  ├─ Score >= 50
+    │  ├─ Do Not Call = False
+    │  ├─ Outreach Status NOT (Do Not Contact | Bounced | Bad Data)
+    │  ├─ Stage NOT (Customer | Churned)
+    │  └─ Has email OR phone
+    │
+    └─ Set Action Ready checkbox ✓
+    │
+    ▼
+auto_tasks.py (Action Engine)
+    ├─ HOT leads (Score >= 80)
+    │  └─ Create CALL task (SLA: 24 hours)
+    │
+    └─ WARM leads (Score 50-79)
+       └─ Create FOLLOW-UP task (SLA: 48 hours)
+    │
+    ▼
+health_check.py
+    ├─ Check sync stats (zero records = CRITICAL)
+    ├─ Check duplicate rate (>5% = WARNING)
+    ├─ Check action engine errors
+    └─ Validate pipeline health
     │
     ▼
 Notion Views
-    ├─ HOT LEADS (Score >= 80) → Call today
-    ├─ WARM LEADS (Score 50-79) → Follow up
-    └─ COLD LEADS (Score < 50) → Monitor
+    ├─ HOT LEADS (Score >= 80) → 24h CALL tasks
+    ├─ WARM LEADS (Score 50-79) → 48h FOLLOW-UP tasks
+    └─ COLD LEADS (Score < 50) → Monitor only
 ```
 
 ## Notion Databases
@@ -68,16 +100,16 @@ Notion Views
 
 **Automation:** GitHub Actions runs daily pipeline (sync → score). No external tools (n8n, Make, Zapier). Pure Python + GitHub Actions.
 
-## Execution Plan (v3.0)
+## Execution Plan (v3.2)
 
 | Phase | Name | Status |
 |-------|------|--------|
-| Phase 1 | **ACTIVATE** — Full Sync + Lead Score + Calibration | Current |
-| Phase 2 | **ACTION** — auto_tasks.py + Priority Engine | Next |
-| Phase 3 | **ENRICH** — Job Postings + Job Change + Intent Trend | Planned |
-| Phase 4 | **OPTIMIZE** — Lead Score v2 + Odoo Integration | Future |
+| Phase 1 | **ACTIVATE** — Full Sync + Lead Score + Calibration | Complete |
+| Phase 2 | **ACTION** — auto_tasks.py + Action Ready + Health Check | Code Complete |
+| Phase 3 | **ENRICH** — Job Postings + Job Change + Intent Trend | Next |
+| Phase 4 | **OPTIMIZE** — Lead Score v2.0 + Odoo Integration | Future |
 
-Full details in `📚 DOCUMENTATION/EXECUTION_PLAN_v3.0.docx`
+Full details in `📚 DOCUMENTATION/EXECUTION_PLAN_v3.2.docx`
 
 ---
-**Version:** 3.0 | **Last Updated:** 27 March 2026 | **Owner:** Ragheed
+**Version:** 3.2 | **Last Updated:** 27 March 2026 | **Owner:** Ragheed

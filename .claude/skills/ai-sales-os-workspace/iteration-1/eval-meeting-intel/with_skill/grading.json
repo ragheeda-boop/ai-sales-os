@@ -1,0 +1,38 @@
+{
+  "eval_id": 3,
+  "eval_name": "meeting-intelligence-cfo-construction",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "Produces a meeting summary",
+      "passed": true,
+      "evidence": "Response provides comprehensive meeting summary in section '1. ملخص الاجتماع' documenting Ahmed's interest, hesitation, quote request, and approval requirement."
+    },
+    {
+      "text": "Identifies buying signals (requested quote)",
+      "passed": true,
+      "evidence": "Response explicitly identifies: 'طلب العرض الرسمي: طلب الحصول على عرض سعر محدد خلال أسبوع (7 أيام) — خطوة ملموسة نحو المشتريات'"
+    },
+    {
+      "text": "Identifies stakeholders (Ahmed + financial director)",
+      "passed": true,
+      "evidence": "Response clearly identifies two stakeholders in section '3. أصحاب المصلحة': Ahmed Al-Mansour (CFO) as primary evaluator, and 'صاحب السلطة النهائي' (unknown authority figure) as final decision maker."
+    },
+    {
+      "text": "Provides specific CRM field updates using Notion property names",
+      "passed": true,
+      "evidence": "Section '4. تحديثات CRM الواجب إجراؤها' lists specific Notion fields: 'Stage → Prospect', 'Qualification Status → In Progress', 'Reply Status → Positive', 'Contact Responded → True', 'Meeting Booked → True', 'Last Contacted → 2026-03-27'"
+    },
+    {
+      "text": "Creates at least one follow-up task with priority and due date",
+      "passed": true,
+      "evidence": "Section '5. المهام المطلوبة' creates 5 tasks including Task 1 'إعداد عرض السعر' with Priority: Critical and Due Date: 2026-03-31"
+    },
+    {
+      "text": "Drafts a follow-up email",
+      "passed": true,
+      "evidence": "Section '7. مسودة بريد المتابعة' provides complete follow-up email draft with subject, body addressing Ahmed by name, commitment to timeline, and call to action."
+    }
+  ],
+  "overall_pass_rate": 1.0
+}

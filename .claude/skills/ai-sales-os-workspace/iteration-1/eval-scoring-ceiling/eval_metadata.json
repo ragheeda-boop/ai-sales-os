@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "scoring-ceiling-effect-explanation",
+  "prompt": "ليش هذا الـ contact عنده score 100 بالرغم إنه ما رد على أي إيميل ولا حجز اجتماع؟ سينيوريتي C-Suite وشركة فيها 12000 موظف",
+  "assertions": [
+    {"text": "Explains the scoring formula weights (Size 45% + Seniority 35%)", "type": "content_check"},
+    {"text": "Shows the math: C-Suite(100)*0.35 + 12K employees(100)*0.45 = 80 minimum", "type": "content_check"},
+    {"text": "References the 56% ceiling effect at score 100", "type": "content_check"},
+    {"text": "Notes that Intent Score is empty (0) for all contacts", "type": "content_check"}
+  ]
+}

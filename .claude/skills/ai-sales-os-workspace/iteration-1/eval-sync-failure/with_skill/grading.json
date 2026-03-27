@@ -1,0 +1,28 @@
+{
+  "eval_id": 1,
+  "eval_name": "sync-failure-429-troubleshooting",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "References apollo_request() retry logic with exponential backoff",
+      "passed": true,
+      "evidence": "Response explicitly states: 'كود daily_sync.py لديه بالفعل 5x exponential backoff على أخطاء 429 و 500 في notion_helpers.py'"
+    },
+    {
+      "text": "Suggests waiting before retry or using backfill mode",
+      "passed": true,
+      "evidence": "Response recommends: 'انتظر 15-30 دقيقة قبل إعادة التشغيل' and provides concrete commands for backfill: 'python daily_sync.py --mode backfill --days 7'"
+    },
+    {
+      "text": "Mentions rate limiting as the cause of 429 errors",
+      "passed": true,
+      "evidence": "Response explains: 'رسالة الخطأ 429 Too Many Requests من Apollo تعني أنك تجاوزت حد معدل الطلبات (Rate Limit)'"
+    },
+    {
+      "text": "Provides a concrete command to re-run the sync",
+      "passed": true,
+      "evidence": "Multiple concrete commands provided: 'python daily_sync.py --mode incremental --hours 26' and 'python daily_sync.py --mode backfill --days 7' and 'python daily_sync.py --mode full'"
+    }
+  ],
+  "overall_pass_rate": 1.0
+}

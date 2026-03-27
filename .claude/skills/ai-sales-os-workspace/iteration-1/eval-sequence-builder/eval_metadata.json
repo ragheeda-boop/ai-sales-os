@@ -1,0 +1,12 @@
+{
+  "eval_id": 6,
+  "eval_name": "sequence-ceo-construction-saudi",
+  "prompt": "ابني لي sequence لـ CEO شركات البناء في السعودية، حجم 500-5000 موظف. أبغى 5 لمسات خلال أسبوعين.",
+  "assertions": [
+    {"text": "Creates exactly 5 touches over 2 weeks", "type": "content_check"},
+    {"text": "Uses executive/CEO-appropriate tone", "type": "content_check"},
+    {"text": "References Saudi/GCC business context", "type": "content_check"},
+    {"text": "Includes at least 2 different channels (email + LinkedIn or call)", "type": "content_check"},
+    {"text": "Each touch has specific copy (subject + body or message text)", "type": "content_check"}
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "ai-sales-os-presentation",
+  "version": "1.0.0",
+  "description": "AI Sales OS Presentation Generator",
+  "main": "generate_presentation.js",
+  "scripts": {
+    "generate": "node generate_presentation.js"
+  },
+  "dependencies": {
+    "pptxgenjs": "^3.12.0"
+  }
+}

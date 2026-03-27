@@ -46,3 +46,18 @@ desktop.ini
 # ─── Temp files ────────────────────────────────────────────
 test_write.txt
 *.tmp
+
+# ─── Skills & Generated Output ────────────────────────────
+packaged-skills/
+temp_docx_work/
+docx_unpack/
+node_modules/
+*.skill
+Skills_Eval_Review.html
+# ─── Skills & Generated Output ────────────────────────────
+packaged-skills/
+temp_docx_work/
+docx_unpack/
+node_modules/
+*.skill
+Skills_Eval_Review.html

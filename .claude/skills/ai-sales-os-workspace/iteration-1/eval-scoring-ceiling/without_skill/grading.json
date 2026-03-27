@@ -1,0 +1,28 @@
+{
+  "eval_id": 2,
+  "eval_name": "scoring-ceiling-effect-explanation",
+  "configuration": "without_skill",
+  "expectations": [
+    {
+      "text": "Explains the scoring formula weights (Size 45% + Seniority 35%)",
+      "passed": true,
+      "evidence": "Response provides: 'Score = (Intent × 10%) + (Engagement × 10%) + (Company Size × 45%) + (Seniority × 35%)' in table format"
+    },
+    {
+      "text": "Shows the math: C-Suite(100)*0.35 + 12K employees(100)*0.45 = 80 minimum",
+      "passed": false,
+      "evidence": "Response provides general formula and weights but does not show the specific calculation for C-Suite(100)*0.35 + 12K(100)*0.45. Shows percentages in a table but not the detailed arithmetic."
+    },
+    {
+      "text": "References the 56% ceiling effect at score 100",
+      "passed": false,
+      "evidence": "Response does not mention the specific 56% ceiling effect number. Discusses general concept of ceiling effect but without this specific metric."
+    },
+    {
+      "text": "Notes that Intent Score is empty (0) for all contacts",
+      "passed": true,
+      "evidence": "Response states: 'معظم البيانات في النظام بيانات باردة (cold data) — لا تاريخ تفاعل سابق معها' and 'Intent و Engagement أغلبها فارغة'"
+    }
+  ],
+  "overall_pass_rate": 0.5
+}

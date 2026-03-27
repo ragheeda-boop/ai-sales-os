@@ -1,0 +1,11 @@
+{
+  "eval_id": 5,
+  "eval_name": "data-integrity-dnc-conflict",
+  "prompt": "لاحظت إن فيه contacts بـ Outreach Status = Do Not Contact لكن عندهم Action Ready = True. كيف أصلح هذا؟",
+  "assertions": [
+    {"text": "Explains the difference between Outreach Status and DNC checkbox", "type": "content_check"},
+    {"text": "References OUTREACH_BLOCKED set from constants.py", "type": "content_check"},
+    {"text": "Recommends running action_ready_updater.py", "type": "content_check"},
+    {"text": "Notes that this is a known issue category", "type": "content_check"}
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "eval_id": 5,
+  "eval_name": "data-integrity-dnc-conflict",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "Explains the difference between Outreach Status and DNC checkbox",
+      "passed": true,
+      "evidence": "Response explicitly states: 'Liست نفس الشيء: Do Not Call: حقل checkbox منفصل vs Do Not Contact: قيمة في select field Outreach Status' and clarifies they check different conditions (2 vs 3)."
+    },
+    {
+      "text": "References OUTREACH_BLOCKED set from constants.py",
+      "passed": true,
+      "evidence": "Response quotes directly: 'من constants.py: OUTREACH_BLOCKED = {\"Do Not Contact\", \"Bounced\", \"Bad Data\"}' and references it in the context of the action_ready_updater.py function."
+    },
+    {
+      "text": "Recommends running action_ready_updater.py",
+      "passed": true,
+      "evidence": "Response provides command: 'python action_ready_updater.py --dry-run' for diagnosis and 'python action_ready_updater.py' for the actual fix, with explanation of expected results."
+    },
+    {
+      "text": "Notes that this is a known issue category",
+      "passed": true,
+      "evidence": "Response identifies this as one of multiple known data integrity issues and mentions: 'Skill حماية البيانات — لاكتشاف المشاكل' and lists this under 'الفحوصات المهمة (Important)' category."
+    }
+  ],
+  "overall_pass_rate": 1.0
+}

@@ -1,0 +1,91 @@
+═══════════════════════════════════════════════════════════════════════════
+✅ WHAT TO CHECK AFTER NEXT SYNC
+═══════════════════════════════════════════════════════════════════════════
+
+When the scheduler runs (every 5 minutes), use this checklist:
+
+═══════════════════════════════════════════════════════════════════════════
+📋 COMPANY RECORD CHECK
+═══════════════════════════════════════════════════════════════════════════
+
+Open any company record in Notion (e.g., Amazon):
+
+BEFORE FIX:
+  ❌ Company Name: Amazon
+  ❌ Domain: amazon.com
+  ❌ Industry: Empty
+  ❌ Employee Count: Empty
+  ❌ Annual Revenue: Empty
+  ❌ LinkedIn: Empty
+
+AFTER FIX (what you should see):
+  ✅ Company Name: Amazon
+  ✅ Domain: amazon.com
+  ✅ Industry: Technology  ← NOT Empty!
+  ✅ Employee Count: 1,500,000  ← NOT Empty!
+  ✅ Annual Revenue: $469,822,000,000  ← NOT Empty!
+  ✅ LinkedIn: https://linkedin.com/company/amazon  ← NOT Empty!
+
+═══════════════════════════════════════════════════════════════════════════
+👤 CONTACT RECORD CHECK
+═══════════════════════════════════════════════════════════════════════════
+
+Open any contact record in Notion (e.g., Mat Sayer):
+
+BEFORE FIX:
+  ❌ Name: Mat Sayer
+  ❌ Email: Empty
+  ❌ Title: Empty
+  ❌ Company: Empty
+  ❌ Phone: Empty
+  ❌ Location: Empty
+
+AFTER FIX (what you should see):
+  ✅ Name: Mat Sayer
+  ✅ Email: mat.sayer@company.com  ← NOT Empty!
+  ✅ Title: Sales Director  ← NOT Empty!
+  ✅ Company: Amazon (linked)  ← NOT Empty!
+  ✅ Phone: +1-206-555-0123  ← NOT Empty!
+  ✅ Location: Seattle, WA  ← NOT Empty!
+
+═══════════════════════════════════════════════════════════════════════════
+🔢 FIELD COUNT CHECK
+═══════════════════════════════════════════════════════════════════════════
+
+Count how many fields are populated:
+
+COMPANIES DATABASE:
+  Expected: ~30 fields populated (not just 3-5)
+
+CONTACTS DATABASE:
+  Expected: ~40 fields populated (not just 3-5)
+
+═══════════════════════════════════════════════════════════════════════════
+🚫 WHAT NOT TO SEE
+═══════════════════════════════════════════════════════════════════════════
+
+If you see these, there's still an issue:
+
+❌ HTTP 400 Bad Request errors in logs
+❌ "Empty" fields in multiple records
+❌ Duplicate records for same company/contact
+❌ Companies not linked to contacts
+
+═══════════════════════════════════════════════════════════════════════════
+✅ SUCCESS INDICATORS
+═══════════════════════════════════════════════════════════════════════════
+
+When you see these, the fix is working perfectly:
+
+✅ All company/contact fields have values (not "Empty")
+✅ Scheduler logs show "with all properties"
+✅ No HTTP 400 errors in logs
+✅ Record counts stable after first sync
+✅ Contact "Company" field shows linked company name
+✅ Same number of records after each sync cycle
+✅ Sync completes without errors
+
+═══════════════════════════════════════════════════════════════════════════
+Date: March 24, 2026
+Status: READY FOR PRODUCTION
+═══════════════════════════════════════════════════════════════════════════

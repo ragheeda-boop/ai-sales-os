@@ -1,0 +1,28 @@
+{
+  "eval_id": 5,
+  "eval_name": "data-integrity-dnc-conflict",
+  "configuration": "without_skill",
+  "expectations": [
+    {
+      "text": "Explains the difference between Outreach Status and DNC checkbox",
+      "passed": true,
+      "evidence": "Response explains: 'Do Not Contact = يجب عدم التواصل مع هذا الشخص' vs 'Action Ready = True = نعم، يجب إنشاء مهمة واستدعاء هذا الشخص' and notes these are contradictory."
+    },
+    {
+      "text": "References OUTREACH_BLOCKED set from constants.py",
+      "passed": false,
+      "evidence": "Response does not reference OUTREACH_BLOCKED or constants.py. Discusses the issue conceptually but without specific code references."
+    },
+    {
+      "text": "Recommends running action_ready_updater.py",
+      "passed": false,
+      "evidence": "Response suggests general fix options (Choices A and B for correcting either Action Ready or Outreach Status) but does not recommend running the specific action_ready_updater.py script."
+    },
+    {
+      "text": "Notes that this is a known issue category",
+      "passed": false,
+      "evidence": "Response treats this as a one-time data problem but does not reference it as a known issue category or mention data integrity checks/frameworks."
+    }
+  ],
+  "overall_pass_rate": 0.25
+}

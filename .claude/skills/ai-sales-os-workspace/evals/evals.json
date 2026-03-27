@@ -1,0 +1,41 @@
+{
+  "skill_name": "ai-sales-os-skills",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "الـ sync الأخير فشل وظهرت في اللوج رسالة 429 من Apollo. كيف أصلح المشكلة وأعيد التشغيل؟",
+      "expected_output": "Should invoke apollo-sync-operator, explain rate limiting, suggest wait + retry with backfill mode, reference the 5x exponential backoff in apollo_request()",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "ليش هذا الـ contact عنده score 100 بالرغم إنه ما رد على أي إيميل ولا حجز اجتماع؟ سينيوريتي C-Suite وشركة فيها 12000 موظف",
+      "expected_output": "Should invoke lead-scoring-analyst, explain ceiling effect: C-Suite(100)*0.35 + 10K+ employees(100)*0.45 + 0 intent + 0 engagement = 80 minimum, likely higher with any engagement. Reference the 56% at 100 stat.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "اليوم كان عندي اجتماع مع أحمد المنصور CFO في شركة البناء المتحدة. كان متردد بس مهتم بالموضوع. طلب عرض سعر خلال أسبوع وقال إن مديره المالي لازم يوافق.",
+      "expected_output": "Should invoke meeting-intelligence-summarizer, produce: summary, pain points, buying signals (requested quote), stakeholders (Ahmed + financial director), CRM updates (Stage→Engaged, Contact Responded→True, Last Contacted→today), follow-up task (send quote, High priority, due in 3 days), follow-up email draft",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "أبغى أعرف هل الـ HOT leads فعلاً أفضل من الـ WARM من ناحية الـ conversion. كم واحد رد وكم واحد حجز اجتماع من كل tier؟",
+      "expected_output": "Should invoke revenue-loop-tracker, query Notion for conversion metrics by tier, compare HOT vs WARM response rates and meeting rates, provide the baseline data (HOT: 24% meetings, 36% replies)",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "ابني لي sequence لـ CEO شركات البناء في السعودية، حجم 500-5000 موظف. أبغى 5 لمسات خلال أسبوعين.",
+      "expected_output": "Should invoke apollo-sequence-builder, create 5-touch sequence adapted for Saudi construction CEOs, use executive tone, include email subjects + bodies + LinkedIn messages, reference company size and industry context",
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "لاحظت إن فيه contacts بـ Outreach Status = Do Not Contact لكن عندهم Action Ready = True. كيف أصلح هذا؟",
+      "expected_output": "Should invoke data-integrity-guardian, explain the Outreach Status vs DNC checkbox distinction, check how many are affected, recommend running action_ready_updater.py which checks OUTREACH_BLOCKED set",
+      "files": []
+    }
+  ]
+}

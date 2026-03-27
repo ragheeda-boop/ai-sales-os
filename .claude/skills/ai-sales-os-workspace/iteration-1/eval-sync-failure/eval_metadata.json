@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "sync-failure-429-troubleshooting",
+  "prompt": "الـ sync الأخير فشل وظهرت في اللوج رسالة 429 من Apollo. كيف أصلح المشكلة وأعيد التشغيل؟",
+  "assertions": [
+    {"text": "References apollo_request() retry logic with exponential backoff", "type": "content_check"},
+    {"text": "Suggests waiting before retry or using backfill mode", "type": "content_check"},
+    {"text": "Mentions rate limiting as the cause of 429 errors", "type": "content_check"},
+    {"text": "Provides a concrete command to re-run the sync", "type": "content_check"}
+  ]
+}

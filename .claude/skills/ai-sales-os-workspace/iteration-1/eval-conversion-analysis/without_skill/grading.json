@@ -1,0 +1,23 @@
+{
+  "eval_id": 4,
+  "eval_name": "conversion-analysis-hot-vs-warm",
+  "configuration": "without_skill",
+  "expectations": [
+    {
+      "text": "References the baseline data: HOT 24% meetings, 36% replies",
+      "passed": false,
+      "evidence": "Response provides general conversion rate guidance ('HOT leads معدل الرد عادة 15-40%' and 'معدل تحويل من رد إلى اجتماع = 40-60%') but does not reference the specific 24% and 36% baseline numbers from the data."
+    },
+    {
+      "text": "Compares HOT vs WARM conversion metrics",
+      "passed": true,
+      "evidence": "Response provides comparison: 'WARM leads معدل الرد عادة 5-15%' vs 'HOT leads معدل الرد عادة 15-40%' and meeting conversion 10-25% vs 40-60%"
+    },
+    {
+      "text": "Suggests querying Notion or provides analysis methodology",
+      "passed": false,
+      "evidence": "Response provides general recommendations ('احفظ بيانات الرد والاجتماعات لكل tier لمدة شهر أو شهرين') but does not provide specific Notion query methodology or detailed analysis approach."
+    }
+  ],
+  "overall_pass_rate": 0.333
+}

@@ -1,0 +1,28 @@
+{
+  "eval_id": 2,
+  "eval_name": "scoring-ceiling-effect-explanation",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "Explains the scoring formula weights (Size 45% + Seniority 35%)",
+      "passed": true,
+      "evidence": "Response explicitly states: 'Score = Intent(10%) + Engagement(10%) + CompanySize(45%) + Seniority(35%)' from v1.1 formula"
+    },
+    {
+      "text": "Shows the math: C-Suite(100)*0.35 + 12K employees(100)*0.45 = 80 minimum",
+      "passed": true,
+      "evidence": "Response shows: 'Score = (0 × 10%) + (0 × 10%) + (100 × 45%) + (100 × 35%) = 0 + 0 + 45 + 35 = 80 نقطة' for exactly this scenario"
+    },
+    {
+      "text": "References the 56% ceiling effect at score 100",
+      "passed": true,
+      "evidence": "Response states: '56% من جميع HOT contacts عندهم Score = 100 بالضبط' and 'الـ ceiling effect (56% من HOT الـ contacts عندهم 100)'"
+    },
+    {
+      "text": "Notes that Intent Score is empty (0) for all contacts",
+      "passed": true,
+      "evidence": "Response explicitly notes: 'Intent Score فارغ على 100% من الـ contacts في قاعدة البيانات' and 'هذا محدودية في خطة Apollo وليس خطأ في البيانات'"
+    }
+  ],
+  "overall_pass_rate": 1.0
+}

@@ -1,0 +1,13 @@
+{
+  "eval_id": 3,
+  "eval_name": "meeting-intelligence-cfo-construction",
+  "prompt": "اليوم كان عندي اجتماع مع أحمد المنصور CFO في شركة البناء المتحدة. كان متردد بس مهتم بالموضوع. طلب عرض سعر خلال أسبوع وقال إن مديره المالي لازم يوافق.",
+  "assertions": [
+    {"text": "Produces a meeting summary", "type": "content_check"},
+    {"text": "Identifies buying signals (requested quote)", "type": "content_check"},
+    {"text": "Identifies stakeholders (Ahmed + financial director)", "type": "content_check"},
+    {"text": "Provides specific CRM field updates using Notion property names", "type": "content_check"},
+    {"text": "Creates at least one follow-up task with priority and due date", "type": "content_check"},
+    {"text": "Drafts a follow-up email", "type": "content_check"}
+  ]
+}

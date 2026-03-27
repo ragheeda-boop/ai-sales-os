@@ -1,0 +1,10 @@
+{
+  "eval_id": 4,
+  "eval_name": "conversion-analysis-hot-vs-warm",
+  "prompt": "أبغى أعرف هل الـ HOT leads فعلاً أفضل من الـ WARM من ناحية الـ conversion. كم واحد رد وكم واحد حجز اجتماع من كل tier؟",
+  "assertions": [
+    {"text": "References the baseline data: HOT 24% meetings, 36% replies", "type": "content_check"},
+    {"text": "Compares HOT vs WARM conversion metrics", "type": "content_check"},
+    {"text": "Suggests querying Notion or provides analysis methodology", "type": "content_check"}
+  ]
+}

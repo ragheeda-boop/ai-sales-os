@@ -2,9 +2,17 @@
 
 ## What This Does
 
-Runs the daily pipeline automatically at **7:00 AM KSA** every day:
-1. `daily_sync.py --mode incremental` — sync new/updated records from Apollo
-2. `lead_score.py` — recalculate Lead Scores
+Runs the daily pipeline automatically at **7:00 AM KSA** every day (10-step flow):
+1. Checkout repository
+2. Setup Python 3.11
+3. Install dependencies
+4. `daily_sync.py --mode incremental --hours 26` — sync new/updated records from Apollo
+5. `lead_score.py` — recalculate Lead Scores + write Lead Tier
+6. `action_ready_updater.py` — evaluate Action Ready checkbox (5 conditions)
+7. `auto_tasks.py` — create SLA-based tasks for Action Ready contacts
+8. `health_check.py` — validate pipeline results
+9. Upload logs as artifacts (30-day retention)
+10. Notify on failure
 
 ## Step 1: Create Repository
 
@@ -36,6 +44,7 @@ Go to **Settings > Secrets and variables > Actions** and add:
 | `NOTION_API_KEY` | Your Notion API key |
 | `NOTION_DATABASE_ID_CONTACTS` | Your Contacts database ID |
 | `NOTION_DATABASE_ID_COMPANIES` | Your Companies database ID |
+| `NOTION_DATABASE_ID_TASKS` | Your Tasks database ID |
 
 ## Step 4: Enable Actions
 
@@ -46,12 +55,14 @@ Go to **Settings > Secrets and variables > Actions** and add:
 
 1. Go to **Actions > Apollo > Notion Daily Pipeline**
 2. Click **Run workflow**
-3. Select mode:
+3. Select sync mode:
    - `incremental` — last 26 hours (default daily)
    - `backfill_week` — last 7 days with checkpoint
    - `backfill_month` — last 30 days with checkpoint
    - `full` — complete rebuild (slow, first-time only)
-4. Select whether to run Lead Score after sync
+4. Select toggles:
+   - `run_lead_score` — recalculate scores + Lead Tier
+   - `run_action_engine` — create tasks for Action Ready contacts
 5. Click **Run workflow**
 
 ## Daily Schedule
@@ -59,8 +70,12 @@ Go to **Settings > Secrets and variables > Actions** and add:
 After setup, the pipeline runs **automatically** every day:
 - 7:00 AM KSA (04:00 UTC)
 - Syncs new/updated contacts and companies
-- Recalculates Lead Scores
+- Recalculates Lead Scores + writes Lead Tier
+- Evaluates Action Ready for all scored contacts
+- Creates SLA-based tasks (HOT = 24h call, WARM = 48h follow-up)
+- Validates pipeline health
 - Uploads logs as downloadable artifacts
+- Notifies on failure
 
 ## Cost
 

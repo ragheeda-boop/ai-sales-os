@@ -7,17 +7,19 @@ This is a production-grade Sales Operating System, not a hobby project.
 
 **System:** Apollo.io → Python Engine → Notion CRM → GitHub Actions → Odoo (future)
 **Owner:** Ragheed
-**Version:** 3.1 | March 2026
+**Version:** 4.0 | March 2026
 
 ---
 
 ## System Architecture
 
 ```
-Apollo.io (Data)  ──►  Python Scripts (Sync + Score + Action)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily Cron)
-  44,875 contacts         daily_sync.py v2.1                       7 Databases            7:00 AM KSA
-  15,407 companies        lead_score.py + auto_tasks.py            HOT/WARM/COLD          Sync → Score → Action → Health
+Apollo.io (Data)  ──►  Python Scripts (15 scripts)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily + Weekly)
+  44,875 contacts         Sync + Enrich + Score +            7 Databases            7:00 AM KSA
+  15,407 companies        Action + Sequence + Learn           HOT/WARM/COLD          14-step pipeline + weekly calibration
 ```
+
+**Autonomous Sales Loop:** Score → Task → Auto-Sequence → Track Results → Calibrate → Better Score
 
 **Key design decision:** NO middleware. No n8n, no Make.com, no Zapier. Pure Python + GitHub Actions = full control, zero cost.
 
@@ -35,16 +37,22 @@ AI Sales OS/
 │   ├── auto_tasks.py            → Action Engine — SLA-based task creator
 │   ├── action_ready_updater.py  → Computes Action Ready checkbox (5 conditions)
 │   ├── health_check.py          → Pipeline health validator
+│   ├── job_postings_enricher.py → Intent proxy from Apollo Job Postings (NEW v4.0)
+│   ├── auto_sequence.py         → Auto-enroll contacts in Apollo Sequences (NEW v4.0)
+│   ├── analytics_tracker.py     → Apollo Analytics → Notion engagement sync (NEW v4.0)
+│   ├── score_calibrator.py      → Self-learning weight adjustment (NEW v4.0)
+│   ├── morning_brief.py         → Daily intelligence report generator (NEW v4.0)
 │   ├── webhook_server.py        → Apollo webhook receiver
 │   ├── verify_links.py          → Contact-company link verifier
 │   ├── .env                     → API credentials (NEVER commit)
 │   └── .env.example             → Credential template
+├── .claude/skills/              → 12 Claude Skills for AI Sales OS operations
 ├── 📊 DATA/                     → CSVs, mappings, snapshots, logs
-├── 📚 DOCUMENTATION/            → EXECUTION_PLAN_v3.0.docx + phase docs
-├── .github/workflows/           → daily_sync.yml (CI/CD — 10-step pipeline)
+├── 📚 DOCUMENTATION/            → EXECUTION_PLAN_v3.2.docx + phase docs
+├── .github/workflows/           → daily_sync.yml (CI/CD — 14-step pipeline + weekly calibration)
 ├── 🚀 START HERE/               → Entry docs (QUICK_START, SYSTEM_OVERVIEW)
 ├── 🗂️ ARCHIVED/                 → Superseded files
-└── AI_Sales_OS_MindMap.html     → Interactive mind map v4.0
+└── AI_Sales_OS_MindMap.html     → Interactive mind map v6.0 (Arabic)
 ```
 
 ---
@@ -60,9 +68,13 @@ AI Sales OS/
 | `auto_tasks.py` | Action Engine — creates SLA-based tasks for Action Ready contacts | **ACTIVE** |
 | `action_ready_updater.py` | Evaluates 5 conditions to set Action Ready checkbox | **ACTIVE** |
 | `health_check.py` | Post-pipeline health validator (checks stats files for anomalies) | **ACTIVE** |
+| `job_postings_enricher.py` | Intent proxy — uses Apollo Job Postings API for intent scoring | **ACTIVE (v4.0)** |
+| `auto_sequence.py` | Auto-enrolls Action Ready contacts into Apollo Sequences | **ACTIVE (v4.0)** |
+| `analytics_tracker.py` | Pulls Apollo Analytics, syncs engagement data back to Notion | **ACTIVE (v4.0)** |
+| `score_calibrator.py` | Self-learning weight adjustment based on actual outcomes | **ACTIVE (v4.0)** |
+| `morning_brief.py` | Daily intelligence report (urgent calls, tasks, replies, stats) | **ACTIVE (v4.0)** |
 | `webhook_server.py` | Apollo webhook receiver | **ACTIVE** |
 | `verify_links.py` | Contact-company link verifier | **ACTIVE** |
-| `job_postings_sync.py` | Job posting signals from Apollo | **PLANNED (Phase 3)** |
 
 Superseded scripts (still in CODE folder but replaced by daily_sync.py):
 - `sync_companies.py`, `sync_contacts.py`, `apollo_sync_scheduler.py`, `initial_load_from_csv.py`
@@ -211,6 +223,129 @@ python health_check.py --strict     # exit 1 on any warning (not just critical)
 
 ---
 
+## job_postings_enricher.py — Intent Proxy (v4.0)
+
+Uses Apollo's Job Postings API as a proxy for Intent Score. Companies that are actively hiring in relevant roles = higher buying intent.
+
+### Scoring Components (0-100)
+- **Job Volume (0-40):** Number of open positions
+- **Recency (0-20):** How recently jobs were posted
+- **Relevance (0-25):** Keywords matching our solution areas (insurance, risk, compliance, finance, etc.)
+- **Growth Signals (0-15):** Hiring across multiple departments
+
+Writes `Job Postings Intent` to Companies DB, then propagates to linked Contacts' `Primary Intent Score`. Uses 7-day cache to avoid redundant API calls.
+
+### Commands
+
+```bash
+python job_postings_enricher.py                    # enrich all HOT/WARM companies
+python job_postings_enricher.py --dry-run          # preview without writing
+python job_postings_enricher.py --limit 20         # limit to first N companies
+python job_postings_enricher.py --tier HOT         # only HOT companies
+python job_postings_enricher.py --no-cache         # ignore 7-day cache
+```
+
+---
+
+## auto_sequence.py — Auto Sequence Enrollment (v4.0)
+
+Automatically enrolls Action Ready contacts into Apollo Sequences based on Lead Tier + Role category. Round-robins between senders.
+
+### Sequence Mapping
+
+Maps (Tier, Role) → specific Apollo sequence. Role detection uses seniority + title keywords to classify contacts as: CEO, CFO, Sales, Legal, or General.
+
+### Sender Round-Robin
+
+Alternates between `ragheed` and `ibrahim` email accounts (2 accounts each: joinmuhide.com + ratlfintech.com/muhide.com).
+
+### Safety
+
+- Skips contacts already "In Sequence"
+- Skips DNC and blocked outreach statuses
+- Updates Notion `Outreach Status → "In Sequence"` after enrollment
+- Default limit of 50 per run in pipeline
+
+### Commands
+
+```bash
+python auto_sequence.py                     # enroll all eligible contacts
+python auto_sequence.py --dry-run           # preview without enrolling
+python auto_sequence.py --limit 10          # limit to first N
+python auto_sequence.py --tier HOT          # only HOT contacts
+python auto_sequence.py --sender ragheed    # force specific sender
+```
+
+---
+
+## analytics_tracker.py — Analytics & Engagement Sync (v4.0)
+
+Pulls Apollo Analytics data and syncs engagement signals back to Notion contacts. Closes the feedback loop by bringing real engagement data into the CRM.
+
+### What It Does
+
+1. **Engagement Sync:** Checks contacts in active outreach (In Sequence, Sent, Opened) and updates Notion booleans (Replied, Email Opened, Email Sent) from Apollo data
+2. **Analytics Report:** Generates performance reports broken down by seniority, company size, and weekly trends
+
+### Commands
+
+```bash
+python analytics_tracker.py                    # full sync + report
+python analytics_tracker.py --dry-run          # preview without writing
+python analytics_tracker.py --days 7           # last N days
+python analytics_tracker.py --export           # save report to file
+python analytics_tracker.py --skip-sync        # report only, no Notion writes
+```
+
+---
+
+## score_calibrator.py — Self-Learning Weights (v4.0)
+
+Analyzes actual engagement outcomes and recommends weight adjustments for lead_score.py. The feedback loop: Score → Action → Outcome → Calibrate → Better Score.
+
+### Safety Rails
+
+- `MAX_WEIGHT_CHANGE = 0.10` per cycle (no sudden jumps)
+- `MIN_WEIGHT = 0.05` (no component goes to zero)
+- `MIN_EMAILS_FOR_CALIBRATION = 100` (need enough data)
+- Saves full history in `calibration_history.json`
+- Never auto-applies unless `--apply` flag is explicitly used
+
+### Commands
+
+```bash
+python score_calibrator.py                  # analyze + recommend (no changes)
+python score_calibrator.py --apply          # apply recommended weights
+python score_calibrator.py --days 90        # analyze last 90 days
+python score_calibrator.py --export         # save analysis to file
+```
+
+**IMPORTANT:** Weekly pipeline runs calibrator in review-only mode (no --apply). Manual review required before applying.
+
+---
+
+## morning_brief.py — Daily Intelligence Report (v4.0)
+
+Generates a daily morning brief with everything a sales rep needs to know.
+
+### Sections
+
+1. **Urgent Calls:** HOT leads not yet contacted
+2. **Today's Tasks:** Due today + overdue
+3. **Recent Replies:** Contacts that responded
+4. **Pipeline Summary:** HOT/WARM/COLD counts
+5. **Email Performance:** Last 7 days from Apollo Analytics
+
+### Commands
+
+```bash
+python morning_brief.py                 # generate today's brief (stdout)
+python morning_brief.py --output file   # save to markdown file
+python morning_brief.py --days 1        # look back N days for activity
+```
+
+---
+
 ## constants.py — Unified Constants
 
 Single source of truth for all field names, score thresholds, SLA hours, and seniority normalization. Changing a field name here changes it across all scripts that import from constants.
@@ -265,17 +400,23 @@ Opportunities, Meetings, Activities, Email Hub — used for execution workflow.
 **File:** `.github/workflows/daily_sync.yml`
 **Schedule:** Daily at 7:00 AM KSA (04:00 UTC)
 
-Pipeline steps (10 total):
+Pipeline steps (14 total + weekly calibration):
 1. Checkout repository
 2. Setup Python 3.11 with pip cache
 3. Install dependencies
 4. `daily_sync.py --mode incremental --hours 26` (sync)
-5. `lead_score.py` (recalculate scores + write Lead Tier)
-6. `action_ready_updater.py` (evaluate Action Ready for scored contacts)
-7. `auto_tasks.py` (create tasks for Action Ready contacts, continue-on-error)
-8. `health_check.py` (validate pipeline run)
-9. Upload logs as artifacts (30-day retention)
-10. Notify on failure (tail last 30 lines of each log)
+5. `job_postings_enricher.py --limit 50` (intent proxy, continue-on-error)
+6. `lead_score.py` (recalculate scores + write Lead Tier)
+7. `action_ready_updater.py` (evaluate Action Ready for scored contacts)
+8. `auto_tasks.py` (create tasks for Action Ready contacts, continue-on-error)
+9. `auto_sequence.py --limit 50` (enroll contacts in sequences, continue-on-error)
+10. `analytics_tracker.py --days 7` (sync engagement data, continue-on-error)
+11. `health_check.py` (validate pipeline run)
+12. `morning_brief.py --output file` (generate daily report, continue-on-error)
+13. Upload logs as artifacts (30-day retention)
+14. Notify on failure (tail last 30 lines of each log)
+
+**Weekly Job (Sundays):** `score_calibrator.py --days 30 --export` (review-only, no auto-apply)
 
 **Required Secrets:** `APOLLO_API_KEY`, `NOTION_API_KEY`, `NOTION_DATABASE_ID_CONTACTS`, `NOTION_DATABASE_ID_COMPANIES`, `NOTION_DATABASE_ID_TASKS`
 
@@ -287,7 +428,7 @@ Pipeline steps (10 total):
 
 ## Execution Plan (4 Phases)
 
-### Phase 1: ACTIVATE — COMPLETE
+### Phase 1: ACTIVATE — COMPLETE ✓
 - [x] Full Sync running (all 60K+ records)
 - [x] Lead Score engine built (v1.1 weights)
 - [x] Lead Tier writing (HOT/WARM/COLD alongside score)
@@ -304,6 +445,7 @@ Pipeline steps (10 total):
 - [x] Built `action_ready_updater.py` — 5-condition gating (score, DNC, outreach, stage, contact method)
 - [x] Built `health_check.py` — post-pipeline health validator
 - [x] Updated `daily_sync.yml` — 10-step pipeline with Action Engine + Health Check
+- [x] Built 12 Claude Skills for AI Sales OS operations (evaluated at 100% pass rate)
 - [ ] First run: `action_ready_updater.py` then `auto_tasks.py --dry-run` to validate
 - [ ] Create Notion task views for sales workflow
 - **Gate:** Tasks must generate correctly before Phase 3
@@ -364,6 +506,29 @@ Pipeline steps (10 total):
 
 ---
 
+## Claude Skills (12 Production Skills)
+
+AI Sales OS has 12 specialized Claude Skills in `.claude/skills/`. These are production-grade, evaluated at **100% pass rate** (vs 61.1% without skills).
+
+| Skill | Purpose |
+|-------|---------|
+| `shared-sales-os-rules` | Foundation rules — system architecture, data constraints, scoring formula, primary key rules |
+| `apollo-sync-operator` | Operate, troubleshoot, and improve the Apollo-to-Notion sync pipeline |
+| `notion-schema-manager` | Manage Notion database schema, properties, relations, and views |
+| `lead-scoring-analyst` | Analyze, calibrate, and improve lead scoring and classification |
+| `data-integrity-guardian` | Detect and fix data quality issues (duplicates, missing fields, conflicts) |
+| `action-engine-builder` | Build and operate the Action Engine (auto_tasks.py) and Action Ready logic |
+| `pipeline-health-monitor` | Monitor daily pipeline health, detect failures, alert on anomalies |
+| `meeting-intelligence-summarizer` | Turn meetings into structured CRM updates and follow-up tasks |
+| `revenue-loop-tracker` | Track conversion rates, score-to-revenue correlation, feedback loops |
+| `apollo-icp-strategist` | Define ICP, segment markets, prioritize accounts |
+| `apollo-sequence-builder` | Create outbound sales sequences, email copy, LinkedIn messages |
+| `exec-brief-writer` | Write executive summaries, status updates, business cases |
+
+**Eval Benchmark:** `Skills_Eval_Review.html` — interactive viewer with side-by-side comparisons
+
+---
+
 ## Execution Behavior
 
 - Execute sequentially. No jumping between phases.
@@ -398,7 +563,7 @@ Required env vars: `APOLLO_API_KEY`, `NOTION_API_KEY`, `NOTION_DATABASE_ID_CONTA
 | Action Ready evaluator | `💻 CODE/Phase 3 - Sync/action_ready_updater.py` |
 | Health check | `💻 CODE/Phase 3 - Sync/health_check.py` |
 | Notion utilities | `💻 CODE/Phase 3 - Sync/notion_helpers.py` |
-| Execution plan | `📚 DOCUMENTATION/EXECUTION_PLAN_v3.0.docx` |
+| Execution plan | `📚 DOCUMENTATION/EXECUTION_PLAN_v3.2.docx` |
 | Field mapping | `📚 DOCUMENTATION/System Architecture/FIELD_MAPPING_RULES.md` |
 | GitHub Actions | `.github/workflows/daily_sync.yml` |
 | Mind map | `AI_Sales_OS_MindMap.html` |

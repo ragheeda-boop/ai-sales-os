@@ -1,0 +1,444 @@
+{
+  "metadata": {
+    "skill_name": "ai-sales-os-skills",
+    "skill_path": "/sessions/adoring-great-cori/mnt/AI Sales OS/.claude/skills/",
+    "executor_model": "claude-opus-4-6",
+    "analyzer_model": "claude-opus-4-6",
+    "timestamp": "2026-03-27T20:35:00Z",
+    "evals_run": [
+      "sync-failure-429-troubleshooting",
+      "scoring-ceiling-effect-explanation",
+      "meeting-intelligence-cfo-construction",
+      "conversion-analysis-hot-vs-warm",
+      "data-integrity-dnc-conflict",
+      "sequence-ceo-construction-saudi"
+    ],
+    "runs_per_configuration": 1
+  },
+  "configurations": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0
+      },
+      "time_seconds": {
+        "mean": 92.2,
+        "stddev": 23.1
+      },
+      "tokens": {
+        "mean": 104830,
+        "stddev": 3074
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.611,
+        "stddev": 0.297
+      },
+      "time_seconds": {
+        "mean": 29.6,
+        "stddev": 5.4
+      },
+      "tokens": {
+        "mean": 95861,
+        "stddev": 472
+      }
+    }
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "sync-failure-429-troubleshooting",
+      "configuration": "with_skill",
+      "pass_rate": 1.0,
+      "expectations": [
+        {
+          "text": "References apollo_request() retry logic with exponential backoff",
+          "passed": true,
+          "evidence": "Response explicitly states: '\u0643\u0648\u062f daily_sync.py \u0644\u062f\u064a\u0647 \u0628\u0627\u0644\u0641\u0639\u0644 5x exponential backoff \u0639\u0644\u0649 \u0623\u062e\u0637\u0627\u0621 429 \u0648 500 \u0641\u064a notion_helpers.py'"
+        },
+        {
+          "text": "Suggests waiting before retry or using backfill mode",
+          "passed": true,
+          "evidence": "Response recommends: '\u0627\u0646\u062a\u0638\u0631 15-30 \u062f\u0642\u064a\u0642\u0629 \u0642\u0628\u0644 \u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u062a\u0634\u063a\u064a\u0644' and provides concrete commands for backfill: 'python daily_sync.py --mode backfill --days 7'"
+        },
+        {
+          "text": "Mentions rate limiting as the cause of 429 errors",
+          "passed": true,
+          "evidence": "Response explains: '\u0631\u0633\u0627\u0644\u0629 \u0627\u0644\u062e\u0637\u0623 429 Too Many Requests \u0645\u0646 Apollo \u062a\u0639\u0646\u064a \u0623\u0646\u0643 \u062a\u062c\u0627\u0648\u0632\u062a \u062d\u062f \u0645\u0639\u062f\u0644 \u0627\u0644\u0637\u0644\u0628\u0627\u062a (Rate Limit)'"
+        },
+        {
+          "text": "Provides a concrete command to re-run the sync",
+          "passed": true,
+          "evidence": "Multiple concrete commands provided: 'python daily_sync.py --mode incremental --hours 26' and 'python daily_sync.py --mode backfill --days 7' and 'python daily_sync.py --mode full'"
+        }
+      ],
+      "time_seconds": 61.6,
+      "total_tokens": 101533
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "sync-failure-429-troubleshooting",
+      "configuration": "without_skill",
+      "pass_rate": 0.75,
+      "expectations": [
+        {
+          "text": "References apollo_request() retry logic with exponential backoff",
+          "passed": false,
+          "evidence": "Response mentions general retry logic concepts but does not reference the specific 'apollo_request()' function or specific '5x exponential backoff' implementation. States '\u0645\u0639\u0638\u0645 \u0623\u062f\u0648\u0627\u062a Sync \u0627\u0644\u062d\u062f\u064a\u062b\u0629 \u062a\u062a\u0636\u0645\u0646 Exponential Backoff' but without technical specificity."
+        },
+        {
+          "text": "Suggests waiting before retry or using backfill mode",
+          "passed": true,
+          "evidence": "Response recommends: '\u0627\u0646\u062a\u0638\u0631 2-5 \u062f\u0642\u0627\u0626\u0642 \u0639\u0644\u0649 \u0627\u0644\u0623\u0642\u0644 \u0642\u0628\u0644 \u0625\u0639\u0627\u062f\u0629 \u062a\u0634\u063a\u064a\u0644 \u0627\u0644\u0640 Sync' and mentions backfill: 'python daily_sync.py --mode backfill --days 7'"
+        },
+        {
+          "text": "Mentions rate limiting as the cause of 429 errors",
+          "passed": true,
+          "evidence": "Response explains: '\u0627\u0644\u062e\u0637\u0623 429 \u0645\u0646 Apollo \u064a\u0639\u0646\u064a \u0623\u0646\u0643 \u062a\u062c\u0627\u0648\u0632\u062a \u062d\u062f \u0645\u0639\u062f\u0644 \u0627\u0644\u0637\u0644\u0628\u0627\u062a (Rate Limiting)'"
+        },
+        {
+          "text": "Provides a concrete command to re-run the sync",
+          "passed": true,
+          "evidence": "Provides command: 'python daily_sync.py --mode incremental --hours 24' and discusses incremental vs full modes"
+        }
+      ],
+      "time_seconds": 34.9,
+      "total_tokens": 96150
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "scoring-ceiling-effect-explanation",
+      "configuration": "with_skill",
+      "pass_rate": 1.0,
+      "expectations": [
+        {
+          "text": "Explains the scoring formula weights (Size 45% + Seniority 35%)",
+          "passed": true,
+          "evidence": "Response explicitly states: 'Score = Intent(10%) + Engagement(10%) + CompanySize(45%) + Seniority(35%)' from v1.1 formula"
+        },
+        {
+          "text": "Shows the math: C-Suite(100)*0.35 + 12K employees(100)*0.45 = 80 minimum",
+          "passed": true,
+          "evidence": "Response shows: 'Score = (0 \u00d7 10%) + (0 \u00d7 10%) + (100 \u00d7 45%) + (100 \u00d7 35%) = 0 + 0 + 45 + 35 = 80 \u0646\u0642\u0637\u0629' for exactly this scenario"
+        },
+        {
+          "text": "References the 56% ceiling effect at score 100",
+          "passed": true,
+          "evidence": "Response states: '56% \u0645\u0646 \u062c\u0645\u064a\u0639 HOT contacts \u0639\u0646\u062f\u0647\u0645 Score = 100 \u0628\u0627\u0644\u0636\u0628\u0637' and '\u0627\u0644\u0640 ceiling effect (56% \u0645\u0646 HOT \u0627\u0644\u0640 contacts \u0639\u0646\u062f\u0647\u0645 100)'"
+        },
+        {
+          "text": "Notes that Intent Score is empty (0) for all contacts",
+          "passed": true,
+          "evidence": "Response explicitly notes: 'Intent Score \u0641\u0627\u0631\u063a \u0639\u0644\u0649 100% \u0645\u0646 \u0627\u0644\u0640 contacts \u0641\u064a \u0642\u0627\u0639\u062f\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a' and '\u0647\u0630\u0627 \u0645\u062d\u062f\u0648\u062f\u064a\u0629 \u0641\u064a \u062e\u0637\u0629 Apollo \u0648\u0644\u064a\u0633 \u062e\u0637\u0623 \u0641\u064a \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a'"
+        }
+      ],
+      "time_seconds": 68.1,
+      "total_tokens": 101960
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "scoring-ceiling-effect-explanation",
+      "configuration": "without_skill",
+      "pass_rate": 0.5,
+      "expectations": [
+        {
+          "text": "Explains the scoring formula weights (Size 45% + Seniority 35%)",
+          "passed": true,
+          "evidence": "Response provides: 'Score = (Intent \u00d7 10%) + (Engagement \u00d7 10%) + (Company Size \u00d7 45%) + (Seniority \u00d7 35%)' in table format"
+        },
+        {
+          "text": "Shows the math: C-Suite(100)*0.35 + 12K employees(100)*0.45 = 80 minimum",
+          "passed": false,
+          "evidence": "Response provides general formula and weights but does not show the specific calculation for C-Suite(100)*0.35 + 12K(100)*0.45. Shows percentages in a table but not the detailed arithmetic."
+        },
+        {
+          "text": "References the 56% ceiling effect at score 100",
+          "passed": false,
+          "evidence": "Response does not mention the specific 56% ceiling effect number. Discusses general concept of ceiling effect but without this specific metric."
+        },
+        {
+          "text": "Notes that Intent Score is empty (0) for all contacts",
+          "passed": true,
+          "evidence": "Response states: '\u0645\u0639\u0638\u0645 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0641\u064a \u0627\u0644\u0646\u0638\u0627\u0645 \u0628\u064a\u0627\u0646\u0627\u062a \u0628\u0627\u0631\u062f\u0629 (cold data) \u2014 \u0644\u0627 \u062a\u0627\u0631\u064a\u062e \u062a\u0641\u0627\u0639\u0644 \u0633\u0627\u0628\u0642 \u0645\u0639\u0647\u0627' and 'Intent \u0648 Engagement \u0623\u063a\u0644\u0628\u0647\u0627 \u0641\u0627\u0631\u063a\u0629'"
+        }
+      ],
+      "time_seconds": 35.6,
+      "total_tokens": 96163
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "meeting-intelligence-cfo-construction",
+      "configuration": "with_skill",
+      "pass_rate": 1.0,
+      "expectations": [
+        {
+          "text": "Produces a meeting summary",
+          "passed": true,
+          "evidence": "Response provides comprehensive meeting summary in section '1. \u0645\u0644\u062e\u0635 \u0627\u0644\u0627\u062c\u062a\u0645\u0627\u0639' documenting Ahmed's interest, hesitation, quote request, and approval requirement."
+        },
+        {
+          "text": "Identifies buying signals (requested quote)",
+          "passed": true,
+          "evidence": "Response explicitly identifies: '\u0637\u0644\u0628 \u0627\u0644\u0639\u0631\u0636 \u0627\u0644\u0631\u0633\u0645\u064a: \u0637\u0644\u0628 \u0627\u0644\u062d\u0635\u0648\u0644 \u0639\u0644\u0649 \u0639\u0631\u0636 \u0633\u0639\u0631 \u0645\u062d\u062f\u062f \u062e\u0644\u0627\u0644 \u0623\u0633\u0628\u0648\u0639 (7 \u0623\u064a\u0627\u0645) \u2014 \u062e\u0637\u0648\u0629 \u0645\u0644\u0645\u0648\u0633\u0629 \u0646\u062d\u0648 \u0627\u0644\u0645\u0634\u062a\u0631\u064a\u0627\u062a'"
+        },
+        {
+          "text": "Identifies stakeholders (Ahmed + financial director)",
+          "passed": true,
+          "evidence": "Response clearly identifies two stakeholders in section '3. \u0623\u0635\u062d\u0627\u0628 \u0627\u0644\u0645\u0635\u0644\u062d\u0629': Ahmed Al-Mansour (CFO) as primary evaluator, and '\u0635\u0627\u062d\u0628 \u0627\u0644\u0633\u0644\u0637\u0629 \u0627\u0644\u0646\u0647\u0627\u0626\u064a' (unknown authority figure) as final decision maker."
+        },
+        {
+          "text": "Provides specific CRM field updates using Notion property names",
+          "passed": true,
+          "evidence": "Section '4. \u062a\u062d\u062f\u064a\u062b\u0627\u062a CRM \u0627\u0644\u0648\u0627\u062c\u0628 \u0625\u062c\u0631\u0627\u0624\u0647\u0627' lists specific Notion fields: 'Stage \u2192 Prospect', 'Qualification Status \u2192 In Progress', 'Reply Status \u2192 Positive', 'Contact Responded \u2192 True', 'Meeting Booked \u2192 True', 'Last Contacted \u2192 2026-03-27'"
+        },
+        {
+          "text": "Creates at least one follow-up task with priority and due date",
+          "passed": true,
+          "evidence": "Section '5. \u0627\u0644\u0645\u0647\u0627\u0645 \u0627\u0644\u0645\u0637\u0644\u0648\u0628\u0629' creates 5 tasks including Task 1 '\u0625\u0639\u062f\u0627\u062f \u0639\u0631\u0636 \u0627\u0644\u0633\u0639\u0631' with Priority: Critical and Due Date: 2026-03-31"
+        },
+        {
+          "text": "Drafts a follow-up email",
+          "passed": true,
+          "evidence": "Section '7. \u0645\u0633\u0648\u062f\u0629 \u0628\u0631\u064a\u062f \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629' provides complete follow-up email draft with subject, body addressing Ahmed by name, commitment to timeline, and call to action."
+        }
+      ],
+      "time_seconds": 99.3,
+      "total_tokens": 105090
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "meeting-intelligence-cfo-construction",
+      "configuration": "without_skill",
+      "pass_rate": 0.833,
+      "expectations": [
+        {
+          "text": "Produces a meeting summary",
+          "passed": true,
+          "evidence": "Response provides '\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0627\u062c\u062a\u0645\u0627\u0639' section documenting the meeting details and '\u062a\u062d\u0644\u064a\u0644 \u0627\u0644\u0627\u062c\u062a\u0645\u0627\u0639' with positive and negative points."
+        },
+        {
+          "text": "Identifies buying signals (requested quote)",
+          "passed": true,
+          "evidence": "Response identifies: '\u0637\u0644\u0628 \u0639\u0631\u0636 \u0633\u0639\u0631 \u0645\u062d\u062f\u062f (\u062f\u0644\u064a\u0644 \u0639\u0644\u0649 \u0627\u0647\u062a\u0645\u0627\u0645 \u062c\u0627\u062f)' and '\u062d\u062f\u062f \u0625\u0637\u0627\u0631 \u0632\u0645\u0646\u064a \u0648\u0627\u0636\u062d (\u0623\u0633\u0628\u0648\u0639 \u0648\u0627\u062d\u062f)'"
+        },
+        {
+          "text": "Identifies stakeholders (Ahmed + financial director)",
+          "passed": true,
+          "evidence": "Response mentions: 'CFO \u0645\u0647\u062a\u0645 \u0628\u0627\u0644\u0645\u0648\u0636\u0648\u0639' (Ahmed) and '\u064a\u0648\u062c\u062f \u0637\u0628\u0642\u0629 \u0645\u0648\u0627\u0641\u0642\u0629 \u0625\u0636\u0627\u0641\u064a\u0629 (\u0627\u0644\u0645\u062f\u064a\u0631 \u0627\u0644\u0645\u0627\u0644\u064a)'"
+        },
+        {
+          "text": "Provides specific CRM field updates using Notion property names",
+          "passed": false,
+          "evidence": "Response does not provide specific Notion property field names or CRM updates. Discusses general next steps but without technical CRM field specifications."
+        },
+        {
+          "text": "Creates at least one follow-up task with priority and due date",
+          "passed": true,
+          "evidence": "Response provides task suggestions in numbered steps with timeframes: '1. \u0625\u0639\u062f\u0627\u062f \u0627\u0644\u0639\u0631\u0636 \u0627\u0644\u0633\u0639\u0631\u064a (\u062e\u0644\u0627\u0644 3-4 \u0623\u064a\u0627\u0645)' with implied due dates throughout the steps."
+        },
+        {
+          "text": "Drafts a follow-up email",
+          "passed": true,
+          "evidence": "Response includes '\u0631\u0633\u0627\u0644\u0629 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629 \u0627\u0644\u0645\u0648\u0635\u0649 \u0628\u0647\u0627 (\u0646\u0645\u0648\u0630\u062c)' with complete email template."
+        }
+      ],
+      "time_seconds": 29.4,
+      "total_tokens": 95979
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "conversion-analysis-hot-vs-warm",
+      "configuration": "with_skill",
+      "pass_rate": 1.0,
+      "expectations": [
+        {
+          "text": "References the baseline data: HOT 24% meetings, 36% replies",
+          "passed": true,
+          "evidence": "Response explicitly states: '\u0645\u0646 \u0627\u0644\u0640 baseline data (\u0623\u0648\u0644 100 HOT lead): HOT: 24% meeting booked | 36% replied' and in the table: 'Meeting Booked: 24 | 24%' and 'Contact Responded: 36 | 36%'"
+        },
+        {
+          "text": "Compares HOT vs WARM conversion metrics",
+          "passed": true,
+          "evidence": "Response provides comparison table with HOT baseline (24% meetings, 36% replies) and WARM forecasts: 'Meeting Booked: 8-12% (compared to 24% for HOT)' and 'Replied: 15-20% (compared to 36% for HOT)'"
+        },
+        {
+          "text": "Suggests querying Notion or provides analysis methodology",
+          "passed": true,
+          "evidence": "Section '2. \u0645\u0646\u0647\u062c\u064a\u0629 \u0627\u0644\u062a\u062d\u0644\u064a\u0644' provides detailed Python query methodology for Notion data with specific code for analyzing each tier by conversion rates and score ranges."
+        }
+      ],
+      "time_seconds": 109.9,
+      "total_tokens": 105771
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "conversion-analysis-hot-vs-warm",
+      "configuration": "without_skill",
+      "pass_rate": 0.333,
+      "expectations": [
+        {
+          "text": "References the baseline data: HOT 24% meetings, 36% replies",
+          "passed": false,
+          "evidence": "Response provides general conversion rate guidance ('HOT leads \u0645\u0639\u062f\u0644 \u0627\u0644\u0631\u062f \u0639\u0627\u062f\u0629 15-40%' and '\u0645\u0639\u062f\u0644 \u062a\u062d\u0648\u064a\u0644 \u0645\u0646 \u0631\u062f \u0625\u0644\u0649 \u0627\u062c\u062a\u0645\u0627\u0639 = 40-60%') but does not reference the specific 24% and 36% baseline numbers from the data."
+        },
+        {
+          "text": "Compares HOT vs WARM conversion metrics",
+          "passed": true,
+          "evidence": "Response provides comparison: 'WARM leads \u0645\u0639\u062f\u0644 \u0627\u0644\u0631\u062f \u0639\u0627\u062f\u0629 5-15%' vs 'HOT leads \u0645\u0639\u062f\u0644 \u0627\u0644\u0631\u062f \u0639\u0627\u062f\u0629 15-40%' and meeting conversion 10-25% vs 40-60%"
+        },
+        {
+          "text": "Suggests querying Notion or provides analysis methodology",
+          "passed": false,
+          "evidence": "Response provides general recommendations ('\u0627\u062d\u0641\u0638 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0631\u062f \u0648\u0627\u0644\u0627\u062c\u062a\u0645\u0627\u0639\u0627\u062a \u0644\u0643\u0644 tier \u0644\u0645\u062f\u0629 \u0634\u0647\u0631 \u0623\u0648 \u0634\u0647\u0631\u064a\u0646') but does not provide specific Notion query methodology or detailed analysis approach."
+        }
+      ],
+      "time_seconds": 22.2,
+      "total_tokens": 95085
+    },
+    {
+      "eval_id": 5,
+      "eval_name": "data-integrity-dnc-conflict",
+      "configuration": "with_skill",
+      "pass_rate": 1.0,
+      "expectations": [
+        {
+          "text": "Explains the difference between Outreach Status and DNC checkbox",
+          "passed": true,
+          "evidence": "Response explicitly states: 'Li\u0633\u062a \u0646\u0641\u0633 \u0627\u0644\u0634\u064a\u0621: Do Not Call: \u062d\u0642\u0644 checkbox \u0645\u0646\u0641\u0635\u0644 vs Do Not Contact: \u0642\u064a\u0645\u0629 \u0641\u064a select field Outreach Status' and clarifies they check different conditions (2 vs 3)."
+        },
+        {
+          "text": "References OUTREACH_BLOCKED set from constants.py",
+          "passed": true,
+          "evidence": "Response quotes directly: '\u0645\u0646 constants.py: OUTREACH_BLOCKED = {\"Do Not Contact\", \"Bounced\", \"Bad Data\"}' and references it in the context of the action_ready_updater.py function."
+        },
+        {
+          "text": "Recommends running action_ready_updater.py",
+          "passed": true,
+          "evidence": "Response provides command: 'python action_ready_updater.py --dry-run' for diagnosis and 'python action_ready_updater.py' for the actual fix, with explanation of expected results."
+        },
+        {
+          "text": "Notes that this is a known issue category",
+          "passed": true,
+          "evidence": "Response identifies this as one of multiple known data integrity issues and mentions: 'Skill \u062d\u0645\u0627\u064a\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u2014 \u0644\u0627\u0643\u062a\u0634\u0627\u0641 \u0627\u0644\u0645\u0634\u0627\u0643\u0644' and lists this under '\u0627\u0644\u0641\u062d\u0648\u0635\u0627\u062a \u0627\u0644\u0645\u0647\u0645\u0629 (Important)' category."
+        }
+      ],
+      "time_seconds": 120.3,
+      "total_tokens": 110037
+    },
+    {
+      "eval_id": 5,
+      "eval_name": "data-integrity-dnc-conflict",
+      "configuration": "without_skill",
+      "pass_rate": 0.25,
+      "expectations": [
+        {
+          "text": "Explains the difference between Outreach Status and DNC checkbox",
+          "passed": true,
+          "evidence": "Response explains: 'Do Not Contact = \u064a\u062c\u0628 \u0639\u062f\u0645 \u0627\u0644\u062a\u0648\u0627\u0635\u0644 \u0645\u0639 \u0647\u0630\u0627 \u0627\u0644\u0634\u062e\u0635' vs 'Action Ready = True = \u0646\u0639\u0645\u060c \u064a\u062c\u0628 \u0625\u0646\u0634\u0627\u0621 \u0645\u0647\u0645\u0629 \u0648\u0627\u0633\u062a\u062f\u0639\u0627\u0621 \u0647\u0630\u0627 \u0627\u0644\u0634\u062e\u0635' and notes these are contradictory."
+        },
+        {
+          "text": "References OUTREACH_BLOCKED set from constants.py",
+          "passed": false,
+          "evidence": "Response does not reference OUTREACH_BLOCKED or constants.py. Discusses the issue conceptually but without specific code references."
+        },
+        {
+          "text": "Recommends running action_ready_updater.py",
+          "passed": false,
+          "evidence": "Response suggests general fix options (Choices A and B for correcting either Action Ready or Outreach Status) but does not recommend running the specific action_ready_updater.py script."
+        },
+        {
+          "text": "Notes that this is a known issue category",
+          "passed": false,
+          "evidence": "Response treats this as a one-time data problem but does not reference it as a known issue category or mention data integrity checks/frameworks."
+        }
+      ],
+      "time_seconds": 24.8,
+      "total_tokens": 95492
+    },
+    {
+      "eval_id": 6,
+      "eval_name": "sequence-ceo-construction-saudi",
+      "configuration": "with_skill",
+      "pass_rate": 1.0,
+      "expectations": [
+        {
+          "text": "Creates exactly 5 touches over 2 weeks",
+          "passed": true,
+          "evidence": "Response provides 5 touches: Day 0 (Email), Day 2 (LinkedIn), Day 4 (Email case study), Day 7 (Phone call), Day 10 (Email summary). Timeline spans 14 days as requested."
+        },
+        {
+          "text": "Uses executive/CEO-appropriate tone",
+          "passed": true,
+          "evidence": "Tone is professional, respectful, and focuses on strategic business impact. Example: '\u0641\u064a \u0634\u0631\u0643\u0627\u062a \u0627\u0644\u0628\u0646\u0627\u0621 \u0628\u062d\u062c\u0645\u0643\u0645\u060c \u0647\u0627\u0645\u0634 \u0627\u0644\u062e\u0637\u0623 \u0641\u064a \u062a\u0642\u062f\u064a\u0631 \u0627\u0644\u062a\u0643\u0627\u0644\u064a\u0641 \u0648\u0627\u0644\u0645\u0647\u0644 \u0627\u0644\u0632\u0645\u0646\u064a\u0629 \u0636\u064a\u0642 \u062c\u062f\u0627\u064b' - direct, peer-to-peer, respecting decision-maker time constraints."
+        },
+        {
+          "text": "References Saudi/GCC business context",
+          "passed": true,
+          "evidence": "Response explicitly references Saudi context: '\u0641\u064a \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629\u060c \u0647\u0627\u0645\u0634 \u0627\u0644\u062e\u0637\u0623 \u0641\u064a \u062a\u0642\u062f\u064a\u0631 \u0627\u0644\u062a\u0643\u0627\u0644\u064a\u0641' and '\u0627\u0644\u0645\u0634\u0627\u0631\u064a\u0639 \u0627\u0644\u062d\u0643\u0648\u0645\u064a\u0629 \u0627\u0644\u0636\u062e\u0645\u0629 (\u0631\u0624\u064a\u0629 2030)' and uses Saudi Riyal currency: '50 \u0645\u0644\u064a\u0648\u0646 \u0631\u064a\u0627\u0644' and '\u0634\u0631\u0643\u0627\u062a \u0627\u0644\u0628\u0646\u0627\u0621 \u0628\u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629'"
+        },
+        {
+          "text": "Includes at least 2 different channels (email + LinkedIn or call)",
+          "passed": true,
+          "evidence": "Sequence uses 3 channels: Email (touches 1, 3, 5), LinkedIn (touch 2), Phone (touch 4). Specifically mentions '\u0627\u0644\u0628\u0631\u064a\u062f \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a + LinkedIn + \u0627\u0644\u0647\u0627\u062a\u0641' in header."
+        },
+        {
+          "text": "Each touch has specific copy (subject + body or message text)",
+          "passed": true,
+          "evidence": "All 5 touches include complete, specific copy: Touch 1 has subject '\u062a\u0642\u0644\u064a\u0644 \u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u0645\u0634\u0627\u0631\u064a\u0639 \u0628\u0640 12-15%' with full body text, Touch 2 has LinkedIn message copy, Touch 3 has subject and body about case study, Touch 4 has phone script with opening and response paths, Touch 5 has subject '\u062d\u062f\u064a\u062b \u0633\u0631\u064a\u0639' with body."
+        }
+      ],
+      "time_seconds": 94.3,
+      "total_tokens": 104587
+    },
+    {
+      "eval_id": 6,
+      "eval_name": "sequence-ceo-construction-saudi",
+      "configuration": "without_skill",
+      "pass_rate": 1.0,
+      "expectations": [
+        {
+          "text": "Creates exactly 5 touches over 2 weeks",
+          "passed": true,
+          "evidence": "Response provides 5 touches labeled '\u0627\u0644\u0644\u0645\u0633\u0629 \u0627\u0644\u0623\u0648\u0644\u0649' through '\u0627\u0644\u0644\u0645\u0633\u0629 \u0627\u0644\u062e\u0627\u0645\u0633\u0629' on days 1, 3, 5, 9, and 12, spanning 2-week timeframe."
+        },
+        {
+          "text": "Uses executive/CEO-appropriate tone",
+          "passed": true,
+          "evidence": "Response uses professional, concise tone appropriate for CEOs: '\u0644\u0627 \u0623\u0631\u064a\u062f \u0623\u0646 \u0623\u062e\u0630 \u0648\u0642\u062a\u0643 \u0627\u0644\u0637\u0648\u064a\u0644' and focuses on business impact with respect for executive time constraints."
+        },
+        {
+          "text": "References Saudi/GCC business context",
+          "passed": true,
+          "evidence": "Response mentions '\u0634\u0631\u0643\u0627\u062a \u0627\u0644\u0628\u0646\u0627\u0621 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629' and includes Saudi-specific business references like '\u0627\u0644\u0645\u0634\u0627\u0631\u064a\u0639 \u0627\u0644\u062d\u0643\u0648\u0645\u064a\u0629' (government projects)."
+        },
+        {
+          "text": "Includes at least 2 different channels (email + LinkedIn or call)",
+          "passed": true,
+          "evidence": "Sequence includes email (touches 1, 3, 5), phone call (touch 3 mentioned as '\u0627\u062a\u0635\u0627\u0644 \u0647\u0627\u062a\u0641\u064a'), and implies LinkedIn based on document context. All three channels are represented."
+        },
+        {
+          "text": "Each touch has specific copy (subject + body or message text)",
+          "passed": true,
+          "evidence": "All 5 touches include specific copy with subjects and message content. Touch 1 has subject '\u0641\u0631\u0635\u0629 \u0644\u062a\u062d\u0633\u064a\u0646 \u0643\u0641\u0627\u0621\u0629 \u0627\u0644\u0645\u0634\u0627\u0631\u064a\u0639', Touch 3 has phone call script, Touch 4 has subject '\u062f\u0631\u0627\u0633\u0629 \u062d\u0627\u0644\u0629', Touch 5 has subject '\u0641\u0631\u0635\u0629 \u0645\u062d\u062f\u0648\u062f\u0629 - \u0627\u0633\u062a\u0634\u0627\u0631\u0629 \u0645\u062c\u0627\u0646\u064a\u0629'."
+        }
+      ],
+      "time_seconds": 30.9,
+      "total_tokens": 96295
+    }
+  ],
+  "run_summary": {
+    "delta": {
+      "pass_rate": "+0.389",
+      "time_seconds": "+62.6",
+      "tokens": "+8969"
+    }
+  },
+  "notes": [
+    "with_skill achieves 100% pass rate across all 6 evals (perfect score)",
+    "without_skill averages 61.1% \u2014 strongest gap on data-integrity (25%) and conversion-analysis (33%)",
+    "sequence-builder shows no skill advantage (100% both) \u2014 general sales knowledge suffices",
+    "Largest differentiation on system-specific knowledge: constants.py references, script commands, Notion field names",
+    "with_skill uses more tokens and time due to reading skill files, but delivers significantly higher quality"
+  ]
+}
