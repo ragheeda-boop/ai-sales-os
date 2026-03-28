@@ -4,7 +4,8 @@
 
 - Python 3.11+
 - Apollo.io API Key
-- Notion API Key + 3 Database IDs (Contacts, Companies, Tasks)
+- Notion API Key + 5 Database IDs (Contacts, Companies, Tasks, Meetings, Opportunities)
+- Anthropic API Key (optional — required only for AI meeting analysis)
 
 ## Step 1: Configure (2 min)
 
@@ -20,6 +21,9 @@ NOTION_API_KEY=your_notion_key
 NOTION_DATABASE_ID_CONTACTS=your_contacts_db_id
 NOTION_DATABASE_ID_COMPANIES=your_companies_db_id
 NOTION_DATABASE_ID_TASKS=your_tasks_db_id
+NOTION_DATABASE_ID_MEETINGS=your_meetings_db_id
+NOTION_DATABASE_ID_OPPORTUNITIES=your_opportunities_db_id
+ANTHROPIC_API_KEY=your_anthropic_key   # Optional — for AI meeting analysis
 ```
 
 ## Step 2: Install (1 min)
@@ -95,6 +99,21 @@ python auto_sequence.py --limit 50
 python analytics_tracker.py --days 7
 ```
 
+## Step 10.5: Meeting Intelligence — Phase 3.5 (optional)
+
+```bash
+# Sync meetings from Notion → update Contact fields
+python meeting_tracker.py --days 7
+
+# Analyze meeting notes with AI (requires ANTHROPIC_API_KEY)
+python meeting_analyzer.py --limit 10
+
+# Convert positive meetings to opportunities + flag stale deals
+python opportunity_manager.py
+```
+
+> If you have logged meetings in the Meetings DB, run these 3 scripts to activate the revenue feedback loop.
+
 ## Step 11: Health Check (2 min)
 
 ```bash
@@ -113,7 +132,7 @@ python morning_brief.py
 
 Push code to GitHub, add 5 Secrets, and GitHub Actions will run daily at 7 AM KSA:
 
-**14-step pipeline:**
+**16-step pipeline (Phase 3.5 included):**
 1. `daily_sync.py --mode incremental --hours 26` → sync new/updated records
 2. `job_postings_enricher.py --limit 50` → intent enrichment
 3. `lead_score.py` → recalculate scores + write Lead Tier
@@ -121,8 +140,13 @@ Push code to GitHub, add 5 Secrets, and GitHub Actions will run daily at 7 AM KS
 5. `auto_tasks.py` → create SLA-based tasks
 6. `auto_sequence.py --limit 50` → enroll in Apollo sequences
 7. `analytics_tracker.py --days 7` → sync engagement data
-8. `health_check.py` → validate run
-9. `morning_brief.py --output file` → daily report
+8. `meeting_tracker.py --days 7` → sync meetings, update contact stage *(Phase 3.5)*
+9. `meeting_analyzer.py --limit 10` → AI meeting analysis *(Phase 3.5, requires ANTHROPIC_API_KEY)*
+10. `opportunity_manager.py` → meetings → opportunities + stale deal detection *(Phase 3.5)*
+11. `health_check.py` → validate run
+12. `morning_brief.py --output file` → daily report
+
+**GitHub Secrets required:** APOLLO_API_KEY, NOTION_API_KEY, NOTION_DATABASE_ID_CONTACTS, NOTION_DATABASE_ID_COMPANIES, NOTION_DATABASE_ID_TASKS, NOTION_DATABASE_ID_MEETINGS, NOTION_DATABASE_ID_OPPORTUNITIES, ANTHROPIC_API_KEY (optional)
 
 **Weekly (Sundays):** `score_calibrator.py --days 30 --export` → self-learning calibration
 

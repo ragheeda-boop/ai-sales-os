@@ -66,3 +66,27 @@ Go to **Settings > Secrets and variables > Actions** and add:
 5. Click **Run workflow**
 
 ## Daily Schedule
+
+After setup, the pipeline runs **automatically** every day:
+- 7:00 AM KSA (04:00 UTC)
+- Syncs new/updated contacts and companies
+- Recalculates Lead Scores + writes Lead Tier
+- Evaluates Action Ready for all scored contacts
+- Creates SLA-based tasks (HOT = 24h call, WARM = 48h follow-up)
+- Validates pipeline health
+- Uploads logs as downloadable artifacts
+- Notifies on failure
+
+## Cost
+
+```
+GitHub Actions Free Tier: 2,000 min/month
+Daily run estimate:       ~15 min/day x 30 = 450 min/month
+Remaining:                1,550 min/month (no cost)
+```
+
+## Monitoring
+
+- **Actions tab** — see each run status
+- **Artifacts** — download sync and score logs
+- **Email notifications** — Settings > Notifications > Actions

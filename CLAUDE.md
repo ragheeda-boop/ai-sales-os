@@ -7,19 +7,19 @@ This is a production-grade Sales Operating System, not a hobby project.
 
 **System:** Apollo.io → Python Engine → Notion CRM → GitHub Actions → Odoo (future)
 **Owner:** Ragheed
-**Version:** 4.0 | March 2026
+**Version:** 4.1 | March 2026 | Phase 3.5 Complete
 
 ---
 
 ## System Architecture
 
 ```
-Apollo.io (Data)  ──►  Python Scripts (15 scripts)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily + Weekly)
+Apollo.io (Data)  ──►  Python Scripts (18 scripts)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily + Weekly)
   44,875 contacts         Sync + Enrich + Score +            7 Databases            7:00 AM KSA
-  15,407 companies        Action + Sequence + Learn           HOT/WARM/COLD          14-step pipeline + weekly calibration
+  15,407 companies        Action + Sequence + Meet           HOT/WARM/COLD          16-step pipeline + weekly calibration
 ```
 
-**Autonomous Sales Loop:** Score → Task → Auto-Sequence → Track Results → Calibrate → Better Score
+**Autonomous Sales Loop:** Score → Task → Auto-Sequence → Track Results → Meet → Analyze → Opportunity → Calibrate → Better Score
 
 **Key design decision:** NO middleware. No n8n, no Make.com, no Zapier. Pure Python + GitHub Actions = full control, zero cost.
 
@@ -29,7 +29,12 @@ Apollo.io (Data)  ──►  Python Scripts (15 scripts)  ──►  Notion (CRM
 
 ```
 AI Sales OS/
-├── 💻 CODE/Phase 3 - Sync/     → All production scripts
+├── CLAUDE.md                    → AI instructions & system reference (this file)
+├── README.md                    → Project overview
+├── AI_Sales_OS_MindMap.html     → Interactive mind map v8.0 (Arabic)
+├── Muhide.png                   → Brand logo
+│
+├── 💻 CODE/Phase 3 - Sync/      → All 18 production scripts
 │   ├── daily_sync.py            → Main sync engine v2.1 (3 modes)
 │   ├── lead_score.py            → Lead scoring engine (writes Score + Tier)
 │   ├── constants.py             → Unified field names & thresholds (single source of truth)
@@ -37,22 +42,54 @@ AI Sales OS/
 │   ├── auto_tasks.py            → Action Engine — SLA-based task creator
 │   ├── action_ready_updater.py  → Computes Action Ready checkbox (5 conditions)
 │   ├── health_check.py          → Pipeline health validator
-│   ├── job_postings_enricher.py → Intent proxy from Apollo Job Postings (NEW v4.0)
-│   ├── auto_sequence.py         → Auto-enroll contacts in Apollo Sequences (NEW v4.0)
-│   ├── analytics_tracker.py     → Apollo Analytics → Notion engagement sync (NEW v4.0)
-│   ├── score_calibrator.py      → Self-learning weight adjustment (NEW v4.0)
-│   ├── morning_brief.py         → Daily intelligence report generator (NEW v4.0)
+│   ├── job_postings_enricher.py → Intent proxy from Apollo Job Postings
+│   ├── auto_sequence.py         → Auto-enroll contacts in Apollo Sequences
+│   ├── analytics_tracker.py     → Apollo Analytics → Notion engagement sync
+│   ├── score_calibrator.py      → Self-learning weight adjustment
+│   ├── morning_brief.py         → Daily intelligence report generator
+│   ├── meeting_tracker.py       → Meeting sync + Contact stage update [Phase 3.5]
+│   ├── meeting_analyzer.py      → AI meeting intelligence via Claude API [Phase 3.5]
+│   ├── opportunity_manager.py   → Meetings → Opportunities + stale deal detection [Phase 3.5]
+│   ├── doc_sync_checker.py      → Documentation drift validator [v4.1]
 │   ├── webhook_server.py        → Apollo webhook receiver
 │   ├── verify_links.py          → Contact-company link verifier
 │   ├── .env                     → API credentials (NEVER commit)
-│   └── .env.example             → Credential template
+│   ├── .env.example             → Credential template
+│   ├── requirements.txt         → Python dependencies
+│   └── *.log                    → Runtime logs (auto-generated, gitignored)
+│
+├── 🎯 PRESENTATIONS/            → All presentation files
+│   ├── English/
+│   │   └── AI_Sales_OS_Presentation.pptx       → Main English technical deck (v4.1)
+│   ├── Arabic/
+│   │   ├── عرض_تقديمي_AI_Sales_OS_v4.1.pptx   → Arabic v4.1 (latest)
+│   │   └── عرض_تقديمي_v2.pptx                 → Arabic v2 overview
+│   └── CEO Pitch/
+│       └── AI_Sales_OS_CEO_Pitch_v2.pptx       → Executive pitch deck (Arabic)
+│
+├── 📊 DATA/
+│   ├── Import CSVs/             → Initial data import files (companies + contacts)
+│   ├── Logs/                    → Sync run logs and runtime stats JSON
+│   ├── Mapping Files/           → Apollo↔Notion field mapping + setup tracker
+│   └── Notion Snapshots/        → Point-in-time JSON snapshots
+│
+├── 📚 DOCUMENTATION/
+│   ├── EXECUTION_PLAN_v3.2.docx → Master execution plan (phases 1–4)
+│   ├── AI_Sales_OS_Deep_Analysis.md           → 12-section system analysis (v4.1)
+│   ├── AI_Sales_OS_Comprehensive_Audit.docx   → Comprehensive audit report
+│   ├── AI_Sales_OS_Revenue_Gap_Analysis.docx  → Revenue gap analysis
+│   ├── MUHIDE_Brand_Identity_Guide.md         → Brand guidelines
+│   ├── GITHUB_SETUP_GUIDE.md                  → GitHub Actions setup instructions
+│   ├── Phase 1 - Notion Setup/  → Notion database setup documentation
+│   ├── Phase 2 - Data Import/   → Data import strategy and guides
+│   ├── Phase 3 - Apollo API Pull/ → Apollo API integration documentation
+│   └── System Architecture/     → Technical architecture + field mapping + assessment docs
+│
 ├── .claude/skills/              → 12 Claude Skills for AI Sales OS operations
-├── 📊 DATA/                     → CSVs, mappings, snapshots, logs
-├── 📚 DOCUMENTATION/            → EXECUTION_PLAN_v3.2.docx + phase docs
-├── .github/workflows/           → daily_sync.yml (CI/CD — 14-step pipeline + weekly calibration)
-├── 🚀 START HERE/               → Entry docs (QUICK_START, SYSTEM_OVERVIEW)
-├── 🗂️ ARCHIVED/                 → Superseded files
-└── AI_Sales_OS_MindMap.html     → Interactive mind map v6.0 (Arabic)
+├── .github/workflows/           → daily_sync.yml (CI/CD — 16-step pipeline + weekly calibration)
+├── 🚀 START HERE/               → Entry docs: QUICK_START, SYSTEM_OVERVIEW, PROJECT_MAP
+├── 🗂️ ARCHIVED/                 → Superseded scripts, old docs, old presentations
+└── .gitignore
 ```
 
 ---
@@ -73,6 +110,10 @@ AI Sales OS/
 | `analytics_tracker.py` | Pulls Apollo Analytics, syncs engagement data back to Notion | **ACTIVE (v4.0)** |
 | `score_calibrator.py` | Self-learning weight adjustment based on actual outcomes | **ACTIVE (v4.0)** |
 | `morning_brief.py` | Daily intelligence report (urgent calls, tasks, replies, stats) | **ACTIVE (v4.0)** |
+| `meeting_tracker.py` | Notion-native meeting sync; updates Contact (Meeting Booked, Stage, Outreach Status) | **ACTIVE (v4.1)** |
+| `meeting_analyzer.py` | Claude AI analysis of meeting notes → key takeaways, sentiment, next steps | **ACTIVE (v4.1) — requires ANTHROPIC_API_KEY** |
+| `opportunity_manager.py` | Positive meetings → Opportunities; stage advancement; stale deal detection (14 days) | **ACTIVE (v4.1)** |
+| `doc_sync_checker.py` | Validates documentation vs codebase state — catches drift after development | **ACTIVE (v4.1)** |
 | `webhook_server.py` | Apollo webhook receiver | **ACTIVE** |
 | `verify_links.py` | Contact-company link verifier | **ACTIVE** |
 
@@ -444,18 +485,30 @@ Pipeline steps (14 total + weekly calibration):
 - [x] Built `auto_tasks.py` — SLA-based task creator (HOT=24h call, WARM=48h follow-up)
 - [x] Built `action_ready_updater.py` — 5-condition gating (score, DNC, outreach, stage, contact method)
 - [x] Built `health_check.py` — post-pipeline health validator
-- [x] Updated `daily_sync.yml` — 10-step pipeline with Action Engine + Health Check
+- [x] Updated `daily_sync.yml` — 16-step pipeline with Action Engine + Health Check
 - [x] Built 12 Claude Skills for AI Sales OS operations (evaluated at 100% pass rate)
 - [ ] First run: `action_ready_updater.py` then `auto_tasks.py --dry-run` to validate
 - [ ] Create Notion task views for sales workflow
 - **Gate:** Tasks must generate correctly before Phase 3
 
-### Phase 3: ENRICH ← NEXT
-- [ ] Job Postings signal (`organizations/job_postings` Apollo endpoint)
-- [ ] Job Change detection (build from `people_match` + compare)
-- [ ] Intent Trend tracking (compare intent scores between syncs)
-- [ ] Lead Score v2.0 (activate new weights with signals data)
-- **Gate:** Signals must have data before v2 weights activate
+### Phase 3: ENRICH — COMPLETE ✓
+- [x] Job Postings signal (`job_postings_enricher.py` — active, 50/run limit)
+- [x] Auto Sequence enrollment (`auto_sequence.py` — HOT/WARM × 5 roles × 2 senders)
+- [x] Analytics tracking (`analytics_tracker.py` — engagement sync from Apollo)
+- [x] Score Calibrator (`score_calibrator.py` — weekly review-only mode)
+- [ ] Job Change detection (build from `people_match` + compare) — deferred to Phase 4
+- [ ] Lead Score v2.0 — HOLD until intent/engagement signals > 50% coverage
+
+### Phase 3.5: MEET — COMPLETE ✓ (March 2026)
+- [x] `meeting_tracker.py` — Notion-native meeting sync, dual mode (Notion + Google Calendar)
+- [x] `meeting_analyzer.py` — Claude AI meeting intelligence (requires ANTHROPIC_API_KEY in GitHub Secrets)
+- [x] `opportunity_manager.py` — Meeting → Opportunity pipeline + stale deal detection
+- [x] `doc_sync_checker.py` — Documentation drift validator
+- [x] GitHub Actions updated to 16-step pipeline (meeting tracker, analyzer, opportunity manager added)
+- [x] constants.py expanded with MEETINGS + OPPORTUNITIES field definitions
+- [ ] ANTHROPIC_API_KEY confirmed in GitHub Secrets — **must verify**
+- [ ] First real meeting logged in Meetings DB — **activate the loop**
+- **Architecture assessment:** `Meeting_Call_Intelligence_Architecture_Assessment.md`
 
 ### Phase 4: OPTIMIZE
 - [ ] Odoo ERP integration (push qualified opportunities)
@@ -529,6 +582,29 @@ AI Sales OS has 12 specialized Claude Skills in `.claude/skills/`. These are pro
 
 ---
 
+## Documentation Sync Protocol — MANDATORY
+
+**Every time any script is added, modified, or the pipeline changes, Claude MUST immediately update:**
+
+| What Changed | Files to Update |
+|---|---|
+| New script added | CLAUDE.md (Active Scripts table + Folder Structure) · SYSTEM_OVERVIEW.md · QUICK_START.md |
+| Pipeline steps changed | CLAUDE.md (architecture line + GitHub Actions section) · SYSTEM_OVERVIEW.md · QUICK_START.md · Notion Command Center · Notion Autonomous Loop Dashboard |
+| New Phase or Phase status change | CLAUDE.md (Execution Plan) · SYSTEM_OVERVIEW.md (Execution Plan table) · Notion Command Center |
+| New env variable required | `.env.example` · QUICK_START.md Prerequisites section |
+| New key document created | SYSTEM_OVERVIEW.md Key Documents table |
+
+**Validation command (run after any development session):**
+```bash
+python doc_sync_checker.py --strict --fix-hints
+```
+
+This script (`doc_sync_checker.py`) checks script count, pipeline step count, env variables, and phase alignment against the actual codebase. Any drift is flagged before it compounds.
+
+**The rule:** Never finish a development session without running doc_sync_checker.py. If it finds drift, fix it before moving on.
+
+---
+
 ## Execution Behavior
 
 - Execute sequentially. No jumping between phases.
@@ -536,6 +612,7 @@ AI Sales OS has 12 specialized Claude Skills in `.claude/skills/`. These are pro
 - Do NOT redesign schema during execution.
 - Do NOT suggest alternatives mid-execution.
 - Accuracy over speed. A slow correct system beats a fast broken one.
+- After any code change: run `doc_sync_checker.py` and update all listed documentation files.
 
 ---
 

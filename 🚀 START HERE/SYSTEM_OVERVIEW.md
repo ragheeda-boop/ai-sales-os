@@ -4,19 +4,19 @@
 
 ```
 ┌──────────────┐     ┌──────────────────────────┐     ┌──────────────┐     ┌───────────────┐
-│  Apollo.io   │────►│  Python Scripts (15)      │────►│   Notion     │────►│ GitHub Actions│
+│  Apollo.io   │────►│  Python Scripts (18)      │────►│   Notion     │────►│ GitHub Actions│
 │  (Data)      │     │  Sync + Enrich + Score +  │     │  (CRM Hub)   │     │ (Daily Cron)  │
-└──────────────┘     │  Action + Sequence + Learn│     └──────────────┘     └───────────────┘
- 44,875 contacts     └──────────────────────────┘      7 Databases          14-step pipeline
+└──────────────┘     │  Action + Sequence + Meet │     └──────────────┘     └───────────────┘
+ 44,875 contacts     └──────────────────────────┘      7 Databases          16-step pipeline
  15,407 companies                                      HOT/WARM/COLD Views  + weekly calibration
 ```
 
-## Autonomous Sales Loop (v4.0)
+## Autonomous Sales Loop (v4.1 — Phase 3.5 Added)
 
 ```
-Score → Task → Sequence → Track → Calibrate → Better Score
-  ↑                                               │
-  └───────────────────────────────────────────────┘
+Score → Task → Sequence → Meet → Analyze → Opportunity → Calibrate → Better Score
+  ↑                                                                        │
+  └────────────────────────────────────────────────────────────────────────┘
 ```
 
 The system runs itself. Your job is to close deals, not manage data.
@@ -92,6 +92,29 @@ analytics_tracker.py (v4.0)
     └─ Generate analytics report (seniority, size, trends)
     │
     ▼
+meeting_tracker.py (v1.1) ← Phase 3.5
+    ├─ Notion-native mode: reads Meetings DB, updates linked Contacts
+    │  ├─ Sets Meeting Booked = True on Contact
+    │  ├─ Updates Outreach Status → "Meeting Booked"
+    │  └─ Advances Stage → "Engaged"
+    └─ Google Calendar mode (--calendar): syncs events, matches attendees
+    │
+    ▼
+meeting_analyzer.py (v1.0) ← Phase 3.5 — requires ANTHROPIC_API_KEY
+    ├─ Reads meetings with notes not yet analyzed
+    ├─ Calls Claude AI to extract: key takeaways, sentiment, next steps
+    └─ Writes structured intelligence back to Meetings DB
+    │
+    ▼
+opportunity_manager.py (v1.0) ← Phase 3.5
+    ├─ Reads Meetings with Outcome=Positive + no linked Opportunity
+    ├─ Creates Opportunity (Discovery stage, linked to Contact+Company)
+    ├─ Advances existing Opportunity stage based on Meeting Type
+    │  └─ Discovery→Proposal→Negotiation (from STAGE_ADVANCE_MAP)
+    ├─ Flags stale deals (no update > 14 days) → creates follow-up tasks
+    └─ Updates Contact: Opportunity Created = True
+    │
+    ▼
 health_check.py
     ├─ Check sync stats (zero records = CRITICAL)
     ├─ Check duplicate rate (>5% = WARNING)
@@ -146,7 +169,9 @@ Notion Views
 
 **Self-Learning:** score_calibrator.py analyzes actual engagement outcomes and recommends weight adjustments. Safety rails prevent sudden jumps (max 10% change per cycle).
 
-**Automation:** GitHub Actions runs 14-step pipeline daily + weekly calibration. No external tools (n8n, Make, Zapier). Pure Python + GitHub Actions.
+**Meeting Intelligence (Phase 3.5):** meeting_tracker.py syncs meetings, meeting_analyzer.py extracts AI intelligence (requires ANTHROPIC_API_KEY in GitHub Secrets), opportunity_manager.py converts positive meetings into pipeline opportunities with stage advancement and stale deal detection.
+
+**Automation:** GitHub Actions runs 16-step pipeline daily + weekly calibration. No external tools (n8n, Make, Zapier). Pure Python + GitHub Actions.
 
 ## Execution Plan (v4.0)
 
@@ -155,9 +180,20 @@ Notion Views
 | Phase 1 | **ACTIVATE** — Full Sync + Lead Score + Calibration | Complete |
 | Phase 2 | **ACTION** — auto_tasks.py + Action Ready + Health Check | Complete |
 | Phase 3 | **ENRICH** — Job Postings + Sequences + Analytics + Calibration | Complete (v4.0) |
+| Phase 3.5 | **MEET** — Meeting Tracker + AI Analyzer + Opportunity Manager | Complete (March 2026) |
 | Phase 4 | **OPTIMIZE** — Odoo ERP + Revenue Tracking + Advanced Analytics | Planned |
 
 Full details in `📚 DOCUMENTATION/EXECUTION_PLAN_v3.2.docx`
 
+## Key Documents
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| Deep-Dive Analysis Report | `AI_Sales_OS_Deep_Analysis.md` | Full 12-section system analysis — strategy, tech, AI quality, gap analysis, risks, action plan |
+| Meeting Intelligence Assessment | `Meeting_Call_Intelligence_Architecture_Assessment.md` | Phase 3.5 architecture decision + rollout plan |
+| Execution Plan | `📚 DOCUMENTATION/EXECUTION_PLAN_v3.2.docx` | Phase-by-phase detailed plan |
+| Field Mapping Rules | `📚 DOCUMENTATION/System Architecture/FIELD_MAPPING_RULES.md` | Apollo → Notion field mapping |
+| GitHub Actions Setup | `.github/workflows/daily_sync.yml` | 16-step daily pipeline configuration |
+
 ---
-**Version:** 4.0 | **Last Updated:** 28 March 2026 | **Owner:** Ragheed
+**Version:** 4.1 | **Last Updated:** 28 March 2026 | **Owner:** Ragheed | **Phase 3.5:** Complete
