@@ -96,6 +96,71 @@ def check_action_health(stats: dict) -> list:
     return issues
 
 
+def check_meeting_tracker_health(stats: dict) -> list:
+    """Check meeting tracker stats."""
+    issues = []
+    if not stats:
+        return issues  # meeting tracker may not have run yet
+
+    errors = stats.get("errors", 0)
+    if errors > 0:
+        issues.append(("WARNING", f"Meeting Tracker had {errors} errors"))
+
+    processed = stats.get("events_processed", 0)
+    created = stats.get("meetings_created", 0)
+    contacts_updated = stats.get("contacts_updated", 0)
+
+    if processed > 0 and created == 0 and contacts_updated == 0:
+        issues.append(("INFO", f"Meeting Tracker processed {processed} events but created 0 meetings — all may be duplicates or no contact matches"))
+
+    return issues
+
+
+def check_analyzer_health(stats: dict) -> list:
+    """Check meeting analyzer stats."""
+    issues = []
+    if not stats:
+        return issues  # analyzer may not have run yet
+
+    errors = stats.get("errors", 0)
+    analyzed = stats.get("analyzed", 0)
+    found = stats.get("meetings_found", 0)
+
+    if errors > 0:
+        issues.append(("WARNING", f"Meeting Analyzer had {errors} errors (API failures or parse issues)"))
+
+    if found > 0 and analyzed == 0:
+        issues.append(("WARNING", f"Meeting Analyzer found {found} meetings but analyzed 0 — check ANTHROPIC_API_KEY"))
+
+    opp_flagged = stats.get("opportunities_flagged", 0)
+    if opp_flagged > 0:
+        issues.append(("INFO", f"Meeting Analyzer flagged {opp_flagged} opportunity signal(s) — review recommended"))
+
+    return issues
+
+
+def check_opportunity_health(stats: dict) -> list:
+    """Check opportunity manager stats."""
+    issues = []
+    if not stats:
+        return issues  # opportunity manager may not have run yet
+
+    errors = stats.get("errors", 0)
+    if errors > 0:
+        issues.append(("WARNING", f"Opportunity Manager had {errors} errors"))
+
+    stale_detected = stats.get("stale_detected", 0)
+    if stale_detected > 0:
+        issues.append(("WARNING", f"{stale_detected} stale deals detected — no update in 14+ days"))
+
+    created = stats.get("opportunities_created", 0)
+    meetings_processed = stats.get("meetings_processed", 0)
+    if meetings_processed > 0 and created == 0:
+        issues.append(("INFO", f"Opportunity Manager processed {meetings_processed} meetings but created 0 opportunities — contacts may already have open deals"))
+
+    return issues
+
+
 def main():
     parser = argparse.ArgumentParser(description="AI Sales OS — Health Check")
     parser.add_argument("--strict", action="store_true", help="Exit 1 on any warning")
@@ -116,6 +181,21 @@ def main():
     action_stats = load_json("last_action_stats.json")
     action_issues = check_action_health(action_stats)
     all_issues.extend(action_issues)
+
+    # Check meeting tracker stats
+    meeting_stats = load_json("last_meeting_tracker_stats.json")
+    meeting_issues = check_meeting_tracker_health(meeting_stats)
+    all_issues.extend(meeting_issues)
+
+    # Check meeting analyzer stats
+    analyzer_stats = load_json("last_analyzer_stats.json")
+    analyzer_issues = check_analyzer_health(analyzer_stats)
+    all_issues.extend(analyzer_issues)
+
+    # Check opportunity manager stats
+    opp_stats = load_json("last_opportunity_stats.json")
+    opp_issues = check_opportunity_health(opp_stats)
+    all_issues.extend(opp_issues)
 
     # Report
     if all_issues:

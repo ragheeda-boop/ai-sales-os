@@ -1,4 +1,4 @@
-# GitHub Setup Guide — AI Sales OS
+# GitHub Setup Guide — AI Sales OS v4.0
 
 ## الخطوة 1: إصلاح Git repo (شغّل من VS Code Terminal)
 
@@ -30,6 +30,11 @@ git add "💻 CODE/Phase 3 - Sync/notion_helpers.py"
 git add "💻 CODE/Phase 3 - Sync/auto_tasks.py"
 git add "💻 CODE/Phase 3 - Sync/action_ready_updater.py"
 git add "💻 CODE/Phase 3 - Sync/health_check.py"
+git add "💻 CODE/Phase 3 - Sync/job_postings_enricher.py"
+git add "💻 CODE/Phase 3 - Sync/auto_sequence.py"
+git add "💻 CODE/Phase 3 - Sync/analytics_tracker.py"
+git add "💻 CODE/Phase 3 - Sync/score_calibrator.py"
+git add "💻 CODE/Phase 3 - Sync/morning_brief.py"
 git add "💻 CODE/Phase 3 - Sync/webhook_server.py"
 git add "💻 CODE/Phase 3 - Sync/verify_links.py"
 git add "💻 CODE/Phase 3 - Sync/requirements.txt"
@@ -39,18 +44,21 @@ git add "📚 DOCUMENTATION/"
 git add AI_Sales_OS_MindMap.html
 
 # Commit
-git commit -m "Initial commit: AI Sales OS v3.2 — Full pipeline ready
+git commit -m "Initial commit: AI Sales OS v4.0 — Autonomous Sales Loop
 
 - Sync Engine v2.1 (daily_sync.py) with 3 modes
 - Lead Score v1.1 (lead_score.py) with calibrated weights
 - Action Engine (auto_tasks.py) with SLA-based tasks
 - Action Ready evaluator (action_ready_updater.py) — 5 conditions
 - Health Check validator (health_check.py)
-- GitHub Actions 10-step pipeline (daily_sync.yml)
+- Job Postings Intent proxy (job_postings_enricher.py) [v4.0]
+- Auto Sequence enrollment (auto_sequence.py) [v4.0]
+- Analytics & Engagement sync (analytics_tracker.py) [v4.0]
+- Self-learning calibration (score_calibrator.py) [v4.0]
+- Morning intelligence brief (morning_brief.py) [v4.0]
+- GitHub Actions 14-step pipeline + weekly calibration
 - Constants unified in constants.py (single source of truth)
-- Bug fixes: field name consistency across all scripts
-- Skills framework integration for operations
-- .gitignore updated for v3.2 builds"
+- 12 Claude Skills evaluated at 100% pass rate"
 ```
 
 ## الخطوة 3: رفع على GitHub
@@ -93,7 +101,19 @@ python auto_tasks.py --dry-run
 # 4. إذا النتايج سليمة، شغّل فعلي
 python auto_tasks.py
 
-# 5. Health Check
+# 5. تجربة Job Postings Intent
+python job_postings_enricher.py --dry-run --limit 20
+
+# 6. تجربة Auto Sequence (dry run أول)
+python auto_sequence.py --dry-run --limit 10
+
+# 7. Analytics Tracker
+python analytics_tracker.py --days 7 --dry-run
+
+# 8. Morning Brief
+python morning_brief.py
+
+# 9. Health Check
 python health_check.py
 ```
 
@@ -102,7 +122,10 @@ python health_check.py
 روح لـ: https://github.com/ragheeda-boop/ai-sales-os/actions
 
 1. اضغط "I understand my workflows, go ahead and enable them"
-2. اختر "🔄 Apollo → Notion Daily Pipeline"
+2. اختر "🔄 Apollo → Notion Daily Pipeline v2.0"
 3. اضغط "Run workflow" → اختر `incremental` → Run
 
-الـ Pipeline يشتغل تلقائياً كل يوم الساعة 7:00 صباحاً بتوقيت السعودية.
+الـ Pipeline يشتغل تلقائياً كل يوم 7:00 صباحاً بتوقيت السعودية (14 خطوة):
+1. Sync → 2. Enrich → 3. Score → 4. Gate → 5. Tasks → 6. Sequences → 7. Analytics → 8. Health → 9. Brief
+
+**كل يوم أحد:** Score Calibrator يشتغل تلقائي (review-only بدون تعديل أوتوماتيكي)

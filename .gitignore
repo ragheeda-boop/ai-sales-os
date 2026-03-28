@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════
-# AI Sales OS — .gitignore
+# AI Sales OS v4.0 — .gitignore
 # ═══════════════════════════════════════════════════════════
 
 # ─── Credentials & Secrets ─────────────────────────────────
@@ -29,7 +29,12 @@ env/
 logs/
 last_sync_stats.json
 last_action_stats.json
+last_job_postings_stats.json
+last_sequence_stats.json
+last_analytics_stats.json
 backfill_checkpoint.json
+calibration_history.json
+morning_brief_*.md
 
 # ─── OS Files ──────────────────────────────────────────────
 .DS_Store
@@ -47,13 +52,6 @@ desktop.ini
 test_write.txt
 *.tmp
 
-# ─── Skills & Generated Output ────────────────────────────
-packaged-skills/
-temp_docx_work/
-docx_unpack/
-node_modules/
-*.skill
-Skills_Eval_Review.html
 # ─── Skills & Generated Output ────────────────────────────
 packaged-skills/
 temp_docx_work/

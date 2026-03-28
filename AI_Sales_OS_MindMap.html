@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Sales OS - Mind Map v6.0</title>
+<title>AI Sales OS v4.1 - Mind Map v8.0</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap');
   *{margin:0;padding:0;box-sizing:border-box}
@@ -195,7 +195,7 @@
   <h1>نظام تشغيل البيع الذكي</h1>
   <p class="subtitle">نظام تشغيل البيع الذكي — الحلقة المغلقة</p>
   <p style="color:#E8771A;font-size:0.9em;margin-top:4px">Apollo → Python → Notion → Apollo — الحلقة الذاتية</p>
-  <span class="version-badge">v6.0 — 28 مارس 2026</span>
+  <span class="version-badge">v8.0 — AI Sales OS v4.1 — 28 مارس 2026</span>
   <p class="date">خطة التنفيذ — مراحل متكاملة — حلقة مغلقة ذاتية التعلم</p>
 </div>
 
@@ -223,14 +223,14 @@
   <div class="arch-arrow">→</div>
   <div class="arch-node python">
     <div class="node-icon">🐍</div>
-    <div class="node-label">Python Scripts</div>
-    <div class="node-sub">المعالجة</div>
+    <div class="node-label">Python (18 سكربت)</div>
+    <div class="node-sub">المعالجة + الذكاء</div>
   </div>
   <div class="arch-arrow">→</div>
   <div class="arch-node notion">
     <div class="node-icon">📊</div>
     <div class="node-label">Notion CRM</div>
-    <div class="node-sub">قاعدة البيانات</div>
+    <div class="node-sub">7 قواعد بيانات</div>
   </div>
   <div class="arch-arrow">→</div>
   <div class="arch-node apollo">
@@ -247,14 +247,44 @@
   <div class="arch-arrow" style="animation:arrowPulse 1.5s infinite">↺</div>
 </div>
 
-<p style="text-align:center;color:#E8771A;font-weight:700;margin-bottom:28px">الحلقة الذاتية — تحسن مستمر بدون تدخل يدوي</p>
+<!-- Revenue Gap Layer -->
+<div style="text-align:center;margin:12px 0 8px">
+  <h4 style="font-size:.95em;color:#E8771A;margin-bottom:10px">طبقة ذكاء الاجتماعات (v4.1)</h4>
+</div>
+<div class="arch-flow">
+  <div class="arch-node notion">
+    <div class="node-icon">📅</div>
+    <div class="node-label">Notion Calendar</div>
+    <div class="node-sub">الاجتماعات</div>
+  </div>
+  <div class="arch-arrow">→</div>
+  <div class="arch-node python">
+    <div class="node-icon">🔍</div>
+    <div class="node-label">Meeting Tracker</div>
+    <div class="node-sub">جمع + ربط</div>
+  </div>
+  <div class="arch-arrow">→</div>
+  <div class="arch-node analytics" style="border-color:#E8771A">
+    <div class="node-icon">🧠</div>
+    <div class="node-label">Claude AI</div>
+    <div class="node-sub">تحليل ذكي</div>
+  </div>
+  <div class="arch-arrow">→</div>
+  <div class="arch-node notion">
+    <div class="node-icon">💰</div>
+    <div class="node-label">Opportunities</div>
+    <div class="node-sub">الفرص + المهام</div>
+  </div>
+</div>
+
+<p style="text-align:center;color:#E8771A;font-weight:700;margin-bottom:28px">الحلقة الذاتية — تحسن مستمر بدون تدخل يدوي | اجتماع → فهم → تحديث تشغيلي</p>
 
 <!-- PROGRESS -->
 <div class="progress-section">
-  <div class="progress-pct">90%</div>
-  <div class="progress-label">المرحلة 1+2 مكتملة | المرحلة 3 مبنية | الحلقة الذاتية مفعّلة</div>
+  <div class="progress-pct">97%</div>
+  <div class="progress-label">المراحل 1+2+3+3.5 مكتملة | ذكاء الاجتماعات مفعّل | 17 خطوة يومية | بانتظار Phase 4</div>
   <div class="progress-bar-bg">
-    <div class="progress-bar-fill" style="width:90%"></div>
+    <div class="progress-bar-fill" style="width:97%"></div>
   </div>
   <div class="progress-phases">
     <span class="done-phase">إعداد Notion ✓</span>
@@ -264,6 +294,7 @@
     <span class="done-phase">تسجيل النقاط ✓</span>
     <span class="done-phase">محرك التنفيذ ✓</span>
     <span class="done-phase">الإثراء ✓</span>
+    <span class="done-phase">ذكاء الاجتماعات ✓</span>
     <span class="active-phase">◀ التعلّم الذاتي</span>
     <span>التحسين</span>
   </div>
@@ -283,7 +314,7 @@
   </div>
   <div class="stat-card">
     <div class="icon">🐍</div>
-    <div class="value">15</div>
+    <div class="value">18</div>
     <div class="label">سكربت</div>
   </div>
   <div class="stat-card">
@@ -303,7 +334,7 @@
   </div>
   <div class="stat-card">
     <div class="icon">📧</div>
-    <div class="value">20</div>
+    <div class="value">24</div>
     <div class="label">سلسلة Apollo</div>
   </div>
   <div class="stat-card">
@@ -479,32 +510,52 @@
 <div class="phase done">
   <div class="phase-num">3</div>
   <div class="phase-header">
-    <div class="phase-title"><h3>المرحلة 3: الإثراء (البيانات الإضافية)</h3></div>
-    <span class="status-badge badge-partial">🟠 مبني ✅</span>
+    <div class="phase-title"><h3>المرحلة 3: الإثراء + الحلقة الذاتية (v4.0)</h3></div>
+    <span class="status-badge badge-done">✅ مكتملة 100%</span>
   </div>
   <ul class="tasks">
-    <li><span class="done-t">✅ job_postings_enricher.py — معالج الوظائف المفتوحة</span></li>
-    <li><span class="done-t">✅ analytics_tracker.py — تتبع أداء Apollo</span></li>
-    <li><span class="done-t">✅ auto_sequence.py — إضافة تلقائية للسلاسل</span></li>
-    <li><span class="partial-t">⏳ اختبار التكامل مع السلاسل</span></li>
-    <li><span class="pending-t">⏳ معايرة أوزان الصيغ</span></li>
+    <li><span class="done-t">✅ job_postings_enricher.py — معالج الوظائف المفتوحة (نية الشراء 0-100)</span></li>
+    <li><span class="done-t">✅ analytics_tracker.py — تتبع أداء Apollo + مزامنة التفاعل</span></li>
+    <li><span class="done-t">✅ auto_sequence.py — إضافة تلقائية لـ 24 سلسلة (5 أدوار × تيرين)</span></li>
+    <li><span class="done-t">✅ score_calibrator.py — تعلم ذاتي وتعديل الأوزان (حدود أمان 10%)</span></li>
+    <li><span class="done-t">✅ morning_brief.py — ملخص صباحي يومي ذكي</span></li>
+    <li><span class="done-t">✅ GitHub Actions v2.0 — 14 خطوة يومية + معايرة أسبوعية (ارتقت لـ v3.0 في Phase 3.5)</span></li>
+  </ul>
+</div>
+
+<!-- PHASE 3.5: REVENUE GAP -->
+<div class="phase done">
+  <div class="phase-num">3.5</div>
+  <div class="phase-header">
+    <div class="phase-title"><h3>المرحلة 3.5: ذكاء الاجتماعات — سد فجوة الإيرادات (v4.1)</h3></div>
+    <span class="status-badge badge-done">✅ مكتملة 100%</span>
+  </div>
+  <ul class="tasks">
+    <li><span class="done-t">✅ meeting_tracker.py — جمع الاجتماعات من Notion (الوضع الأصلي بدون Google OAuth)</span></li>
+    <li><span class="done-t">✅ meeting_analyzer.py — تحليل AI ذكي (Claude API) مع JSON منظّم</span></li>
+    <li><span class="done-t">✅ opportunity_manager.py — إدارة الفرص + كشف الصفقات الراكدة</span></li>
+    <li><span class="done-t">✅ morning_brief.py v2.0 — 9 أقسام (اجتماعات + خط الصفقات + تنبيهات)</span></li>
+    <li><span class="done-t">✅ health_check.py — 5 فاحصات (sync + action + meetings + analyzer + opportunities)</span></li>
+    <li><span class="done-t">✅ خط الأنابيب 17 خطوة — GitHub Actions v3.0</span></li>
+    <li><span class="done-t">✅ وضعين للتحليل: Cowork (تفاعلي، مجاني) + API (آلي، اختياري)</span></li>
   </ul>
 </div>
 
 <!-- AUTONOMOUS LOOP PHASE -->
-<div class="phase active">
+<div class="phase done">
   <div class="phase-num">∞</div>
   <div class="phase-header">
-    <div class="phase-title"><h3>الحلقة الذاتية (Autonomous Loop)</h3></div>
-    <span class="status-badge badge-active">🟠 نشط الآن</span>
+    <div class="phase-title"><h3>الحلقة الذاتية (Autonomous Loop) — مفعّلة</h3></div>
+    <span class="status-badge badge-done">✅ مفعّلة</span>
   </div>
   <ul class="tasks">
-    <li><span class="done-t">✅ analytics_tracker.py — سحب نتائج الأداء من Apollo Analytics</span></li>
-    <li><span class="done-t">✅ job_postings_enricher.py — حساب نية الشراء من الوظائف المفتوحة</span></li>
-    <li><span class="done-t">✅ auto_sequence.py — إضافة تلقائية للسلاسل</span></li>
-    <li><span class="done-t">✅ score_calibrator.py — تعلم ذاتي وتعديل الأوزان</span></li>
-    <li><span class="done-t">✅ morning_brief.py — ملخص صباحي يومي ذكي</span></li>
-    <li><span class="partial-t">⏳ أول تشغيل كامل للحلقة (يوم الأحد)</span></li>
+    <li><span class="done-t">✅ Score → Task → Sequence → Meet → Analyze → Opportunity → Calibrate → Better Score</span></li>
+    <li><span class="done-t">✅ 17-step pipeline يشتغل يومياً 7:00 صباحاً KSA</span></li>
+    <li><span class="done-t">✅ معايرة أسبوعية تلقائية (كل أحد)</span></li>
+    <li><span class="done-t">✅ 24 سلسلة Apollo × 6 حسابات بريد × round-robin</span></li>
+    <li><span class="done-t">✅ 12 Claude Skill بنسبة نجاح 100%</span></li>
+    <li><span class="done-t">✅ ذكاء الاجتماعات — اجتماع → فهم → تحديث تشغيلي</span></li>
+    <li><span class="done-t">✅ Notion workspace محدّث بالكامل (6 صفحات تشغيلية + 9 قواعد بيانات)</span></li>
   </ul>
 </div>
 
@@ -553,102 +604,120 @@ Intent (20%)<br>
 </div>
 
 <!-- PIPELINE CODE BLOCK -->
-<div class="section-title cyan">خط الأنابيب اليومي — الإصدار 2.0 (9 خطوات)</div>
+<div class="section-title cyan">خط الأنابيب اليومي — الإصدار 3.0 (17 خطوة + معايرة أسبوعية)</div>
 
-<div class="code-block"># خط الأنابيب اليومي v2.0 — 9 خطوات
+<div class="code-block"># خط الأنابيب اليومي v3.0 — 17 خطوة (GitHub Actions — 7:00 AM KSA)
 
-1. daily_sync.py --mode incremental          # مزامنة Apollo
-2. job_postings_enricher.py --limit 50       # إثراء نية الشراء 🆕
-3. lead_score.py                             # تسجيل النقاط
-4. action_ready_updater.py                   # تقييم الجاهزية
-5. auto_tasks.py                             # إنشاء المهام
-6. auto_sequence.py --limit 20              # تسجيل في السلاسل 🆕
-7. analytics_tracker.py --export             # تتبع الأداء 🆕
-8. health_check.py                           # فحص الصحة
-9. morning_brief.py                          # الملخص الصباحي 🆕
+ 1. checkout                                  # تحميل الكود
+ 2. setup python 3.11                         # تهيئة البيئة
+ 3. pip install                               # تثبيت المكتبات
+ 4. daily_sync.py --mode incremental --hours 26  # مزامنة Apollo
+ 5. job_postings_enricher.py --limit 50       # إثراء نية الشراء
+ 6. lead_score.py                             # تسجيل النقاط (0-100) + Lead Tier
+ 7. action_ready_updater.py                   # تقييم الجاهزية (5 شروط)
+ 8. auto_tasks.py                             # إنشاء المهام (HOT=24h / WARM=48h)
+ 9. auto_sequence.py --limit 50              # تسجيل في السلاسل (24 سلسلة)
+10. meeting_tracker.py --days 7              # جمع الاجتماعات من Notion ←  جديد
+11. meeting_analyzer.py --limit 10           # تحليل AI ذكي (Claude) ←  جديد
+12. opportunity_manager.py                   # إدارة الفرص والصفقات ←  جديد
+13. analytics_tracker.py --days 7             # مزامنة التفاعل من Apollo
+14. health_check.py                           # فحص صحة النظام (5 فاحصات)
+15. morning_brief.py --output file            # الملخص الصباحي v2.0 (9 أقسام)
+16. upload logs                               # حفظ السجلات (30 يوم)
+17. notify on failure                         # تنبيه عند الفشل
 
 # أسبوعي (كل أحد):
-10. score_calibrator.py --export             # معايرة الأوزان 🆕
+score_calibrator.py --days 30 --export        # معايرة الأوزان (مراجعة فقط)
 </div>
 
 <!-- SCRIPTS INVENTORY -->
-<div class="section-title orange">مخزون السكريبتات (15 سكربت)</div>
+<div class="section-title orange">مخزون السكريبتات (18 سكربت)</div>
 
 <div class="script-grid">
   <div class="script-card">
     <div class="s-name">daily_sync.py</div>
-    <div class="s-desc">مزامنة بيانات Apollo إلى Notion</div>
-    <div class="s-lines">220 سطر</div>
+    <div class="s-desc">محرك المزامنة v2.1 — 3 أوضاع (incremental/backfill/full)</div>
+    <div class="s-lines">912 سطر</div>
   </div>
   <div class="script-card">
     <div class="s-name">lead_score.py</div>
-    <div class="s-desc">حساب نقاط الـ Leads الديناميكية</div>
-    <div class="s-lines">185 سطر</div>
-  </div>
-  <div class="script-card">
-    <div class="s-name">action_ready_updater.py</div>
-    <div class="s-desc">تحديث حالة جاهزية الإجراء</div>
-    <div class="s-lines">150 سطر</div>
+    <div class="s-desc">حساب النقاط (0-100) + كتابة Lead Tier (HOT/WARM/COLD)</div>
+    <div class="s-lines">494 سطر</div>
   </div>
   <div class="script-card">
     <div class="s-name">auto_tasks.py</div>
-    <div class="s-desc">إنشاء المهام الآلية</div>
-    <div class="s-lines">210 سطر</div>
+    <div class="s-desc">محرك التنفيذ — إنشاء مهام SLA تلقائياً</div>
+    <div class="s-lines">437 سطر</div>
+  </div>
+  <div class="script-card">
+    <div class="s-name">action_ready_updater.py</div>
+    <div class="s-desc">تقييم جاهزية الإجراء (5 شروط)</div>
+    <div class="s-lines">211 سطر</div>
   </div>
   <div class="script-card">
     <div class="s-name">health_check.py</div>
-    <div class="s-desc">فحص صحة النظام والأخطاء</div>
-    <div class="s-lines">95 سطر</div>
+    <div class="s-desc">فحص صحة النظام — 5 فاحصات (sync/action/meetings/analyzer/opportunities)</div>
+    <div class="s-lines">229 سطر</div>
   </div>
   <div class="script-card">
     <div class="s-name">constants.py</div>
-    <div class="s-desc">ثابت مركزي واحد للجميع</div>
-    <div class="s-lines">65 سطر</div>
+    <div class="s-desc">ثوابت مركزية — أسماء الحقول والعتبات والـ SLA</div>
+    <div class="s-lines">189 سطر</div>
   </div>
   <div class="script-card">
-    <div class="s-name">utils.py</div>
-    <div class="s-desc">وظائف مساعدة مشتركة</div>
-    <div class="s-lines">180 سطر</div>
+    <div class="s-name">notion_helpers.py</div>
+    <div class="s-desc">أدوات Notion المشتركة — Rate Limiter + CRUD</div>
+    <div class="s-lines">241 سطر</div>
   </div>
   <div class="script-card">
-    <div class="s-name">sync_stats.py</div>
-    <div class="s-desc">إحصائيات المزامنة والتتبع</div>
-    <div class="s-lines">75 سطر</div>
+    <div class="s-name">webhook_server.py</div>
+    <div class="s-desc">خادم Webhooks لاستقبال أحداث Apollo</div>
+    <div class="s-lines">487 سطر</div>
   </div>
   <div class="script-card">
-    <div class="s-name">dedup.py</div>
-    <div class="s-desc">كشف ومنع التكرارات (Triple)</div>
-    <div class="s-lines">130 سطر</div>
-  </div>
-  <div class="script-card">
-    <div class="s-name">apollo_api.py</div>
-    <div class="s-desc">مكتبة Apollo API</div>
-    <div class="s-lines">240 سطر</div>
+    <div class="s-name">verify_links.py</div>
+    <div class="s-desc">التحقق من روابط جهات الاتصال بالشركات</div>
+    <div class="s-lines">253 سطر</div>
   </div>
   <div class="script-card new-script">
-    <div class="s-name">analytics_tracker.py 🆕</div>
-    <div class="s-desc">سحب تحليلات Apollo</div>
-    <div class="s-lines">165 سطر</div>
+    <div class="s-name">job_postings_enricher.py</div>
+    <div class="s-desc">إثراء نية الشراء — Apollo Job Postings API</div>
+    <div class="s-lines">508 سطر</div>
   </div>
   <div class="script-card new-script">
-    <div class="s-name">job_postings_enricher.py 🆕</div>
-    <div class="s-desc">إثراء نية الشراء</div>
-    <div class="s-lines">195 سطر</div>
+    <div class="s-name">auto_sequence.py</div>
+    <div class="s-desc">تسجيل تلقائي في 24 سلسلة Apollo</div>
+    <div class="s-lines">442 سطر</div>
   </div>
   <div class="script-card new-script">
-    <div class="s-name">auto_sequence.py 🆕</div>
-    <div class="s-desc">إضافة تلقائية للسلاسل</div>
-    <div class="s-lines">145 سطر</div>
+    <div class="s-name">analytics_tracker.py</div>
+    <div class="s-desc">مزامنة التفاعل + تقارير الأداء</div>
+    <div class="s-lines">480 سطر</div>
   </div>
   <div class="script-card new-script">
-    <div class="s-name">score_calibrator.py 🆕</div>
-    <div class="s-desc">معايرة الأوزان الذاتية</div>
-    <div class="s-lines">210 سطر</div>
+    <div class="s-name">score_calibrator.py</div>
+    <div class="s-desc">معايرة ذاتية للأوزان (حدود أمان 10%)</div>
+    <div class="s-lines">448 سطر</div>
   </div>
   <div class="script-card new-script">
-    <div class="s-name">morning_brief.py 🆕</div>
-    <div class="s-desc">ملخص صباحي يومي</div>
-    <div class="s-lines">125 سطر</div>
+    <div class="s-name">morning_brief.py</div>
+    <div class="s-desc">ملخص صباحي v2.0 — 9 أقسام (اجتماعات + صفقات + تنبيهات)</div>
+    <div class="s-lines">520 سطر</div>
+  </div>
+  <div class="script-card new-script">
+    <div class="s-name">meeting_tracker.py</div>
+    <div class="s-desc">جمع الاجتماعات من Notion — الوضع الأصلي (بدون Google OAuth)</div>
+    <div class="s-lines">560 سطر — جديد v4.1</div>
+  </div>
+  <div class="script-card new-script">
+    <div class="s-name">meeting_analyzer.py</div>
+    <div class="s-desc">تحليل AI ذكي — Claude API — JSON منظّم + إنشاء مهام تلقائياً</div>
+    <div class="s-lines">380 سطر — جديد v4.1</div>
+  </div>
+  <div class="script-card new-script">
+    <div class="s-name">opportunity_manager.py</div>
+    <div class="s-desc">إدارة الفرص — إنشاء صفقات + كشف الراكد + تحديث المراحل</div>
+    <div class="s-lines">430 سطر — جديد v4.1</div>
   </div>
 </div>
 
@@ -657,39 +726,48 @@ Intent (20%)<br>
 
 <div class="day-plan">
   <div class="day-card d1">
-    <h4>الأسبوع 1</h4>
+    <h4>الأسبوع 1 — Phase 1</h4>
     <ul>
-      <li>التفعيل الأولي</li>
-      <li>ربط Notion</li>
-      <li>محاولة المزامنة الأولى</li>
+      <li>إعداد Notion + 7 قواعد بيانات</li>
+      <li>محرك المزامنة v2.1</li>
+      <li>44,875 جهة + 15,407 شركة</li>
       <li>✅ مكتمل</li>
     </ul>
   </div>
   <div class="day-card d2">
-    <h4>الأسبوع 2-3</h4>
+    <h4>الأسبوع 2-3 — Phase 2</h4>
     <ul>
-      <li>محرك التنفيذ</li>
-      <li>إنشاء المهام</li>
-      <li>تسجيل النقاط</li>
+      <li>تسجيل النقاط + Lead Tier</li>
+      <li>Action Ready (5 شروط)</li>
+      <li>محرك المهام الآلية</li>
       <li>✅ مكتمل</li>
     </ul>
   </div>
   <div class="day-card d3">
-    <h4>الأسبوع 3-4 — الحالي</h4>
+    <h4>الأسبوع 3-4 — Phase 3 (v4.0)</h4>
     <ul>
-      <li>الإثراء (وظائف مفتوحة)</li>
-      <li>الحلقة الذاتية</li>
-      <li>المعايرة الأولى</li>
-      <li>✅ مبني (اختبار)</li>
+      <li>5 سكربتات جديدة</li>
+      <li>الحلقة الذاتية الكاملة</li>
+      <li>14-step pipeline</li>
+      <li>✅ مكتمل</li>
+    </ul>
+  </div>
+  <div class="day-card d3">
+    <h4>الأسبوع 4 — Phase 3.5 (v4.1)</h4>
+    <ul>
+      <li>3 سكربتات جديدة (ذكاء الاجتماعات)</li>
+      <li>اجتماع → تحليل AI → فرصة</li>
+      <li>17-step pipeline</li>
+      <li>✅ مكتمل</li>
     </ul>
   </div>
   <div class="day-card d4">
-    <h4>الأسبوع 5-8</h4>
+    <h4>القادم — Phase 4</h4>
     <ul>
-      <li>التحسين المستمر</li>
-      <li>تحليل البيانات</li>
-      <li>تكامل Odoo</li>
-      <li>🔮 مستقبلي</li>
+      <li>تكامل Odoo ERP</li>
+      <li>تتبع الإيرادات</li>
+      <li>لوحة معلومات حية</li>
+      <li>🔮 مخطط</li>
     </ul>
   </div>
 </div>
@@ -728,6 +806,21 @@ Intent (20%)<br>
     <div class="d-reason">كتابة checkboxes فقط إذا Apollo صرح بالحقل. يمنع overwriting قيم True يدوية مع False.</div>
     <div class="d-status">نهائي</div>
   </div>
+  <div class="decision-card">
+    <div class="d-title">Notion أولاً — بدون Google OAuth</div>
+    <div class="d-reason">meeting_tracker.py يقرأ من Notion مباشرة بدل Google Calendar API. يلغي OAuth المعقد. Notion Calendar مربوط أصلاً. صفر إعداد إضافي.</div>
+    <div class="d-status">نافذ الآن — v4.1</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">AI في Cowork — تحليل تفاعلي مجاني</div>
+    <div class="d-reason">التحليل الذكي عبر Claude في Cowork (الوضع الأساسي) بدل API منفصل. صفر تكلفة. meeting_analyzer.py يبقى كاحتياطي للمعالجة الآلية الجماعية.</div>
+    <div class="d-status">نافذ الآن — v4.1</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">JSON منظّم لمخرجات AI</div>
+    <div class="d-reason">كل تحليل اجتماع يخرج JSON ثابت: outcome, takeaways, buying_signals, next_steps, follow_up_task. يضمن تحديثات CRM متسقة ومهام تلقائية دقيقة.</div>
+    <div class="d-status">نافذ الآن — v4.1</div>
+  </div>
 </div>
 
 <!-- STRENGTHS VS GAPS -->
@@ -738,19 +831,19 @@ Intent (20%)<br>
     <h4>✓ مميزات قوية</h4>
     <ul>
       <li>⭐ 44,875 جهة اتصال + 15,407 شركة (99.96% نجاح)</li>
-      <li>⭐ محرك المزامنة v2.0 — 3 أوضاع (incremental/backfill/full)</li>
-      <li>⭐ صيغة تسجيل النقاط مبنية ومختبرة</li>
-      <li>⭐ 5 سكريبتات جديدة للحلقة الذاتية</li>
-      <li>⭐ معايرة ذاتية بحدود أمان</li>
-      <li>⭐ تتبع analytics_tracker و job_postings_enricher</li>
-      <li>⭐ Zero external dependencies (Python نقي)</li>
+      <li>⭐ محرك المزامنة v2.1 — 3 أوضاع (incremental/backfill/full)</li>
+      <li>⭐ صيغة تسجيل النقاط مبنية ومختبرة + معايرة ذاتية</li>
+      <li>⭐ 18 سكربت — حلقة ذاتية كاملة + ذكاء اجتماعات</li>
+      <li>⭐ اجتماع → تحليل AI → فرصة → مهمة (سد فجوة الإيرادات)</li>
+      <li>⭐ وضعين AI: Cowork تفاعلي (مجاني) + API آلي (اختياري)</li>
+      <li>⭐ 17-step pipeline يومياً + معايرة أسبوعية</li>
+      <li>⭐ Zero external dependencies (Python نقي، بدون وسيط)</li>
     </ul>
   </div>
   <div class="compare-box compare-bad">
     <h4>⚠ ثغرات متبقية</h4>
     <ul>
       <li>⚠ اختبارات شاملة (unit tests) مفقودة</li>
-      <li>⚠ الحلقة الأولى لم تكمل بعد (أول أحد)</li>
       <li>⚠ لوحة معلومات الأداء الحية غير مبنية</li>
       <li>⚠ تكامل Odoo لم يبدأ</li>
       <li>⚠ توزيع دوري للمهام (multi-user) مستقبلي</li>
@@ -761,8 +854,8 @@ Intent (20%)<br>
 
 <!-- FOOTER -->
 <div class="footer">
-  نظام تشغيل البيع الذكي Mind Map v6.0 — رغيد المدني — Claude AI — 28 مارس 2026<br>
-  الحلقة الذاتية | 5 طبقات | 44,875 جهة اتصال | 15,407 شركة | 15 سكربت | بدون وسيط
+  AI Sales OS v4.1 — Mind Map v8.0 — رغيد المدني — Claude AI — 28 مارس 2026<br>
+  الحلقة الذاتية مفعّلة | 17 خطوة يومية | 44,875 جهة اتصال | 15,407 شركة | 18 سكربت | 24 سلسلة | 12 Claude Skill | ذكاء اجتماعات | بدون وسيط
 </div>
 
 </div>

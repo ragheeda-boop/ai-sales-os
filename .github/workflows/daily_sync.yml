@@ -45,7 +45,7 @@ on:
 
 jobs:
   daily-pipeline:
-    name: "Sync → Enrich → Score → Action → Sequence → Learn"
+    name: "Sync → Enrich → Score → Action → Sequence → Track → Learn"
     runs-on: ubuntu-latest
     timeout-minutes: 360  # 6 hours — Full mode + all steps
 
@@ -55,6 +55,9 @@ jobs:
       NOTION_DATABASE_ID_CONTACTS: ${{ secrets.NOTION_DATABASE_ID_CONTACTS }}
       NOTION_DATABASE_ID_COMPANIES: ${{ secrets.NOTION_DATABASE_ID_COMPANIES }}
       NOTION_DATABASE_ID_TASKS: ${{ secrets.NOTION_DATABASE_ID_TASKS }}
+      NOTION_DATABASE_ID_MEETINGS: ${{ secrets.NOTION_DATABASE_ID_MEETINGS }}
+      NOTION_DATABASE_ID_OPPORTUNITIES: ${{ secrets.NOTION_DATABASE_ID_OPPORTUNITIES }}
+      # GOOGLE_CALENDAR_CREDENTIALS: ${{ secrets.GOOGLE_CALENDAR_CREDENTIALS }}  # Optional: only if using --calendar mode
 
     steps:
       # ─── 1. Checkout ─────────────────────────────────────────────────────
@@ -130,7 +133,34 @@ jobs:
           echo "📧 Enrolling contacts in sequences..."
           python auto_sequence.py --limit 50
 
-      # ─── 10. Analytics Tracker ───────────────────────────────────────────
+      # ─── 10. Meeting Tracker ─────────────────────────────────────────────
+      - name: "📅 Meeting Tracker"
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        continue-on-error: true
+        run: |
+          echo "📅 Processing meetings from Notion..."
+          python meeting_tracker.py --days 7
+
+      # ─── 11. Meeting Analyzer (AI) ────────────────────────────────────
+      - name: "🧠 Meeting Analyzer"
+        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "🧠 Analyzing meetings with AI..."
+          python meeting_analyzer.py --limit 10
+
+      # ─── 12. Opportunity Manager ───────────────────────────────────────
+      - name: "💰 Opportunity Manager"
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        continue-on-error: true
+        run: |
+          echo "💰 Processing opportunities from meetings..."
+          python opportunity_manager.py
+
+      # ─── 12. Analytics Tracker ───────────────────────────────────────────
       - name: "📊 Analytics Tracker"
         working-directory: "💻 CODE/Phase 3 - Sync"
         continue-on-error: true
@@ -138,14 +168,14 @@ jobs:
           echo "📊 Syncing analytics and engagement..."
           python analytics_tracker.py --days 7
 
-      # ─── 11. Health Check ────────────────────────────────────────────────
+      # ─── 13. Health Check ────────────────────────────────────────────────
       - name: "🏥 Health Check"
         working-directory: "💻 CODE/Phase 3 - Sync"
         run: |
           echo "🏥 Running health check..."
           python health_check.py
 
-      # ─── 12. Morning Brief ──────────────────────────────────────────────
+      # ─── 14. Morning Brief ──────────────────────────────────────────────
       - name: "☀️ Morning Brief"
         working-directory: "💻 CODE/Phase 3 - Sync"
         continue-on-error: true
@@ -153,7 +183,7 @@ jobs:
           echo "☀️ Generating morning brief..."
           python morning_brief.py --output file
 
-      # ─── 13. Upload Logs ────────────────────────────────────────────────
+      # ─── 15. Upload Logs ────────────────────────────────────────────────
       - name: "📋 Upload Logs"
         if: always()
         uses: actions/upload-artifact@v4
@@ -167,6 +197,9 @@ jobs:
             💻 CODE/Phase 3 - Sync/auto_sequence.log
             💻 CODE/Phase 3 - Sync/job_postings.log
             💻 CODE/Phase 3 - Sync/analytics_tracker.log
+            💻 CODE/Phase 3 - Sync/meeting_tracker.log
+            💻 CODE/Phase 3 - Sync/meeting_analyzer.log
+            💻 CODE/Phase 3 - Sync/opportunity_manager.log
             💻 CODE/Phase 3 - Sync/morning_brief.log
             💻 CODE/Phase 3 - Sync/health_check.log
             💻 CODE/Phase 3 - Sync/last_sync_stats.json
@@ -174,10 +207,13 @@ jobs:
             💻 CODE/Phase 3 - Sync/last_sequence_stats.json
             💻 CODE/Phase 3 - Sync/last_job_postings_stats.json
             💻 CODE/Phase 3 - Sync/last_analytics_stats.json
+            💻 CODE/Phase 3 - Sync/last_meeting_tracker_stats.json
+            💻 CODE/Phase 3 - Sync/last_analyzer_stats.json
+            💻 CODE/Phase 3 - Sync/last_opportunity_stats.json
             💻 CODE/Phase 3 - Sync/morning_brief_*.md
           retention-days: 30
 
-      # ─── 14. Notify on Failure ──────────────────────────────────────────
+      # ─── 16. Notify on Failure ──────────────────────────────────────────
       - name: "❌ Notify on Failure"
         if: failure()
         run: |
@@ -190,6 +226,10 @@ jobs:
           tail -30 "💻 CODE/Phase 3 - Sync/auto_tasks.log" 2>/dev/null || echo "No action log"
           echo "=== Last 30 lines of sequence log ==="
           tail -30 "💻 CODE/Phase 3 - Sync/auto_sequence.log" 2>/dev/null || echo "No sequence log"
+          echo "=== Last 30 lines of meeting tracker log ==="
+          tail -30 "💻 CODE/Phase 3 - Sync/meeting_tracker.log" 2>/dev/null || echo "No meeting tracker log"
+          echo "=== Last 30 lines of opportunity manager log ==="
+          tail -30 "💻 CODE/Phase 3 - Sync/opportunity_manager.log" 2>/dev/null || echo "No opportunity log"
 
   # ─── Weekly Score Calibration (Sundays only) ───────────────────────────
   weekly-calibration:

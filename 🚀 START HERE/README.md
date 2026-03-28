@@ -1,14 +1,16 @@
-# AI Sales OS — Start Here
+# AI Sales OS v4.0 — Start Here
 
 ## What is this?
 
-A unified sales platform that syncs Apollo.io data into Notion, scores leads automatically, and creates actionable priorities.
+An autonomous sales operating system that syncs Apollo.io data into Notion, scores leads, creates tasks, enrolls contacts in sequences, tracks engagement, and self-calibrates — all automatically.
 
 ## Key Numbers
 
 - **44,875** contacts in Notion
 - **15,407** companies in Notion
-- **3** sync modes (incremental / backfill / full)
+- **15** production scripts
+- **14-step** daily pipeline + weekly calibration
+- **12** Claude Skills (100% eval pass rate)
 - **Lead Score** formula: Intent(10%) + Engagement(10%) + Size(45%) + Seniority(35%)
 
 ## Where to Go
@@ -17,17 +19,28 @@ A unified sales platform that syncs Apollo.io data into Notion, scores leads aut
 |--------------|---------------|
 | **Start using the system** | [QUICK_START.md](QUICK_START.md) |
 | **Understand the architecture** | [SYSTEM_OVERVIEW.md](SYSTEM_OVERVIEW.md) |
+| **See the project map** | [PROJECT_MAP.md](PROJECT_MAP.md) |
 | **See the full plan** | `📚 DOCUMENTATION/EXECUTION_PLAN_v3.2.docx` |
 | **Interactive overview** | `AI_Sales_OS_MindMap.html` (open in browser) |
 | **Run sync scripts** | `💻 CODE/Phase 3 - Sync/` |
 | **Field mapping reference** | `📚 DOCUMENTATION/System Architecture/FIELD_MAPPING_RULES.md` |
+| **GitHub setup** | `GITHUB_SETUP_GUIDE.md` |
 
 ## Current Phase
 
-**Phase 2: ACTION** — Task Automation + Action Ready Engine (CODE COMPLETE)
-**Phase 3: ENRICH** — Job Postings, Job Change, Intent Trend (NEXT)
+**Phase 3: ENRICH** — COMPLETE (v4.0)
+- Job postings intent enrichment
+- Auto sequence enrollment (24 sequences)
+- Analytics & engagement sync
+- Self-learning score calibration
+- Daily morning intelligence brief
+
+**Phase 4: OPTIMIZE** — PLANNED
+- Odoo ERP integration
+- Revenue tracking
+- Advanced analytics
 
 See EXECUTION_PLAN_v3.2.docx for complete 4-phase plan.
 
 ---
-**Last Updated**: 27 March 2026 | **Version**: 3.2 | **Owner**: Ragheed
+**Last Updated**: 28 March 2026 | **Version**: 4.0 | **Owner**: Ragheed
