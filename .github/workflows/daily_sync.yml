@@ -44,10 +44,13 @@ on:
           - 'no'
 
 jobs:
-  daily-pipeline:
-    name: "Sync → Enrich → Score → Action → Sequence → Track → Learn"
+  # ═══════════════════════════════════════════════════════════════════════════
+  # JOB 1: Sync → Enrich → Score (heavy — up to 5h)
+  # ═══════════════════════════════════════════════════════════════════════════
+  sync-and-score:
+    name: "🔄 Sync → Enrich → Score → Action Ready"
     runs-on: ubuntu-latest
-    timeout-minutes: 360  # 6 hours — Full mode + all steps
+    timeout-minutes: 350  # ~5h 50min safety margin before GitHub's 6h wall
 
     env:
       APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
@@ -57,32 +60,30 @@ jobs:
       NOTION_DATABASE_ID_TASKS: ${{ secrets.NOTION_DATABASE_ID_TASKS }}
       NOTION_DATABASE_ID_MEETINGS: ${{ secrets.NOTION_DATABASE_ID_MEETINGS }}
       NOTION_DATABASE_ID_OPPORTUNITIES: ${{ secrets.NOTION_DATABASE_ID_OPPORTUNITIES }}
-      # GOOGLE_CALENDAR_CREDENTIALS: ${{ secrets.GOOGLE_CALENDAR_CREDENTIALS }}  # Optional: only if using --calendar mode
 
     steps:
-      # ─── 1. Checkout ─────────────────────────────────────────────────────
+      # ─── 1. Checkout ──────────────────────────────────────────────────────
       - name: "⬇️ Checkout Repository"
         uses: actions/checkout@v4
 
-      # ─── 2. Python Setup ─────────────────────────────────────────────────
+      # ─── 2. Python Setup ──────────────────────────────────────────────────
       - name: "🐍 Setup Python 3.11"
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
-      # ─── 3. Install Dependencies ─────────────────────────────────────────
+      # ─── 3. Install Dependencies ──────────────────────────────────────────
       - name: "📦 Install Dependencies"
         working-directory: "💻 CODE/Phase 3 - Sync"
         run: pip install -r requirements.txt
 
-      # ─── 4. Run Sync (daily_sync.py v2.1) ────────────────────────────────
+      # ─── 4. Run Sync (daily_sync.py v2.1) ─────────────────────────────────
       - name: "🚀 Run Sync"
         working-directory: "💻 CODE/Phase 3 - Sync"
         run: |
           MODE="${{ github.event.inputs.sync_mode || 'incremental' }}"
           echo "🔄 Sync mode: $MODE"
-
           case $MODE in
             incremental)    python daily_sync.py --mode incremental --hours 26 ;;
             backfill_week)  python daily_sync.py --mode backfill --days 7 ;;
@@ -90,7 +91,7 @@ jobs:
             full)           python daily_sync.py --mode full ;;
           esac
 
-      # ─── 5. Job Postings Enricher (Intent Proxy) ─────────────────────────
+      # ─── 5. Job Postings Enricher ─────────────────────────────────────────
       - name: "🏗️ Job Postings Enricher"
         if: ${{ github.event.inputs.run_lead_score != 'no' }}
         working-directory: "💻 CODE/Phase 3 - Sync"
@@ -99,7 +100,7 @@ jobs:
           echo "🏗️ Enriching companies with job postings intent..."
           python job_postings_enricher.py --limit 50
 
-      # ─── 6. Run Lead Score ───────────────────────────────────────────────
+      # ─── 6. Run Lead Score ────────────────────────────────────────────────
       - name: "🎯 Run Lead Score"
         if: ${{ github.event.inputs.run_lead_score != 'no' }}
         working-directory: "💻 CODE/Phase 3 - Sync"
@@ -107,7 +108,7 @@ jobs:
           echo "🎯 Running Lead Score..."
           python lead_score.py
 
-      # ─── 7. Update Action Ready ──────────────────────────────────────────
+      # ─── 7. Update Action Ready ───────────────────────────────────────────
       - name: "✅ Update Action Ready"
         if: ${{ github.event.inputs.run_lead_score != 'no' }}
         working-directory: "💻 CODE/Phase 3 - Sync"
@@ -115,7 +116,66 @@ jobs:
           echo "✅ Updating Action Ready flags..."
           python action_ready_updater.py
 
-      # ─── 8. Run Action Engine ────────────────────────────────────────────
+      # ─── Pass sync stats to Job 2 ─────────────────────────────────────────
+      - name: "📤 Upload Sync Stats"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sync-stats-${{ github.run_number }}
+          path: |
+            💻 CODE/Phase 3 - Sync/last_sync_stats.json
+            💻 CODE/Phase 3 - Sync/daily_sync.log
+            💻 CODE/Phase 3 - Sync/lead_score.log
+            💻 CODE/Phase 3 - Sync/action_ready.log
+            💻 CODE/Phase 3 - Sync/last_job_postings_stats.json
+            💻 CODE/Phase 3 - Sync/job_postings.log
+          retention-days: 1
+          if-no-files-found: ignore
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # JOB 2: Action → Sequence → Meet → Track → Brief (light — under 2h)
+  # ═══════════════════════════════════════════════════════════════════════════
+  action-and-track:
+    name: "⚡ Action → Sequence → Meet → Track → Brief"
+    runs-on: ubuntu-latest
+    needs: sync-and-score
+    timeout-minutes: 180  # 3h max
+
+    env:
+      APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      NOTION_DATABASE_ID_CONTACTS: ${{ secrets.NOTION_DATABASE_ID_CONTACTS }}
+      NOTION_DATABASE_ID_COMPANIES: ${{ secrets.NOTION_DATABASE_ID_COMPANIES }}
+      NOTION_DATABASE_ID_TASKS: ${{ secrets.NOTION_DATABASE_ID_TASKS }}
+      NOTION_DATABASE_ID_MEETINGS: ${{ secrets.NOTION_DATABASE_ID_MEETINGS }}
+      NOTION_DATABASE_ID_OPPORTUNITIES: ${{ secrets.NOTION_DATABASE_ID_OPPORTUNITIES }}
+
+    steps:
+      # ─── 1. Checkout ──────────────────────────────────────────────────────
+      - name: "⬇️ Checkout Repository"
+        uses: actions/checkout@v4
+
+      # ─── 2. Python Setup ──────────────────────────────────────────────────
+      - name: "🐍 Setup Python 3.11"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # ─── 3. Install Dependencies ──────────────────────────────────────────
+      - name: "📦 Install Dependencies"
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        run: pip install -r requirements.txt
+
+      # ─── 4. Download Sync Stats from Job 1 ───────────────────────────────
+      - name: "📥 Download Sync Stats"
+        uses: actions/download-artifact@v4
+        with:
+          name: sync-stats-${{ github.run_number }}
+          path: "💻 CODE/Phase 3 - Sync/"
+        continue-on-error: true
+
+      # ─── 5. Run Action Engine ─────────────────────────────────────────────
       - name: "⚡ Run Action Engine"
         if: ${{ github.event.inputs.run_action_engine != 'no' }}
         working-directory: "💻 CODE/Phase 3 - Sync"
@@ -124,7 +184,7 @@ jobs:
           echo "⚡ Running Action Engine..."
           python auto_tasks.py
 
-      # ─── 9. Auto Sequence Enrollment ─────────────────────────────────────
+      # ─── 6. Auto Sequence Enrollment ──────────────────────────────────────
       - name: "📧 Auto Sequence Enrollment"
         if: ${{ github.event.inputs.run_sequences != 'no' }}
         working-directory: "💻 CODE/Phase 3 - Sync"
@@ -133,7 +193,7 @@ jobs:
           echo "📧 Enrolling contacts in sequences..."
           python auto_sequence.py --limit 50
 
-      # ─── 10. Meeting Tracker ─────────────────────────────────────────────
+      # ─── 7. Meeting Tracker ───────────────────────────────────────────────
       - name: "📅 Meeting Tracker"
         working-directory: "💻 CODE/Phase 3 - Sync"
         continue-on-error: true
@@ -141,7 +201,7 @@ jobs:
           echo "📅 Processing meetings from Notion..."
           python meeting_tracker.py --days 7
 
-      # ─── 11. Meeting Analyzer (AI) ────────────────────────────────────
+      # ─── 8. Meeting Analyzer (AI) ─────────────────────────────────────────
       - name: "🧠 Meeting Analyzer"
         if: ${{ env.ANTHROPIC_API_KEY != '' }}
         working-directory: "💻 CODE/Phase 3 - Sync"
@@ -152,7 +212,7 @@ jobs:
           echo "🧠 Analyzing meetings with AI..."
           python meeting_analyzer.py --limit 10
 
-      # ─── 12. Opportunity Manager ───────────────────────────────────────
+      # ─── 9. Opportunity Manager ───────────────────────────────────────────
       - name: "💰 Opportunity Manager"
         working-directory: "💻 CODE/Phase 3 - Sync"
         continue-on-error: true
@@ -160,7 +220,7 @@ jobs:
           echo "💰 Processing opportunities from meetings..."
           python opportunity_manager.py
 
-      # ─── 12. Analytics Tracker ───────────────────────────────────────────
+      # ─── 10. Analytics Tracker ────────────────────────────────────────────
       - name: "📊 Analytics Tracker"
         working-directory: "💻 CODE/Phase 3 - Sync"
         continue-on-error: true
@@ -168,14 +228,14 @@ jobs:
           echo "📊 Syncing analytics and engagement..."
           python analytics_tracker.py --days 7
 
-      # ─── 13. Health Check ────────────────────────────────────────────────
+      # ─── 11. Health Check ─────────────────────────────────────────────────
       - name: "🏥 Health Check"
         working-directory: "💻 CODE/Phase 3 - Sync"
         run: |
           echo "🏥 Running health check..."
           python health_check.py
 
-      # ─── 14. Morning Brief ──────────────────────────────────────────────
+      # ─── 12. Morning Brief ────────────────────────────────────────────────
       - name: "☀️ Morning Brief"
         working-directory: "💻 CODE/Phase 3 - Sync"
         continue-on-error: true
@@ -183,7 +243,7 @@ jobs:
           echo "☀️ Generating morning brief..."
           python morning_brief.py --output file
 
-      # ─── 15. Upload Logs ────────────────────────────────────────────────
+      # ─── 13. Upload All Logs ──────────────────────────────────────────────
       - name: "📋 Upload Logs"
         if: always()
         uses: actions/upload-artifact@v4
@@ -213,7 +273,7 @@ jobs:
             💻 CODE/Phase 3 - Sync/morning_brief_*.md
           retention-days: 30
 
-      # ─── 16. Notify on Failure ──────────────────────────────────────────
+      # ─── 14. Notify on Failure ────────────────────────────────────────────
       - name: "❌ Notify on Failure"
         if: failure()
         run: |
@@ -231,12 +291,14 @@ jobs:
           echo "=== Last 30 lines of opportunity manager log ==="
           tail -30 "💻 CODE/Phase 3 - Sync/opportunity_manager.log" 2>/dev/null || echo "No opportunity log"
 
-  # ─── Weekly Score Calibration (Sundays only) ───────────────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # WEEKLY: Score Calibration (Sundays only)
+  # ═══════════════════════════════════════════════════════════════════════════
   weekly-calibration:
     name: "📐 Weekly Score Calibration"
     runs-on: ubuntu-latest
     if: github.event.schedule == '0 4 * * 0' || github.event_name == 'workflow_dispatch'
-    needs: daily-pipeline
+    needs: action-and-track
     timeout-minutes: 30
 
     env:
