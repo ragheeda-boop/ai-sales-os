@@ -156,6 +156,10 @@ def _fetch_with_date_filter(
     """
     Generic date-filtered fetch with time-window splitting.
     Used by both incremental and backfill modes.
+
+    Note: Apollo's date filter uses day-granularity only. A local timestamp
+    filter is applied after fetch as a safety net to ensure only records
+    genuinely updated within the requested window are returned.
     """
     all_records = []
     seen_ids = set()
@@ -219,6 +223,29 @@ def _fetch_with_date_filter(
                 break
         else:
             break
+
+    # ── Local timestamp safety filter ────────────────────────────────────────
+    # Apollo's API filter uses date-only precision and may return records from
+    # the full calendar day instead of the exact requested hour window.
+    # We apply a client-side filter to drop anything genuinely outside the window.
+    since_str = since.strftime("%Y-%m-%dT%H:%M:%S")  # e.g. "2026-03-28T05:00:00"
+    original_count = len(all_records)
+    all_records = [
+        r for r in all_records
+        if not r.get("updated_at") or r.get("updated_at", "")[:19] >= since_str
+    ]
+    dropped = original_count - len(all_records)
+    if dropped > 0:
+        logger.warning(
+            f"⚠️  Local timestamp filter removed {dropped} {label} with "
+            f"updated_at < {since.strftime('%Y-%m-%d %H:%M')} UTC. "
+            f"Apollo's API date filter returned records outside the requested window."
+        )
+        logger.info(
+            f"✅ After local filter: {len(all_records)} {label} "
+            f"(was {original_count} before filter)"
+        )
+    # ─────────────────────────────────────────────────────────────────────────
 
     logger.info(f"Fetched {len(all_records)} {label} from Apollo (deduplicated from {len(all_records) + stats.duplicates_prevented})")
     return all_records
