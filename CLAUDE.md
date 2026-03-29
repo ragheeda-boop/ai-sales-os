@@ -16,7 +16,7 @@ This is a production-grade Sales Operating System, not a hobby project.
 ```
 Apollo.io (Data)  ──►  Python Scripts (18 scripts)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily + Weekly)
   44,875 contacts         Sync + Enrich + Score +            7 Databases            7:00 AM KSA
-  15,407 companies        Action + Sequence + Meet           HOT/WARM/COLD          16-step pipeline + weekly calibration
+  15,407 companies        Action + Sequence + Meet           HOT/WARM/COLD          2-job pipeline + weekly calibration
 ```
 
 **Autonomous Sales Loop:** Score → Task → Auto-Sequence → Track Results → Meet → Analyze → Opportunity → Calibrate → Better Score
@@ -86,7 +86,7 @@ AI Sales OS/
 │   └── System Architecture/     → Technical architecture + field mapping + assessment docs
 │
 ├── .claude/skills/              → 12 Claude Skills for AI Sales OS operations
-├── .github/workflows/           → daily_sync.yml (CI/CD — 16-step pipeline + weekly calibration)
+├── .github/workflows/           → daily_sync.yml (CI/CD — 2-job pipeline: Job1 Sync/Score + Job2 Action/Track + weekly calibration)
 ├── 🚀 START HERE/               → Entry docs: QUICK_START, SYSTEM_OVERVIEW, PROJECT_MAP
 ├── 🗂️ ARCHIVED/                 → Superseded scripts, old docs, old presentations
 └── .gitignore
@@ -441,7 +441,10 @@ Opportunities, Meetings, Activities, Email Hub — used for execution workflow.
 **File:** `.github/workflows/daily_sync.yml`
 **Schedule:** Daily at 7:00 AM KSA (04:00 UTC)
 
-Pipeline steps (14 total + weekly calibration):
+### Why 2 Jobs?
+The pipeline was exceeding GitHub's 6-hour per-job limit. Splitting into 2 sequential jobs gives each its own 6-hour clock — total capacity: ~9 hours.
+
+### Job 1: `sync-and-score` — timeout 5h 50min
 1. Checkout repository
 2. Setup Python 3.11 with pip cache
 3. Install dependencies
@@ -449,21 +452,29 @@ Pipeline steps (14 total + weekly calibration):
 5. `job_postings_enricher.py --limit 50` (intent proxy, continue-on-error)
 6. `lead_score.py` (recalculate scores + write Lead Tier)
 7. `action_ready_updater.py` (evaluate Action Ready for scored contacts)
-8. `auto_tasks.py` (create tasks for Action Ready contacts, continue-on-error)
-9. `auto_sequence.py --limit 50` (enroll contacts in sequences, continue-on-error)
-10. `analytics_tracker.py --days 7` (sync engagement data, continue-on-error)
-11. `health_check.py` (validate pipeline run)
-12. `morning_brief.py --output file` (generate daily report, continue-on-error)
-13. Upload logs as artifacts (30-day retention)
-14. Notify on failure (tail last 30 lines of each log)
+8. Upload sync stats as artifact → passed to Job 2
 
-**Weekly Job (Sundays):** `score_calibrator.py --days 30 --export` (review-only, no auto-apply)
+### Job 2: `action-and-track` — timeout 3h (runs after Job 1)
+1. Checkout + Python setup + Install dependencies
+2. Download sync stats from Job 1
+3. `auto_tasks.py` (create tasks for Action Ready contacts, continue-on-error)
+4. `auto_sequence.py --limit 50` (enroll contacts in sequences, continue-on-error)
+5. `meeting_tracker.py --days 7` (sync meetings, update contact stage)
+6. `meeting_analyzer.py --limit 10` (AI meeting intelligence, requires ANTHROPIC_API_KEY)
+7. `opportunity_manager.py` (meetings → opportunities + stale deal detection)
+8. `analytics_tracker.py --days 7` (sync engagement data, continue-on-error)
+9. `health_check.py` (validate pipeline run)
+10. `morning_brief.py --output file` (generate daily report, continue-on-error)
+11. Upload all logs as artifacts (30-day retention)
+12. Notify on failure
 
-**Required Secrets:** `APOLLO_API_KEY`, `NOTION_API_KEY`, `NOTION_DATABASE_ID_CONTACTS`, `NOTION_DATABASE_ID_COMPANIES`, `NOTION_DATABASE_ID_TASKS`
+**Weekly Job (Sundays):** `score_calibrator.py --days 30 --export` — runs after Job 2, review-only, no auto-apply.
 
-**Manual trigger:** Available from GitHub UI with mode selection (incremental / backfill_week / backfill_month / full), plus toggles for `run_lead_score` and `run_action_engine`.
+**Required Secrets:** `APOLLO_API_KEY`, `NOTION_API_KEY`, `NOTION_DATABASE_ID_CONTACTS`, `NOTION_DATABASE_ID_COMPANIES`, `NOTION_DATABASE_ID_TASKS`, `NOTION_DATABASE_ID_MEETINGS`, `NOTION_DATABASE_ID_OPPORTUNITIES`, `ANTHROPIC_API_KEY` (optional)
 
-**Cost:** Free. GitHub Actions free tier = 2,000 min/month. Daily run ≈ 15 min × 30 = 450 min/month.
+**Manual trigger:** Available from GitHub UI with mode selection (incremental / backfill_week / backfill_month / full), plus toggles for `run_lead_score`, `run_action_engine`, `run_sequences`.
+
+**Cost:** Free. GitHub Actions free tier = 2,000 min/month. Daily run ≈ 30 min × 30 = 900 min/month.
 
 ---
 
@@ -556,6 +567,7 @@ Pipeline steps (14 total + weekly calibration):
 9. **Safe Boolean Writing** — Only write engagement checkboxes if Apollo explicitly returns the field. Prevents overwriting manually-set True with False.
 10. **Unified Constants** — All field names in constants.py. No hardcoded strings in individual scripts.
 11. **Action Ready Gating** — 5-condition check before any task is created. Prevents tasks for DNC, bounced, churned, or contacts without contact methods.
+12. **2-Job Pipeline** — Split daily_sync.yml into Job 1 (Sync/Score, 5h 50min) and Job 2 (Action/Track, 3h) to bypass GitHub Actions' 6-hour per-job limit. Stats passed via artifacts.
 
 ---
 

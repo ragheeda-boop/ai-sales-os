@@ -225,7 +225,7 @@ body { font-family:'Montserrat','Segoe UI',sans-serif; background:var(--bg); col
   <div class="h-right">
     <div class="live-pill"><div class="live-dot"></div>LIVE</div>
     <div class="h-ts" id="clock">—</div>
-    <div class="version-badge">v5.1 · March 2026</div>
+    <div class="version-badge">v5.2 · 29 March 2026</div>
   </div>
 </header>
 
@@ -666,23 +666,25 @@ body { font-family:'Montserrat','Segoe UI',sans-serif; background:var(--bg); col
     <div class="sec-sub">health_check.py &middot; GitHub Actions &middot; Daily 07:00 KSA / 04:00 UTC</div>
   </div>
   <div class="g4 gap">
-    <div class="sc orange"><div class="sc-lbl">Pipeline Status</div><div class="sc-val orange">RUNNING</div><div class="sc-sub">16 steps &middot; Daily</div></div>
+    <div class="sc orange"><div class="sc-lbl">Pipeline Status</div><div class="sc-val orange">RUNNING</div><div class="sc-sub">2 jobs &middot; 9h capacity</div></div>
     <div class="sc dark"><div class="sc-lbl">Last Sync</div><div class="sc-val">07:14 KSA</div><div class="sc-sub">Incremental &middot; 26h window</div></div>
     <div class="sc gray"><div class="sc-lbl">Records Processed</div><div class="sc-val">1,847</div><div class="sc-sub">Contacts + companies</div></div>
-    <div class="sc orange"><div class="sc-lbl">Pipeline Cost</div><div class="sc-val orange">$0</div><div class="sc-sub">450 min/mo &middot; GitHub free tier</div></div>
+    <div class="sc orange"><div class="sc-lbl">Pipeline Cost</div><div class="sc-val orange">$0</div><div class="sc-sub">900 min/mo &middot; GitHub free tier</div></div>
   </div>
 
   <div class="sec-hd">
     <div class="sec-icon">🔧</div>
-    <h2>All Active Scripts &mdash; 16-Step Pipeline<span>.</span></h2>
+    <h2>All Active Scripts &mdash; 2-Job Pipeline (9h capacity)<span>.</span></h2>
     <div class="sec-sub">daily_sync.yml &middot; GitHub Actions &middot; Pure Python &middot; No middleware</div>
   </div>
   <div class="g2 gap">
     <div>
+      <div style="background:#E8771A;color:#fff;border-radius:8px;padding:6px 14px;font-size:.75em;font-weight:700;margin-bottom:8px;">⚙️ JOB 1 — sync-and-score &nbsp;|&nbsp; timeout: 5h 50min</div>
       <div class="pipe-step"><div class="ps-n">1</div><div class="ps-info"><div class="ps-cmd">daily_sync.py --mode incremental --hours 26</div><div class="ps-desc">Apollo &rarr; Notion sync &middot; Triple dedup &middot; 44,875 contacts</div></div><div class="ps-badge ok">CORE</div></div>
       <div class="pipe-step"><div class="ps-n">2</div><div class="ps-info"><div class="ps-cmd">job_postings_enricher.py --limit 50</div><div class="ps-desc">Intent proxy &middot; Job postings &rarr; Intent Score &middot; 7-day cache</div></div><div class="ps-badge warn">OPTIONAL</div></div>
       <div class="pipe-step"><div class="ps-n">3</div><div class="ps-info"><div class="ps-cmd">lead_score.py</div><div class="ps-desc">Score 0-100 &middot; HOT/WARM/COLD tier write &middot; v1.1 weights</div></div><div class="ps-badge ok">CORE</div></div>
       <div class="pipe-step"><div class="ps-n">4</div><div class="ps-info"><div class="ps-cmd">action_ready_updater.py</div><div class="ps-desc">5-condition gate &middot; Action Ready checkbox write</div></div><div class="ps-badge ok">CORE</div></div>
+      <div style="background:#1A1A1A;color:#E8771A;border-radius:8px;padding:6px 14px;font-size:.75em;font-weight:700;margin:8px 0;">⚡ JOB 2 — action-and-track &nbsp;|&nbsp; timeout: 3h &nbsp;|&nbsp; starts after Job 1</div>
       <div class="pipe-step"><div class="ps-n">5</div><div class="ps-info"><div class="ps-cmd">auto_tasks.py</div><div class="ps-desc">SLA-based task creation &middot; HOT=24h / WARM=48h</div></div><div class="ps-badge warn">OPTIONAL</div></div>
       <div class="pipe-step"><div class="ps-n">6</div><div class="ps-info"><div class="ps-cmd">auto_sequence.py --limit 50</div><div class="ps-desc">Apollo sequence enrollment &middot; Role routing &middot; Round-robin</div></div><div class="ps-badge warn">OPTIONAL</div></div>
       <div class="pipe-step"><div class="ps-n">7</div><div class="ps-info"><div class="ps-cmd">analytics_tracker.py --days 7</div><div class="ps-desc">Engagement sync &middot; Apollo &rarr; Notion &middot; Open/Reply/Bounce</div></div><div class="ps-badge warn">OPTIONAL</div></div>
@@ -750,7 +752,7 @@ body { font-family:'Montserrat','Segoe UI',sans-serif; background:var(--bg); col
 <!-- FOOTER -->
 <footer class="footer">
   <div>AI Sales OS &middot; <span>MUHIDE</span> &middot; Trust in Every Transaction &middot; Apollo &rarr; Python &rarr; Notion &rarr; GitHub Actions</div>
-  <div>Version <span>5.1</span> &middot; March 2026 &middot; Phase 3.5 Complete &middot; 18 Scripts Active</div>
+  <div>Version <span>5.2</span> &middot; 29 March 2026 &middot; Phase 3.5 Complete &middot; 18 Scripts &middot; 2-Job Pipeline</div>
 </footer>
 
 <script>

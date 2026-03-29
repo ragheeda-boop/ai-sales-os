@@ -7,7 +7,7 @@
 │  Apollo.io   │────►│  Python Scripts (18)      │────►│   Notion     │────►│ GitHub Actions│
 │  (Data)      │     │  Sync + Enrich + Score +  │     │  (CRM Hub)   │     │ (Daily Cron)  │
 └──────────────┘     │  Action + Sequence + Meet │     └──────────────┘     └───────────────┘
- 44,875 contacts     └──────────────────────────┘      7 Databases          16-step pipeline
+ 44,875 contacts     └──────────────────────────┘      7 Databases          2-job pipeline
  15,407 companies                                      HOT/WARM/COLD Views  + weekly calibration
 ```
 
@@ -193,7 +193,7 @@ Full details in `📚 DOCUMENTATION/EXECUTION_PLAN_v3.2.docx`
 | Meeting Intelligence Assessment | `Meeting_Call_Intelligence_Architecture_Assessment.md` | Phase 3.5 architecture decision + rollout plan |
 | Execution Plan | `📚 DOCUMENTATION/EXECUTION_PLAN_v3.2.docx` | Phase-by-phase detailed plan |
 | Field Mapping Rules | `📚 DOCUMENTATION/System Architecture/FIELD_MAPPING_RULES.md` | Apollo → Notion field mapping |
-| GitHub Actions Setup | `.github/workflows/daily_sync.yml` | 16-step daily pipeline configuration |
+| GitHub Actions Setup | `.github/workflows/daily_sync.yml` | 2-job daily pipeline: Job1 Sync/Score (5h50m) + Job2 Action/Track (3h) + weekly calibration |
 
 ---
-**Version:** 4.1 | **Last Updated:** 28 March 2026 | **Owner:** Ragheed | **Phase 3.5:** Complete
+**Version:** 4.1 | **Last Updated:** 29 March 2026 | **Owner:** Ragheed | **Phase 3.5:** Complete

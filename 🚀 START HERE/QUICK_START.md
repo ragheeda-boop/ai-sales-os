@@ -130,25 +130,29 @@ python morning_brief.py
 
 ## Step 13: Daily Automation
 
-Push code to GitHub, add 5 Secrets, and GitHub Actions will run daily at 7 AM KSA:
+Push code to GitHub, add Secrets, and GitHub Actions will run daily at 7 AM KSA.
 
-**16-step pipeline (Phase 3.5 included):**
+The pipeline runs as **2 sequential jobs** — each has its own 6-hour limit (total ~9h capacity):
+
+**Job 1 — `sync-and-score` (timeout: 5h 50min):**
 1. `daily_sync.py --mode incremental --hours 26` → sync new/updated records
 2. `job_postings_enricher.py --limit 50` → intent enrichment
 3. `lead_score.py` → recalculate scores + write Lead Tier
 4. `action_ready_updater.py` → set Action Ready flags
+
+**Job 2 — `action-and-track` (timeout: 3h, starts after Job 1):**
 5. `auto_tasks.py` → create SLA-based tasks
 6. `auto_sequence.py --limit 50` → enroll in Apollo sequences
-7. `analytics_tracker.py --days 7` → sync engagement data
-8. `meeting_tracker.py --days 7` → sync meetings, update contact stage *(Phase 3.5)*
-9. `meeting_analyzer.py --limit 10` → AI meeting analysis *(Phase 3.5, requires ANTHROPIC_API_KEY)*
-10. `opportunity_manager.py` → meetings → opportunities + stale deal detection *(Phase 3.5)*
+7. `meeting_tracker.py --days 7` → sync meetings, update contact stage *(Phase 3.5)*
+8. `meeting_analyzer.py --limit 10` → AI meeting analysis *(Phase 3.5, requires ANTHROPIC_API_KEY)*
+9. `opportunity_manager.py` → meetings → opportunities + stale deal detection *(Phase 3.5)*
+10. `analytics_tracker.py --days 7` → sync engagement data
 11. `health_check.py` → validate run
 12. `morning_brief.py --output file` → daily report
 
 **GitHub Secrets required:** APOLLO_API_KEY, NOTION_API_KEY, NOTION_DATABASE_ID_CONTACTS, NOTION_DATABASE_ID_COMPANIES, NOTION_DATABASE_ID_TASKS, NOTION_DATABASE_ID_MEETINGS, NOTION_DATABASE_ID_OPPORTUNITIES, ANTHROPIC_API_KEY (optional)
 
-**Weekly (Sundays):** `score_calibrator.py --days 30 --export` → self-learning calibration
+**Weekly (Sundays):** `score_calibrator.py --days 30 --export` → self-learning calibration (runs after Job 2)
 
 ## Useful Commands
 
@@ -187,4 +191,4 @@ python score_calibrator.py --days 90
 **Calibrator recommends big changes?** Review manually first — never auto-apply without review.
 
 ---
-**Version:** 4.0 | **Last Updated:** 28 March 2026
+**Version:** 4.1 | **Last Updated:** 29 March 2026
