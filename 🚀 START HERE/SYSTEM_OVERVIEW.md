@@ -1,4 +1,4 @@
-# AI Sales OS v4.0 — System Overview
+# AI Sales OS v4.2 — System Overview
 
 ## Architecture
 
@@ -11,7 +11,7 @@
  15,407 companies                                      HOT/WARM/COLD Views  + weekly calibration
 ```
 
-## Autonomous Sales Loop (v4.1 — Phase 3.5 Added)
+## Autonomous Sales Loop (v4.2 — Local Timestamp Fix)
 
 ```
 Score → Task → Sequence → Meet → Analyze → Opportunity → Calibrate → Better Score
@@ -27,9 +27,10 @@ The system runs itself. Your job is to close deals, not manage data.
 Apollo API
     │
     ▼
-daily_sync.py (v2.1)
+daily_sync.py (v2.2)
     ├─ Fetch contacts (contacts/search)
     │  ├─ Triple dedup (Apollo ID + Email + seen_ids)
+    │  ├─ Local timestamp filter (drops records outside the requested window)
     │  ├─ Normalize seniority & engagement booleans
     │  ├─ Link to Company (by Apollo Account ID)
     │  └─ Create or Update in Notion
@@ -157,7 +158,7 @@ Notion Views
 
 ## Key Technical Details
 
-**Sync Engine:** daily_sync.py handles Apollo's 50,000 record pagination limit using time-window splitting (incremental/backfill) and alphabetical partitioning (full mode). Built-in retry with 5x exponential backoff.
+**Sync Engine:** daily_sync.py (v2.2) handles Apollo's 50,000 record pagination limit using time-window splitting (incremental/backfill) and alphabetical partitioning (full mode). Built-in retry with 5x exponential backoff. Includes a local timestamp filter that drops records outside the exact requested time window — fixes Apollo's day-granularity API filter that was causing all 44,877 contacts to be processed on every incremental run.
 
 **Dedup Strategy:** Triple dedup prevents duplicates — checks Apollo ID, then Email, then in-memory seen_ids set. Pre-loads all existing Notion records before sync to minimize API calls.
 
@@ -193,7 +194,4 @@ Full details in `📚 DOCUMENTATION/EXECUTION_PLAN_v3.2.docx`
 | Meeting Intelligence Assessment | `Meeting_Call_Intelligence_Architecture_Assessment.md` | Phase 3.5 architecture decision + rollout plan |
 | Execution Plan | `📚 DOCUMENTATION/EXECUTION_PLAN_v3.2.docx` | Phase-by-phase detailed plan |
 | Field Mapping Rules | `📚 DOCUMENTATION/System Architecture/FIELD_MAPPING_RULES.md` | Apollo → Notion field mapping |
-| GitHub Actions Setup | `.github/workflows/daily_sync.yml` | 2-job daily pipeline: Job1 Sync/Score (5h50m) + Job2 Action/Track (3h) + weekly calibration |
-
----
-**Version:** 4.1 | **Last Updated:** 29 March 2026 | **Owner:** Ragheed | **Phase 3.5:** Complete
+| GitHub Ac

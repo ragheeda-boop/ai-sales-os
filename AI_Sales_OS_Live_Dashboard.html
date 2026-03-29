@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Sales OS — Live Intelligence Dashboard v5.1 | MUHIDE</title>
+<title>AI Sales OS — Live Intelligence Dashboard v5.3 | MUHIDE</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -219,13 +219,13 @@ body { font-family:'Montserrat','Segoe UI',sans-serif; background:var(--bg); col
     <div class="h-divider"></div>
     <div class="h-sys">
       <div class="sys-name">AI Sales OS</div>
-      <div class="sys-sub">Live Intelligence Dashboard · v5.1</div>
+      <div class="sys-sub">Live Intelligence Dashboard · v5.3</div>
     </div>
   </div>
   <div class="h-right">
     <div class="live-pill"><div class="live-dot"></div>LIVE</div>
     <div class="h-ts" id="clock">—</div>
-    <div class="version-badge">v5.2 · 29 March 2026</div>
+    <div class="version-badge">v5.3 · 29 March 2026</div>
   </div>
 </header>
 
@@ -680,7 +680,7 @@ body { font-family:'Montserrat','Segoe UI',sans-serif; background:var(--bg); col
   <div class="g2 gap">
     <div>
       <div style="background:#E8771A;color:#fff;border-radius:8px;padding:6px 14px;font-size:.75em;font-weight:700;margin-bottom:8px;">⚙️ JOB 1 — sync-and-score &nbsp;|&nbsp; timeout: 5h 50min</div>
-      <div class="pipe-step"><div class="ps-n">1</div><div class="ps-info"><div class="ps-cmd">daily_sync.py --mode incremental --hours 26</div><div class="ps-desc">Apollo &rarr; Notion sync &middot; Triple dedup &middot; 44,875 contacts</div></div><div class="ps-badge ok">CORE</div></div>
+      <div class="pipe-step"><div class="ps-n">1</div><div class="ps-info"><div class="ps-cmd">daily_sync.py --mode incremental --hours 26</div><div class="ps-desc">Apollo &rarr; Notion sync &middot; Triple dedup &middot; Local timestamp filter (v4.2) &middot; minutes not hours</div></div><div class="ps-badge ok">CORE</div></div>
       <div class="pipe-step"><div class="ps-n">2</div><div class="ps-info"><div class="ps-cmd">job_postings_enricher.py --limit 50</div><div class="ps-desc">Intent proxy &middot; Job postings &rarr; Intent Score &middot; 7-day cache</div></div><div class="ps-badge warn">OPTIONAL</div></div>
       <div class="pipe-step"><div class="ps-n">3</div><div class="ps-info"><div class="ps-cmd">lead_score.py</div><div class="ps-desc">Score 0-100 &middot; HOT/WARM/COLD tier write &middot; v1.1 weights</div></div><div class="ps-badge ok">CORE</div></div>
       <div class="pipe-step"><div class="ps-n">4</div><div class="ps-info"><div class="ps-cmd">action_ready_updater.py</div><div class="ps-desc">5-condition gate &middot; Action Ready checkbox write</div></div><div class="ps-badge ok">CORE</div></div>
@@ -698,7 +698,7 @@ body { font-family:'Montserrat','Segoe UI',sans-serif; background:var(--bg); col
       <div class="pipe-step"><div class="ps-n">13</div><div class="ps-info"><div class="ps-cmd">Upload Logs (30-day retention)</div><div class="ps-desc">Artifacts upload &middot; All .log files in GitHub Actions</div></div><div class="ps-badge ok">INFRA</div></div>
       <div class="pipe-step"><div class="ps-n">14</div><div class="ps-info"><div class="ps-cmd">Notify on Failure</div><div class="ps-desc">Tail last 30 lines of each log &middot; Email alert on failure</div></div><div class="ps-badge ok">INFRA</div></div>
       <div class="pipe-step"><div class="ps-n gray-n">W</div><div class="ps-info"><div class="ps-cmd">score_calibrator.py --days 30 --export</div><div class="ps-desc">Weekly &middot; Sundays &middot; Review-only &middot; No auto-apply</div></div><div class="ps-badge weekly">WEEKLY</div></div>
-      <div class="pipe-step"><div class="ps-n gray-n">V</div><div class="ps-info"><div class="ps-cmd">doc_sync_checker.py --strict</div><div class="ps-desc">Post-dev validator &middot; Script count &middot; Drift detection</div></div><div class="ps-badge ok">v4.1</div></div>
+      <div class="pipe-step"><div class="ps-n gray-n">V</div><div class="ps-info"><div class="ps-cmd">doc_sync_checker.py --strict</div><div class="ps-desc">Post-dev validator &middot; Script count &middot; Drift detection</div></div><div class="ps-badge ok">v4.2</div></div>
     </div>
   </div>
 
@@ -752,7 +752,7 @@ body { font-family:'Montserrat','Segoe UI',sans-serif; background:var(--bg); col
 <!-- FOOTER -->
 <footer class="footer">
   <div>AI Sales OS &middot; <span>MUHIDE</span> &middot; Trust in Every Transaction &middot; Apollo &rarr; Python &rarr; Notion &rarr; GitHub Actions</div>
-  <div>Version <span>5.2</span> &middot; 29 March 2026 &middot; Phase 3.5 Complete &middot; 18 Scripts &middot; 2-Job Pipeline</div>
+  <div>Version <span>5.3</span> &middot; 29 March 2026 &middot; Phase 3.5 Complete &middot; 18 Scripts &middot; 2-Job Pipeline &middot; Local Timestamp Fix (v4.2)</div>
 </footer>
 
 <script>

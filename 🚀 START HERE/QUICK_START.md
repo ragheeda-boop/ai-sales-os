@@ -1,4 +1,4 @@
-# Quick Start Guide — AI Sales OS v4.0
+# Quick Start Guide — AI Sales OS v4.2
 
 ## Prerequisites
 
@@ -184,11 +184,6 @@ python score_calibrator.py --days 90
 
 ## Troubleshooting
 
+**Incremental run processing all contacts?** Fixed in v4.2 — local timestamp filter now applied after Apollo fetch. If you see the warning `⚠️ Local timestamp filter removed N contacts`, it means Apollo's API filter was returning records outside the window (normal behavior). The filter corrects this automatically.
 **Sync fails mid-run?** Use backfill mode — it resumes from checkpoint.
-**API rate limited?** Built-in retry with exponential backoff handles this.
-**Duplicate records?** Triple dedup (Apollo ID + Email + seen_ids) prevents this.
-**Sequence enrollment fails?** Check Apollo API key permissions and sequence IDs.
-**Calibrator recommends big changes?** Review manually first — never auto-apply without review.
-
----
-**Version:** 4.1 | **Last Updated:** 29 March 2026
+**API rate l

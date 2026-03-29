@@ -7,7 +7,7 @@ This is a production-grade Sales Operating System, not a hobby project.
 
 **System:** Apollo.io → Python Engine → Notion CRM → GitHub Actions → Odoo (future)
 **Owner:** Ragheed
-**Version:** 4.1 | March 2026 | Phase 3.5 Complete
+**Version:** 4.2 | March 2026 | Phase 3.5 Complete
 
 ---
 
@@ -98,7 +98,7 @@ AI Sales OS/
 
 | Script | Purpose | Status |
 |--------|---------|--------|
-| `daily_sync.py` | Apollo → Notion sync engine (v2.1, 3 modes, seniority normalization, safe booleans) | **ACTIVE** |
+| `daily_sync.py` | Apollo → Notion sync engine (v2.2, 3 modes, local timestamp filter, seniority normalization, safe booleans) | **ACTIVE** |
 | `lead_score.py` | Lead Score calculator (0-100) + Lead Tier writer (HOT/WARM/COLD) | **ACTIVE** |
 | `constants.py` | Unified field names, score thresholds, SLA hours, seniority normalization map | **ACTIVE** |
 | `notion_helpers.py` | Shared Notion API utilities (create, update, preload, rate limiter) | **ACTIVE** |
@@ -141,6 +141,7 @@ Superseded scripts (still in CODE folder but replaced by daily_sync.py):
 - **Safe Boolean Writing:** Only writes engagement checkboxes (Email Sent, Replied, etc.) if Apollo explicitly returns the field — prevents overwriting manual True with False.
 - **Rate Limiting:** 5x exponential backoff on 429/500 errors.
 - **Parallel Workers:** `MAX_WORKERS = 3` for Notion writes.
+- **Local Timestamp Filter (v4.2):** After Apollo fetch, a client-side filter drops any record whose `updated_at` is before the requested `since` datetime. Fixes issue where Apollo's date-only API filter was returning all 44,877 contacts on every incremental run, causing 4-5 hour runtimes instead of minutes.
 
 ### Commands
 
@@ -568,6 +569,7 @@ The pipeline was exceeding GitHub's 6-hour per-job limit. Splitting into 2 seque
 10. **Unified Constants** — All field names in constants.py. No hardcoded strings in individual scripts.
 11. **Action Ready Gating** — 5-condition check before any task is created. Prevents tasks for DNC, bounced, churned, or contacts without contact methods.
 12. **2-Job Pipeline** — Split daily_sync.yml into Job 1 (Sync/Score, 5h 50min) and Job 2 (Action/Track, 3h) to bypass GitHub Actions' 6-hour per-job limit. Stats passed via artifacts.
+13. **Local Timestamp Filter** — Apollo's `contact_updated_at_range` API filter uses day-granularity and was returning all 44,877 contacts even on incremental runs. Fixed in `_fetch_with_date_filter()` with a post-fetch client-side filter using exact `updated_at >= since` comparison. Incremental runs now complete in minutes, not hours.
 
 ---
 
@@ -617,43 +619,3 @@ This script (`doc_sync_checker.py`) checks script count, pipeline step count, en
 
 ---
 
-## Execution Behavior
-
-- Execute sequentially. No jumping between phases.
-- Validate after each batch. Report: created / updated / skipped / errors.
-- Do NOT redesign schema during execution.
-- Do NOT suggest alternatives mid-execution.
-- Accuracy over speed. A slow correct system beats a fast broken one.
-- After any code change: run `doc_sync_checker.py` and update all listed documentation files.
-
----
-
-## Environment Setup
-
-```bash
-cd "💻 CODE/Phase 3 - Sync"
-cp .env.example .env
-# Fill in API keys
-pip install -r requirements.txt
-```
-
-Required env vars: `APOLLO_API_KEY`, `NOTION_API_KEY`, `NOTION_DATABASE_ID_CONTACTS`, `NOTION_DATABASE_ID_COMPANIES`, `NOTION_DATABASE_ID_TASKS`
-
----
-
-## Files That Matter Most
-
-| Need | File |
-|------|------|
-| Sync engine | `💻 CODE/Phase 3 - Sync/daily_sync.py` |
-| Lead scoring | `💻 CODE/Phase 3 - Sync/lead_score.py` |
-| Constants (field names, thresholds) | `💻 CODE/Phase 3 - Sync/constants.py` |
-| Action Engine (task creation) | `💻 CODE/Phase 3 - Sync/auto_tasks.py` |
-| Action Ready evaluator | `💻 CODE/Phase 3 - Sync/action_ready_updater.py` |
-| Health check | `💻 CODE/Phase 3 - Sync/health_check.py` |
-| Notion utilities | `💻 CODE/Phase 3 - Sync/notion_helpers.py` |
-| Execution plan | `📚 DOCUMENTATION/EXECUTION_PLAN_v3.2.docx` |
-| Field mapping | `📚 DOCUMENTATION/System Architecture/FIELD_MAPPING_RULES.md` |
-| GitHub Actions | `.github/workflows/daily_sync.yml` |
-| Mind map | `AI_Sales_OS_MindMap.html` |
-| Credentials | `💻 CODE/Phase 3 - Sync/.env` (NEVER commit) |
