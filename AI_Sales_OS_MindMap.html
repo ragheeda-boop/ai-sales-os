@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Sales OS v4.2 - Mind Map v8.2</title>
+<title>AI Sales OS v4.3 - Mind Map v8.3</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap');
   *{margin:0;padding:0;box-sizing:border-box}
@@ -195,7 +195,7 @@
   <h1>نظام تشغيل البيع الذكي</h1>
   <p class="subtitle">نظام تشغيل البيع الذكي — الحلقة المغلقة</p>
   <p style="color:#E8771A;font-size:0.9em;margin-top:4px">Apollo → Python → Notion → Apollo — الحلقة الذاتية</p>
-  <span class="version-badge">v8.2 — AI Sales OS v4.2 — 29 مارس 2026</span>
+  <span class="version-badge">v8.3 — AI Sales OS v4.3 — 30 مارس 2026</span>
   <p class="date">خطة التنفيذ — مراحل متكاملة — حلقة مغلقة ذاتية التعلم</p>
 </div>
 
@@ -223,7 +223,7 @@
   <div class="arch-arrow">→</div>
   <div class="arch-node python">
     <div class="node-icon">🐍</div>
-    <div class="node-label">Python (18 سكربت)</div>
+    <div class="node-label">Python (19 سكربت)</div>
     <div class="node-sub">المعالجة + الذكاء</div>
   </div>
   <div class="arch-arrow">→</div>
@@ -249,7 +249,7 @@
 
 <!-- Revenue Gap Layer -->
 <div style="text-align:center;margin:12px 0 8px">
-  <h4 style="font-size:.95em;color:#E8771A;margin-bottom:10px">طبقة ذكاء الاجتماعات (v4.1)</h4>
+  <h4 style="font-size:.95em;color:#E8771A;margin-bottom:10px">طبقة ذكاء الاجتماعات (v4.1) + إشارات Apollo الذكية (v4.3)</h4>
 </div>
 <div class="arch-flow">
   <div class="arch-node notion">
@@ -281,10 +281,10 @@
 
 <!-- PROGRESS -->
 <div class="progress-section">
-  <div class="progress-pct">97%</div>
-  <div class="progress-label">المراحل 1+2+3+3.5 مكتملة | ذكاء الاجتماعات مفعّل | 17 خطوة يومية | بانتظار Phase 4</div>
+  <div class="progress-pct">98%</div>
+  <div class="progress-label">المراحل 1+2+3+3.5 مكتملة | إشارات Apollo + AI Fields + داشبورد حي | 19 سكربت | بانتظار Phase 4</div>
   <div class="progress-bar-bg">
-    <div class="progress-bar-fill" style="width:97%"></div>
+    <div class="progress-bar-fill" style="width:98%"></div>
   </div>
   <div class="progress-phases">
     <span class="done-phase">إعداد Notion ✓</span>
@@ -314,7 +314,7 @@
   </div>
   <div class="stat-card">
     <div class="icon">🐍</div>
-    <div class="value">18</div>
+    <div class="value">19</div>
     <div class="label">سكربت</div>
   </div>
   <div class="stat-card">
@@ -538,6 +538,10 @@
     <li><span class="done-t">✅ health_check.py — 5 فاحصات (sync + action + meetings + analyzer + opportunities)</span></li>
     <li><span class="done-t">✅ خط الأنابيب 17 خطوة — GitHub Actions v3.0</span></li>
     <li><span class="done-t">✅ وضعين للتحليل: Cowork (تفاعلي، مجاني) + API (آلي، اختياري)</span></li>
+    <li><span class="done-t">✅ dashboard_generator.py — لوحة معلومات حية (v4.2) — يتجدد يومياً عبر GitHub Actions</span></li>
+    <li><span class="done-t">✅ Apollo Signals في المزامنة (v4.3) — Intent Strength + Job Change Event/Date</span></li>
+    <li><span class="done-t">✅ Apollo AI Fields (v4.3) — AI Decision + AI Qualification Status/Detail + Headcount Growth 6M/12M/24M</span></li>
+    <li><span class="done-t">✅ daily_sync.py v2.3 — سحب إشارات Apollo + حقول AI من typed_custom_fields</span></li>
   </ul>
 </div>
 
@@ -555,6 +559,8 @@
     <li><span class="done-t">✅ 24 سلسلة Apollo × 6 حسابات بريد × round-robin</span></li>
     <li><span class="done-t">✅ 12 Claude Skill بنسبة نجاح 100%</span></li>
     <li><span class="done-t">✅ ذكاء الاجتماعات — اجتماع → فهم → تحديث تشغيلي</span></li>
+    <li><span class="done-t">✅ لوحة معلومات حية — تتجدد يومياً من بيانات Notion (dashboard_generator.py)</span></li>
+    <li><span class="done-t">✅ إشارات Apollo ذكية — Intent Strength + Job Change + Headcount Growth + AI Fields</span></li>
     <li><span class="done-t">✅ Notion workspace محدّث بالكامل (6 صفحات تشغيلية + 9 قواعد بيانات)</span></li>
   </ul>
 </div>
@@ -567,8 +573,8 @@
     <span class="status-badge badge-future">🔮 مستقبلي</span>
   </div>
   <ul class="tasks">
-    <li><span class="pending-t">⏳ لوحة معلومات الأداء الحية</span></li>
-    <li><span class="pending-t">⏳ تحليل Claude AI المتقدم</span></li>
+    <li><span class="done-t">✅ لوحة معلومات الأداء الحية (dashboard_generator.py — مكتمل v4.2)</span></li>
+    <li><span class="done-t">✅ تحليل Claude AI المتقدم (meeting_analyzer.py — مكتمل v4.1)</span></li>
     <li><span class="pending-t">⏳ تكامل Odoo CRM</span></li>
     <li><span class="pending-t">⏳ توزيع دوري للمهام</span></li>
     <li><span class="pending-t">⏳ اختبارات شاملة</span></li>
@@ -604,14 +610,14 @@ Intent (20%)<br>
 </div>
 
 <!-- PIPELINE CODE BLOCK -->
-<div class="section-title cyan">خط الأنابيب اليومي — الإصدار 4.0 (جوبَين مستقلان — 9 ساعات إجمالية)</div>
+<div class="section-title cyan">خط الأنابيب اليومي — الإصدار 4.3 (جوبَين مستقلان — 9 ساعات إجمالية)</div>
 
-<div class="code-block"># خط الأنابيب اليومي v4.0 — 2 جوب (GitHub Actions — 7:00 AM KSA)
+<div class="code-block"># خط الأنابيب اليومي v4.3 — 2 جوب (GitHub Actions — 7:00 AM KSA)
 # السبب: تجاوز حد الـ 6 ساعات — كل جوب له ساعاته المستقلة
 
 # ══ JOB 1: sync-and-score (timeout: 5h 50min) ══════════════════════
  1. checkout + setup python 3.11 + pip install   # تهيئة البيئة
- 2. daily_sync.py --mode incremental --hours 26  # مزامنة Apollo
+ 2. daily_sync.py --mode incremental --hours 26  # مزامنة Apollo + Signals + AI Fields
  3. job_postings_enricher.py --limit 50          # إثراء نية الشراء
  4. lead_score.py                                # تسجيل النقاط (0-100) + Lead Tier
  5. action_ready_updater.py                      # تقييم الجاهزية (5 شروط)
@@ -627,19 +633,20 @@ Intent (20%)<br>
 13. analytics_tracker.py --days 7               # مزامنة التفاعل من Apollo
 14. health_check.py                              # فحص صحة النظام
 15. morning_brief.py --output file              # الملخص الصباحي (9 أقسام)
-16. upload logs (30 يوم) + notify on failure
+16. dashboard_generator.py                       # تجديد لوحة المعلومات الحية
+17. auto-commit dashboard + upload logs (30 يوم) + notify on failure
 
 # ══ JOB 3: weekly-calibration (كل أحد — بعد JOB 2) ═══════════════════
 score_calibrator.py --days 30 --export           # معايرة الأوزان (مراجعة فقط)
 </div>
 
 <!-- SCRIPTS INVENTORY -->
-<div class="section-title orange">مخزون السكريبتات (18 سكربت)</div>
+<div class="section-title orange">مخزون السكريبتات (19 سكربت)</div>
 
 <div class="script-grid">
   <div class="script-card">
     <div class="s-name">daily_sync.py</div>
-    <div class="s-desc">محرك المزامنة v2.2 — 3 أوضاع + Local Timestamp Filter (incremental/backfill/full)</div>
+    <div class="s-desc">محرك المزامنة v2.3 — 3 أوضاع + Signals + AI Fields + Local Timestamp Filter</div>
     <div class="s-lines">912 سطر</div>
   </div>
   <div class="script-card">
@@ -722,6 +729,16 @@ score_calibrator.py --days 30 --export           # معايرة الأوزان (
     <div class="s-desc">إدارة الفرص — إنشاء صفقات + كشف الراكد + تحديث المراحل</div>
     <div class="s-lines">430 سطر — جديد v4.1</div>
   </div>
+  <div class="script-card new-script">
+    <div class="s-name">dashboard_generator.py</div>
+    <div class="s-desc">لوحة معلومات حية — سحب بيانات Notion → HTML تفاعلي (يتجدد يومياً)</div>
+    <div class="s-lines">جديد v4.2</div>
+  </div>
+  <div class="script-card new-script">
+    <div class="s-name">doc_sync_checker.py</div>
+    <div class="s-desc">فحص تزامن التوثيق — كشف الانحراف بين الكود والمستندات</div>
+    <div class="s-lines">جديد v4.1</div>
+  </div>
 </div>
 
 <!-- TIMELINE -->
@@ -764,12 +781,21 @@ score_calibrator.py --days 30 --export           # معايرة الأوزان (
       <li>✅ مكتمل</li>
     </ul>
   </div>
+  <div class="day-card d3">
+    <h4>الأسبوع 4+ — v4.2/v4.3</h4>
+    <ul>
+      <li>لوحة معلومات حية (dashboard_generator.py)</li>
+      <li>Apollo Signals + AI Fields في المزامنة</li>
+      <li>daily_sync.py v2.3</li>
+      <li>✅ مكتمل</li>
+    </ul>
+  </div>
   <div class="day-card d4">
     <h4>القادم — Phase 4</h4>
     <ul>
       <li>تكامل Odoo ERP</li>
       <li>تتبع الإيرادات</li>
-      <li>لوحة معلومات حية</li>
+      <li>تحليلات متقدمة</li>
       <li>🔮 مخطط</li>
     </ul>
   </div>
@@ -834,6 +860,16 @@ score_calibrator.py --days 30 --export           # معايرة الأوزان (
     <div class="d-reason">Apollo API يُرجع كل 44,877 جهة اتصال عند كل run incremental لأن الفلتر يعمل بدقة يومية فقط. الحل: فلتر محلي بعد الـ fetch يحذف أي سجل خارج النافذة الزمنية المطلوبة. النتيجة: runs دقيقة بدل 4-5 ساعات.</div>
     <div class="d-status">نافذ الآن — v4.2</div>
   </div>
+  <div class="decision-card">
+    <div class="d-title">Apollo Signals في المزامنة (v4.3)</div>
+    <div class="d-reason">بدل سكربتات إثراء منفصلة، نسحب Intent Strength + Job Change Event/Date + Headcount Growth (6/12/24M) مباشرة من daily_sync.py. أقل API calls وأكثر كفاءة. الإشارات تتدفق مع المزامنة العادية.</div>
+    <div class="d-status">نافذ الآن — v4.3</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-title">حقول Apollo AI من typed_custom_fields</div>
+    <div class="d-reason">Apollo يولّد حقول AI مخصصة بـ IDs ثابتة: AI Decision للجهات + AI Qualification Status/Detail للشركات. نسحبها مباشرة أثناء المزامنة ونحوّلها لحقول Notion مفيدة (Qualified/Disqualified/Possible Fit).</div>
+    <div class="d-status">نافذ الآن — v4.3</div>
+  </div>
 </div>
 
 <!-- STRENGTHS VS GAPS -->
@@ -844,12 +880,13 @@ score_calibrator.py --days 30 --export           # معايرة الأوزان (
     <h4>✓ مميزات قوية</h4>
     <ul>
       <li>⭐ 44,875 جهة اتصال + 15,407 شركة (99.96% نجاح)</li>
-      <li>⭐ محرك المزامنة v2.2 — 3 أوضاع + Local Timestamp Filter (incremental/backfill/full)</li>
+      <li>⭐ محرك المزامنة v2.3 — 3 أوضاع + Signals + AI Fields + Local Timestamp Filter</li>
       <li>⭐ صيغة تسجيل النقاط مبنية ومختبرة + معايرة ذاتية</li>
-      <li>⭐ 18 سكربت — حلقة ذاتية كاملة + ذكاء اجتماعات</li>
+      <li>⭐ 19 سكربت — حلقة ذاتية كاملة + ذكاء اجتماعات + داشبورد حي</li>
       <li>⭐ اجتماع → تحليل AI → فرصة → مهمة (سد فجوة الإيرادات)</li>
+      <li>⭐ إشارات Apollo ذكية: Intent Strength + Job Change + Headcount Growth + AI Qualification</li>
       <li>⭐ وضعين AI: Cowork تفاعلي (مجاني) + API آلي (اختياري)</li>
-      <li>⭐ 17-step pipeline يومياً + معايرة أسبوعية</li>
+      <li>⭐ لوحة معلومات حية — تتجدد يومياً عبر GitHub Pages</li>
       <li>⭐ Zero external dependencies (Python نقي، بدون وسيط)</li>
     </ul>
   </div>
