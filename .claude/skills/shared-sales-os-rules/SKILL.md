@@ -12,7 +12,7 @@ These rules apply across every operation in AI Sales OS. They represent hard-won
 ```
 Apollo.io (44,875 contacts, 15,407 companies)
     ↓
-Python Scripts (daily_sync.py v2.1 → lead_score.py → action_ready_updater.py → auto_tasks.py → health_check.py)
+Python Scripts (daily_sync.py v2.3 → lead_score.py → action_ready_updater.py → auto_tasks.py → health_check.py)
     ↓
 Notion CRM (7 databases, HOT/WARM/COLD views)
     ↓

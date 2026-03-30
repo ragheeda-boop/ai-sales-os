@@ -1,6 +1,6 @@
-# AI Sales OS v4.1 — Project Map
+# AI Sales OS v4.2 — Project Map
 
-> **Version:** 4.1 | **Last Updated:** 28 March 2026 | **Phase 3.5 Complete**
+> **Version:** 4.2 | **Last Updated:** 29 March 2026 | **Phase 3.5 Complete**
 
 ---
 
@@ -11,7 +11,7 @@ AI Sales OS/
 │
 ├── CLAUDE.md                           ← AI instructions & system reference
 ├── README.md                           ← Project overview
-├── AI_Sales_OS_MindMap.html            ← Interactive mind map v8.0 (Arabic)
+├── AI_Sales_OS_MindMap.html            ← Interactive mind map v8.2 (Arabic)
 ├── Muhide.png                          ← Brand logo
 ├── .gitignore
 │
@@ -22,7 +22,7 @@ AI Sales OS/
 │   └── README.md                       ← Entry navigation guide
 │
 ├── 💻 CODE/Phase 3 - Sync/            ← 18 production Python scripts
-│   ├── daily_sync.py                   ← Sync engine v2.1 (3 modes: incremental/backfill/full)
+│   ├── daily_sync.py                   ← Sync engine v2.3 (3 modes + local timestamp filter)
 │   ├── lead_score.py                   ← Lead Score (0-100) + Lead Tier (HOT/WARM/COLD)
 │   ├── constants.py                    ← Single source of truth: field names, thresholds, SLA
 │   ├── notion_helpers.py               ← Shared Notion API utilities
@@ -37,7 +37,8 @@ AI Sales OS/
 │   ├── meeting_tracker.py              ← Meeting sync + Contact stage update [Phase 3.5]
 │   ├── meeting_analyzer.py             ← AI meeting intelligence via Claude API [Phase 3.5]
 │   ├── opportunity_manager.py          ← Meetings → Opportunities + stale deal detection [Phase 3.5]
-│   ├── doc_sync_checker.py             ← Documentation drift validator [v4.1]
+│   ├── dashboard_generator.py          ← Live Notion data → Sales Dashboard HTML [v4.2]
+│   ├── doc_sync_checker.py             ← Documentation drift validator [v4.2]
 │   ├── webhook_server.py               ← Apollo webhook receiver
 │   ├── verify_links.py                 ← Contact-company link verifier
 │   ├── requirements.txt                ← Python dependencies
@@ -100,7 +101,7 @@ AI Sales OS/
 │   └── exec-brief-writer/              ← Executive summaries & status updates
 │
 ├── .github/workflows/
-│   └── daily_sync.yml                  ← 16-step daily pipeline + weekly calibration
+│   └── daily_sync.yml                  ← 2-job daily pipeline (9h capacity) + weekly calibration
 │
 └── 🗂️ ARCHIVED/                       ← Superseded files (do not delete — historical reference)
     ├── Presentations/                  ← Old presentation versions
@@ -135,11 +136,11 @@ AI Sales OS/
 
 ---
 
-## Active Scripts — 18 Production Scripts
+## Active Scripts — 19 Production Scripts
 
 | Script | Version | Purpose |
 |---|---|---|
-| `daily_sync.py` | v2.1 | Apollo → Notion sync (3 modes) |
+| `daily_sync.py` | v2.3 | Apollo → Notion sync (3 modes + local timestamp filter) |
 | `lead_score.py` | v1.1 | Lead Score + Lead Tier writer |
 | `constants.py` | — | Field names, thresholds, SLA hours |
 | `notion_helpers.py` | — | Shared Notion API utilities |
@@ -154,7 +155,8 @@ AI Sales OS/
 | `meeting_tracker.py` | v4.1 | Meeting sync + Contact stage |
 | `meeting_analyzer.py` | v4.1 | AI meeting intelligence (Claude API) |
 | `opportunity_manager.py` | v4.1 | Meetings → Opportunities pipeline |
-| `doc_sync_checker.py` | v4.1 | Documentation drift validator |
+| `dashboard_generator.py` | v4.2 | Live Notion data → Sales Dashboard HTML |
+| `doc_sync_checker.py` | v4.2 | Documentation drift validator |
 | `webhook_server.py` | — | Apollo webhook receiver |
 | `verify_links.py` | — | Contact-company link verifier |
 
@@ -176,27 +178,32 @@ AI Sales OS/
 
 ---
 
-## GitHub Actions Pipeline — 16 Steps
+## GitHub Actions Pipeline — 2 Jobs (9h capacity)
 
 Daily at **7:00 AM KSA** (04:00 UTC):
 
+**JOB 1 — sync-and-score (timeout: 5h 50min)**
+
 | # | Step | Script |
 |---|---|---|
-| 1 | Checkout | — |
-| 2 | Setup Python 3.11 | — |
-| 3 | Install dependencies | — |
-| 4 | Sync | `daily_sync.py --hours 26` |
-| 5 | Enrich | `job_postings_enricher.py --limit 50` |
-| 6 | Score | `lead_score.py` |
-| 7 | Gate | `action_ready_updater.py` |
-| 8 | Tasks | `auto_tasks.py` |
-| 9 | Sequence | `auto_sequence.py --limit 50` |
-| 10 | Meeting Tracker | `meeting_tracker.py --days 7` |
-| 11 | Meeting Analyzer | `meeting_analyzer.py --limit 10` |
-| 12 | Opportunity Manager | `opportunity_manager.py` |
-| 13 | Analytics | `analytics_tracker.py --days 7` |
-| 14 | Health Check | `health_check.py` |
-| 15 | Morning Brief | `morning_brief.py --output file` |
-| 16 | Upload Logs | (30-day retention) |
+| 1 | Sync | `daily_sync.py --hours 26` (local timestamp filter → minutes not hours) |
+| 2 | Enrich | `job_postings_enricher.py --limit 50` |
+| 3 | Score | `lead_score.py` |
+| 4 | Gate | `action_ready_updater.py` |
+
+**JOB 2 — action-and-track (timeout: 3h, runs after Job 1)**
+
+| # | Step | Script |
+|---|---|---|
+| 5 | Tasks | `auto_tasks.py` |
+| 6 | Sequence | `auto_sequence.py --limit 50` |
+| 7 | Meeting Tracker | `meeting_tracker.py --days 7` |
+| 8 | Meeting Analyzer | `meeting_analyzer.py --limit 10` |
+| 9 | Opportunity Manager | `opportunity_manager.py` |
+| 10 | Analytics | `analytics_tracker.py --days 7` |
+| 11 | Health Check | `health_check.py` |
+| 12 | Morning Brief | `morning_brief.py --output file` |
+| 13 | Dashboard | `dashboard_generator.py` |
+| 14 | Upload Logs | (30-day retention) |
 
 **Weekly (Sundays):** `score_calibrator.py --days 30 --export` — review-only, no auto-apply.

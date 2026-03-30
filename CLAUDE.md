@@ -38,7 +38,7 @@ AI Sales OS/
 ├── Sales_Dashboard_Accounts.html → Account-based Sales Dashboard (auto-regenerated daily)
 │
 ├── 💻 CODE/Phase 3 - Sync/      → All 19 production scripts
-│   ├── daily_sync.py            → Main sync engine v2.1 (3 modes)
+│   ├── daily_sync.py            → Main sync engine v2.3 (3 modes + local timestamp filter)
 │   ├── lead_score.py            → Lead scoring engine (writes Score + Tier)
 │   ├── constants.py             → Unified field names & thresholds (single source of truth)
 │   ├── notion_helpers.py        → Shared Notion API utilities

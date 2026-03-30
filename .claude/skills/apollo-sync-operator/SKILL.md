@@ -9,7 +9,7 @@ You operate the Apollo → Notion synchronization engine. This is the data found
 
 ## How the Sync Works
 
-The engine is `daily_sync.py` (v2.1) in `💻 CODE/Phase 3 - Sync/`. It pulls data from Apollo's API and writes to Notion via `notion_helpers.py`.
+The engine is `daily_sync.py` (v2.3) in `💻 CODE/Phase 3 - Sync/`. It pulls data from Apollo's API and writes to Notion via `notion_helpers.py`.
 
 ### Three Modes
 
@@ -20,6 +20,8 @@ The engine is `daily_sync.py` (v2.1) in `💻 CODE/Phase 3 - Sync/`. It pulls da
 | **full** | First-time build or complete rebuild | `python daily_sync.py --mode full` |
 
 Incremental uses a 26-hour window (not 24) to ensure 2 hours of overlap. The triple dedup (Apollo ID → Email → in-memory seen_ids) handles any duplicates from the overlap.
+
+**Local Timestamp Filter (v2.3):** After fetching from Apollo, a client-side filter drops any record whose `updated_at` is before the requested `since` datetime. This is critical — Apollo's `contact_updated_at_range` filter uses day-granularity only and was previously returning all 44,877 contacts on every incremental run (causing 4-5h runtimes). With this fix, incremental runs complete in minutes.
 
 Full mode uses alphabetical partitioning (A-Z + numbers) to work around Apollo's 50,000 result cap per search. Each letter gets its own query, keeping each partition well under the limit for ~45k contacts.
 
@@ -65,14 +67,16 @@ If booleans are being overwritten: verify the safe boolean pattern at lines 574-
 
 ## GitHub Actions
 
-The pipeline runs daily at 7 AM KSA (04:00 UTC) via `.github/workflows/daily_sync.yml`:
-1. Sync (incremental --hours 26)
-2. Lead Score
-3. Action Ready Update
-4. Auto Tasks (continue-on-error)
-5. Health Check
-6. Upload Logs (30-day retention)
-7. Notify on failure
+The pipeline runs daily at 7 AM KSA (04:00 UTC) via `.github/workflows/daily_sync.yml` — **2 independent jobs** (each with its own 6h clock, 9h total capacity):
+
+**Job 1 — sync-and-score (5h 50min timeout):**
+1. Sync (`daily_sync.py --hours 26` — local timestamp filter makes this minutes not hours)
+2. Enrich (`job_postings_enricher.py --limit 50`)
+3. Lead Score (`lead_score.py`)
+4. Action Ready (`action_ready_updater.py`)
+
+**Job 2 — action-and-track (3h timeout, runs after Job 1):**
+5. Auto Tasks, Sequences, Meeting Tracker/Analyzer, Opportunities, Analytics, Health Check, Morning Brief, Dashboard
 
 Required secrets: `APOLLO_API_KEY`, `NOTION_API_KEY`, `NOTION_DATABASE_ID_CONTACTS`, `NOTION_DATABASE_ID_COMPANIES`, `NOTION_DATABASE_ID_TASKS`.
 

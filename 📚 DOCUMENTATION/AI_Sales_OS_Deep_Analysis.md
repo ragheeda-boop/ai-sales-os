@@ -1,8 +1,8 @@
 # AI SALES OS — Deep-Dive Analysis Report
 **Analyst:** Claude (acting as CEO + CRO + RevOps + Solutions Architect + AI Systems Expert)
 **Date:** March 28, 2026
-**Version reviewed:** v4.0 | Based on actual source code, workflow files, and documentation
-**Scale:** 44,875 contacts | 15,407 companies | 17 Python scripts | 16-step daily pipeline
+**Version reviewed:** v4.2 | Based on actual source code, workflow files, and documentation
+**Scale:** 44,875 contacts | 15,407 companies | 19 Python scripts | 2-job daily pipeline (9h capacity)
 
 ---
 
@@ -51,7 +51,7 @@ The system works. The daily pipeline runs, the sync is real, the tasks generate.
 ### What has been built (verified from code)
 
 **Operational:**
-- `daily_sync.py` v2.1 — three-mode Apollo sync with triple deduplication, alphabetical partitioning, safe boolean writing, rate limiting, 3 parallel workers. This is production-quality code.
+- `daily_sync.py` v2.3 — three-mode Apollo sync with triple deduplication, alphabetical partitioning, safe boolean writing, rate limiting, 3 parallel workers, **local timestamp filter** (v4.2 fix — prevents all 44,877 contacts being processed on every incremental run). This is production-quality code.
 - `lead_score.py` — weighted scoring engine, writes both Lead Score (number) and Lead Tier (HOT/WARM/COLD select) atomically. Working.
 - `constants.py` — unified field registry across 17 scripts. Clean, well-designed.
 - `notion_helpers.py` — shared API utilities with exponential backoff. Solid.
@@ -62,7 +62,7 @@ The system works. The daily pipeline runs, the sync is real, the tasks generate.
 - `meeting_tracker.py` — dual-mode (Notion-native + Google Calendar). Working but calendar mode requires credentials not yet in pipeline.
 - `opportunity_manager.py` — reads positive meetings, creates opportunities, advances stages, flags stale deals. Code complete, but the Opportunities DB is **empty** (per session memory), so this has never actually run against real data.
 - `morning_brief.py` — generates daily intelligence report. Working but outputs to GitHub Actions artifact, not to a channel where a rep will actually see it.
-- GitHub Actions workflow — 16-step pipeline, configured correctly (with exceptions noted below).
+- GitHub Actions workflow — 2-job pipeline (9h total capacity), configured correctly. Split from single job to bypass GitHub's 6h per-job limit.
 - 12 Claude Skills — evaluated at 100% pass rate.
 
 **Partially operational:**
@@ -648,7 +648,7 @@ This is not a vision. Every component needed to achieve this is either already b
 
 ### What this project really is
 
-A founder-built, production-scale GTM infrastructure layer that automates the full cycle from Apollo data ingestion to prioritized, task-driven sales execution — running daily at zero cost, with sophisticated deduplication, a 16-step pipeline, and 17 well-structured Python scripts. It is genuinely impressive infrastructure work. As a data pipeline, it earns a 9/10.
+A founder-built, production-scale GTM infrastructure layer that automates the full cycle from Apollo data ingestion to prioritized, task-driven sales execution — running daily at zero cost, with sophisticated deduplication, a 2-job pipeline (9h capacity), and 19 well-structured Python scripts. It is genuinely impressive infrastructure work. As a data pipeline, it earns a 9/10.
 
 ### What this project is pretending to be but is not yet
 

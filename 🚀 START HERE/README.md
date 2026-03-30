@@ -1,4 +1,4 @@
-# AI Sales OS v4.0 — Start Here
+# AI Sales OS v4.2 — Start Here
 
 ## What is this?
 
@@ -8,8 +8,8 @@ An autonomous sales operating system that syncs Apollo.io data into Notion, scor
 
 - **44,875** contacts in Notion
 - **15,407** companies in Notion
-- **15** production scripts
-- **14-step** daily pipeline + weekly calibration
+- **19** production scripts
+- **2-job** daily pipeline (9h capacity) + weekly calibration
 - **12** Claude Skills (100% eval pass rate)
 - **Lead Score** formula: Intent(10%) + Engagement(10%) + Size(45%) + Seniority(35%)
 
@@ -35,6 +35,15 @@ An autonomous sales operating system that syncs Apollo.io data into Notion, scor
 - Self-learning score calibration
 - Daily morning intelligence brief
 
+**Phase 3.5: MEET** — COMPLETE (v4.1)
+- Meeting tracker + AI analyzer
+- Opportunity pipeline
+- Live Sales Dashboard
+
+**v4.2 Fix (29 March 2026)**
+- 2-job pipeline (9h capacity) — bypasses GitHub 6h limit
+- Local timestamp filter in daily_sync.py — incremental runs complete in minutes not hours
+
 **Phase 4: OPTIMIZE** — PLANNED
 - Odoo ERP integration
 - Revenue tracking
@@ -43,4 +52,4 @@ An autonomous sales operating system that syncs Apollo.io data into Notion, scor
 See EXECUTION_PLAN_v3.2.docx for complete 4-phase plan.
 
 ---
-**Last Updated**: 28 March 2026 | **Version**: 4.0 | **Owner**: Ragheed
+**Last Updated**: 29 March 2026 | **Version**: 4.2 | **Owner**: Ragheed
