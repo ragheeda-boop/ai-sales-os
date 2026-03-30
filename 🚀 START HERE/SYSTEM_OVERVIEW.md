@@ -4,7 +4,7 @@
 
 ```
 ┌──────────────┐     ┌──────────────────────────┐     ┌──────────────┐     ┌───────────────┐
-│  Apollo.io   │────►│  Python Scripts (18)      │────►│   Notion     │────►│ GitHub Actions│
+│  Apollo.io   │────►│  Python Scripts (19)      │────►│   Notion     │────►│ GitHub Actions│
 │  (Data)      │     │  Sync + Enrich + Score +  │     │  (CRM Hub)   │     │ (Daily Cron)  │
 └──────────────┘     │  Action + Sequence + Meet │     └──────────────┘     └───────────────┘
  44,875 contacts     └──────────────────────────┘      7 Databases          2-job pipeline
@@ -174,7 +174,7 @@ Notion Views
 
 **Meeting Intelligence (Phase 3.5):** meeting_tracker.py syncs meetings, meeting_analyzer.py extracts AI intelligence (requires ANTHROPIC_API_KEY in GitHub Secrets), opportunity_manager.py converts positive meetings into pipeline opportunities with stage advancement and stale deal detection.
 
-**Automation:** GitHub Actions runs 16-step pipeline daily + weekly calibration. No external tools (n8n, Make, Zapier). Pure Python + GitHub Actions.
+**Automation:** GitHub Actions runs 23-step pipeline daily + weekly calibration. No external tools (n8n, Make, Zapier). Pure Python + GitHub Actions.
 
 ## Execution Plan (v4.0)
 

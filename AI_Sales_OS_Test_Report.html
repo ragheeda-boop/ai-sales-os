@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Sales OS — تقرير الاختبارات الشاملة</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px; }
+.container { max-width: 1100px; margin: 0 auto; }
+h1 { text-align: center; font-size: 2em; margin-bottom: 5px; color: #38bdf8; }
+.subtitle { text-align: center; color: #94a3b8; margin-bottom: 30px; font-size: 0.95em; }
+.score-card { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+.score-item { background: #1e293b; border-radius: 12px; padding: 20px 30px; text-align: center; min-width: 140px; }
+.score-num { font-size: 2.5em; font-weight: bold; }
+.score-label { font-size: 0.85em; color: #94a3b8; margin-top: 5px; }
+.pass { color: #22c55e; }
+.warn { color: #f59e0b; }
+.fail { color: #ef4444; }
+.section { background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+.section h2 { color: #38bdf8; font-size: 1.3em; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+.test-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #1a2332; }
+.test-row:last-child { border: none; }
+.test-name { flex: 1; }
+.test-detail { color: #94a3b8; font-size: 0.85em; }
+.badge { padding: 3px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
+.badge-pass { background: #052e16; color: #22c55e; border: 1px solid #166534; }
+.badge-warn { background: #422006; color: #f59e0b; border: 1px solid #854d0e; }
+.badge-fail { background: #450a0a; color: #ef4444; border: 1px solid #991b1b; }
+.badge-info { background: #0c1929; color: #38bdf8; border: 1px solid #1e40af; }
+.alert { background: #451a03; border: 1px solid #92400e; border-radius: 10px; padding: 16px; margin-bottom: 20px; }
+.alert h3 { color: #fbbf24; margin-bottom: 8px; }
+.alert p { color: #fde68a; font-size: 0.9em; line-height: 1.6; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th { text-align: right; padding: 8px 12px; background: #0f172a; color: #94a3b8; font-size: 0.85em; }
+td { padding: 8px 12px; border-bottom: 1px solid #1a2332; font-size: 0.9em; }
+.seq-active { color: #22c55e; }
+.seq-inactive { color: #64748b; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🧪 AI Sales OS — تقرير الاختبارات الشاملة</h1>
+<p class="subtitle">Day 1 Sprint | 30 مارس 2026 | فحص شامل لجميع الأنظمة</p>
+
+<div class="score-card">
+  <div class="score-item">
+    <div class="score-num pass">6</div>
+    <div class="score-label">اختبارات ناجحة</div>
+  </div>
+  <div class="score-item">
+    <div class="score-num warn">1</div>
+    <div class="score-label">تحذيرات</div>
+  </div>
+  <div class="score-item">
+    <div class="score-num fail">1</div>
+    <div class="score-label">مشاكل حرجة</div>
+  </div>
+  <div class="score-item">
+    <div class="score-num" style="color:#38bdf8">19/19</div>
+    <div class="score-label">سكربتات سليمة</div>
+  </div>
+</div>
+
+<!-- CRITICAL ALERT -->
+<div class="alert">
+  <h3>⚠️ مشكلة حرجة: Action Ready = TRUE على جهات اتصال COLD</h3>
+  <p>
+    تم اكتشاف جهات اتصال بحالة <strong>Action Ready = YES</strong> رغم أن <strong>Lead Score &lt; 50</strong>.
+    هذا يخالف الشرط الأول من شروط Action Ready الخمسة (Lead Score >= 50).
+    <br><br>
+    <strong>أمثلة مؤكدة:</strong><br>
+    • Ahmed Nassar — Score: 46.3, Tier: COLD, Action Ready: ✅<br>
+    • Athari Alsulami — Score: 35.2, Tier: COLD, Action Ready: ✅<br>
+    • Amani Alselmi — Score: 42.2, Tier: COLD, Action Ready: ✅<br>
+    <br>
+    <strong>الحل:</strong> تشغيل <code>action_ready_updater.py</code> لإعادة حساب Action Ready لجميع جهات الاتصال.
+  </p>
+</div>
+
+<!-- TEST 1: Apollo API -->
+<div class="section">
+  <h2>1️⃣ Apollo API — الاتصال والرصيد</h2>
+  <div class="test-row">
+    <div class="test-name">اتصال API<div class="test-detail">ragheed.a@ratlfintech.com</div></div>
+    <span class="badge badge-pass">✅ متصل</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">رصيد Lead Credits<div class="test-detail">424,096 متبقي من 731,696</div></div>
+    <span class="badge badge-pass">✅ كافي</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">رصيد Direct Dial<div class="test-detail">727,576 متبقي</div></div>
+    <span class="badge badge-pass">✅ كافي</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">رصيد AI Credits<div class="test-detail">36,000,000 متبقي — 532 مستخدم</div></div>
+    <span class="badge badge-pass">✅ كافي</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">البحث عن جهات اتصال<div class="test-detail">contacts/search يعمل بنجاح</div></div>
+    <span class="badge badge-pass">✅ يعمل</span>
+  </div>
+</div>
+
+<!-- TEST 2: Email Accounts -->
+<div class="section">
+  <h2>2️⃣ حسابات البريد الإلكتروني</h2>
+  <table>
+    <tr><th>البريد</th><th>النوع</th><th>آخر مزامنة</th><th>الحالة</th></tr>
+    <tr><td>ragheed.a@ratlfintech.com</td><td>Gmail</td><td>06:51 اليوم</td><td class="seq-active">✅ نشط</td></tr>
+    <tr><td>ragheed@joinmuhide.com</td><td>IMAP</td><td>06:50 اليوم</td><td class="seq-active">✅ نشط</td></tr>
+    <tr><td>ibrahim.a@muhide.com</td><td>Gmail</td><td>06:50 اليوم</td><td class="seq-active">✅ نشط</td></tr>
+    <tr><td>ibrahim@joinmuhide.com</td><td>IMAP</td><td>06:48 اليوم</td><td class="seq-active">✅ نشط</td></tr>
+    <tr><td>soha@ratlfintech.com</td><td>Gmail</td><td>06:52 اليوم</td><td class="seq-active">✅ نشط</td></tr>
+    <tr><td>soha@joinmuhide.com</td><td>IMAP</td><td>06:51 اليوم</td><td class="seq-active">✅ نشط</td></tr>
+  </table>
+  <div class="test-row" style="margin-top:10px">
+    <div class="test-name">إجمالي الحسابات<div class="test-detail">6 حسابات، جميعها تمت مزامنتها اليوم 30 مارس</div></div>
+    <span class="badge badge-pass">✅ 6/6 نشط</span>
+  </div>
+</div>
+
+<!-- TEST 3: Sequences -->
+<div class="section">
+  <h2>3️⃣ Apollo Sequences — حالة التسلسلات</h2>
+  <table>
+    <tr><th>التسلسل</th><th>الحالة</th><th>مجدول</th><th>تم التوصيل</th><th>معدل الفتح</th><th>معدل الرد</th></tr>
+    <tr>
+      <td>Ragheed - Building Materials - Sales Directors</td>
+      <td class="seq-active">نشط</td><td>290</td><td>0</td><td>-</td><td>-</td>
+    </tr>
+    <tr>
+      <td>Ibrahim - Building Materials - Sales Directors</td>
+      <td class="seq-active">نشط</td><td>0</td><td>0</td><td>-</td><td>-</td>
+    </tr>
+    <tr>
+      <td>Ragheed - CFOs/Finance - Risk & Control</td>
+      <td class="seq-active">نشط</td><td>0</td><td>0</td><td>-</td><td>-</td>
+    </tr>
+    <tr>
+      <td>Ragheed - CEOs/Owner - Risk & Control</td>
+      <td class="seq-active">نشط</td><td>0</td><td>0</td><td>-</td><td>-</td>
+    </tr>
+    <tr>
+      <td>Ibrahim - CFOs/Finance - Sales Focussed</td>
+      <td class="seq-active">نشط</td><td>0</td><td>0</td><td>-</td><td>-</td>
+    </tr>
+    <tr>
+      <td>Insurance Contents</td>
+      <td class="seq-inactive">متوقف</td><td>0</td><td>157</td><td>61.1%</td><td>1.3%</td>
+    </tr>
+  </table>
+  <div class="test-row" style="margin-top:10px">
+    <div class="test-name">إجمالي التسلسلات<div class="test-detail">23 تسلسل — 5 نشطة، 290 جهة اتصال مجدولة</div></div>
+    <span class="badge badge-warn">⚠️ 290 مجدولة لكن 0 تم توصيلها</span>
+  </div>
+</div>
+
+<!-- TEST 4: Notion Databases -->
+<div class="section">
+  <h2>4️⃣ Notion — قواعد البيانات</h2>
+  <div class="test-row">
+    <div class="test-name">👤 Contacts<div class="test-detail">9ca842d2... — آخر تحديث: 06:11 اليوم</div></div>
+    <span class="badge badge-pass">✅ متاح</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">🏢 Companies<div class="test-detail">331e04a6... — آخر تحديث: 06:11 اليوم</div></div>
+    <span class="badge badge-pass">✅ متاح</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">✅ Tasks<div class="test-detail">5644e28a... — Status = status type (ليس select) ✓</div></div>
+    <span class="badge badge-pass">✅ متاح + Schema صحيح</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">📅 Meetings<div class="test-detail">c084e81d...</div></div>
+    <span class="badge badge-pass">✅ متاح</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">💰 Opportunities<div class="test-detail">abfee51c...</div></div>
+    <span class="badge badge-pass">✅ متاح</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">Task Views<div class="test-detail">My Tasks, By Priority, By Status, Due Soon, Overdue, Critical (HOT), High (WARM), Auto-Created, Calendar</div></div>
+    <span class="badge badge-pass">✅ 9 views جاهزة</span>
+  </div>
+</div>
+
+<!-- TEST 5: Data Integrity -->
+<div class="section">
+  <h2>5️⃣ سلامة البيانات — Data Integrity</h2>
+  <div class="test-row">
+    <div class="test-name">عينة: Ahmed Nassar<div class="test-detail">Score: 46.3 | Tier: COLD | Action Ready: YES ❌</div></div>
+    <span class="badge badge-fail">❌ خطأ</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">عينة: Athari Alsulami<div class="test-detail">Score: 35.2 | Tier: COLD | Action Ready: YES ❌</div></div>
+    <span class="badge badge-fail">❌ خطأ</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">عينة: Amani Alselmi<div class="test-detail">Score: 42.2 | Tier: COLD | Meeting Booked: YES | Action Ready: YES ❌</div></div>
+    <span class="badge badge-fail">❌ خطأ</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">Primary Key Integrity<div class="test-detail">Apollo Contact ID موجود على جميع العينات</div></div>
+    <span class="badge badge-pass">✅ سليم</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">Company Relations<div class="test-detail">جميع جهات الاتصال مرتبطة بشركات</div></div>
+    <span class="badge badge-pass">✅ لا يتامى</span>
+  </div>
+</div>
+
+<!-- TEST 6: Python Scripts -->
+<div class="section">
+  <h2>6️⃣ سكربتات Python — فحص بناء الجملة</h2>
+  <table>
+    <tr><th>السكربت</th><th>الحالة</th></tr>
+    <tr><td>daily_sync.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>lead_score.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>constants.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>notion_helpers.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>auto_tasks.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>action_ready_updater.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>health_check.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>job_postings_enricher.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>auto_sequence.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>analytics_tracker.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>score_calibrator.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>morning_brief.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>meeting_tracker.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>meeting_analyzer.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>opportunity_manager.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>dashboard_generator.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>doc_sync_checker.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>webhook_server.py</td><td class="seq-active">✅</td></tr>
+    <tr><td>verify_links.py</td><td class="seq-active">✅</td></tr>
+  </table>
+  <div class="test-row" style="margin-top:10px">
+    <div class="test-name">نتيجة فحص py_compile<div class="test-detail">جميع السكربتات الـ 19 خالية من أخطاء بناء الجملة</div></div>
+    <span class="badge badge-pass">✅ 19/19 ناجح</span>
+  </div>
+</div>
+
+<!-- TEST 7: GitHub Actions -->
+<div class="section">
+  <h2>7️⃣ GitHub Actions — Pipeline</h2>
+  <div class="test-row">
+    <div class="test-name">ملف Workflow<div class="test-detail">daily_sync.yml — 359 سطر</div></div>
+    <span class="badge badge-pass">✅ موجود</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">Job 1: Sync & Score<div class="test-detail">timeout: 350 دقيقة — sync → enrich → score → action_ready</div></div>
+    <span class="badge badge-pass">✅ مُعد</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">Job 2: Action & Track<div class="test-detail">tasks → sequences → meetings → analytics → health → brief → dashboard</div></div>
+    <span class="badge badge-pass">✅ مُعد</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">Weekly Calibration<div class="test-detail">score_calibrator.py كل أحد — review only</div></div>
+    <span class="badge badge-pass">✅ مُعد</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">الجدولة<div class="test-detail">يومياً 04:00 UTC = 07:00 KSA</div></div>
+    <span class="badge badge-pass">✅ صحيح</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name">Manual Trigger<div class="test-detail">workflow_dispatch مع خيارات: mode, lead_score, action_engine, sequences</div></div>
+    <span class="badge badge-pass">✅ مُعد</span>
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div class="section" style="border: 2px solid #334155;">
+  <h2>📋 ملخص ومطلوب</h2>
+  <div class="test-row">
+    <div class="test-name" style="color:#ef4444; font-weight:bold">🔴 حرج: تشغيل action_ready_updater.py<div class="test-detail">جهات اتصال COLD تحمل Action Ready = TRUE — يجب إصلاحها فوراً</div></div>
+    <span class="badge badge-fail">مطلوب الآن</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name" style="color:#f59e0b; font-weight:bold">🟡 متابعة: Sequences لم تبدأ الإرسال بعد<div class="test-detail">290 مجدولة لكن 0 تم توصيلها — قد تحتاج وقت للبدء أو فحص الجدولة</div></div>
+    <span class="badge badge-warn">مراقبة</span>
+  </div>
+  <div class="test-row">
+    <div class="test-name" style="color:#22c55e;">🟢 كل شيء آخر يعمل بشكل ممتاز<div class="test-detail">API ✅ | بريد ✅ | Notion ✅ | سكربتات ✅ | Pipeline ✅</div></div>
+    <span class="badge badge-pass">جاهز</span>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

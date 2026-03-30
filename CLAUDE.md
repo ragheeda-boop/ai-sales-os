@@ -505,7 +505,7 @@ The pipeline was exceeding GitHub's 6-hour per-job limit. Splitting into 2 seque
 - [x] Built `auto_tasks.py` — SLA-based task creator (HOT=24h call, WARM=48h follow-up)
 - [x] Built `action_ready_updater.py` — 5-condition gating (score, DNC, outreach, stage, contact method)
 - [x] Built `health_check.py` — post-pipeline health validator
-- [x] Updated `daily_sync.yml` — 16-step pipeline with Action Engine + Health Check
+- [x] Updated `daily_sync.yml` — 23-step pipeline with Action Engine + Health Check
 - [x] Built 12 Claude Skills for AI Sales OS operations (evaluated at 100% pass rate)
 - [ ] First run: `action_ready_updater.py` then `auto_tasks.py --dry-run` to validate
 - [ ] Create Notion task views for sales workflow
@@ -524,7 +524,7 @@ The pipeline was exceeding GitHub's 6-hour per-job limit. Splitting into 2 seque
 - [x] `meeting_analyzer.py` — Claude AI meeting intelligence (requires ANTHROPIC_API_KEY in GitHub Secrets)
 - [x] `opportunity_manager.py` — Meeting → Opportunity pipeline + stale deal detection
 - [x] `doc_sync_checker.py` — Documentation drift validator
-- [x] GitHub Actions updated to 16-step pipeline (meeting tracker, analyzer, opportunity manager added)
+- [x] GitHub Actions updated to 23-step pipeline (meeting tracker, analyzer, opportunity manager added)
 - [x] constants.py expanded with MEETINGS + OPPORTUNITIES field definitions
 - [ ] ANTHROPIC_API_KEY confirmed in GitHub Secrets — **must verify**
 - [ ] First real meeting logged in Meetings DB — **activate the loop**
