@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Apollo → Notion Sync (v2.0)
+Apollo → Notion Sync (v2.3)
 
 Three sync modes:
     incremental  – Pull recently updated records (default: last 24h)
@@ -517,6 +517,55 @@ def format_company_from_api(account: Dict) -> Dict:
     if account_stage and str(account_stage).strip():
         props["Account Stage"] = {"select": {"name": str(account_stage).strip().title()}}
 
+    # NEW: Headcount Growth signals (percentage change)
+    hc_6m = account.get("organization_headcount_six_month_growth") or account.get("headcount_six_month_growth")
+    if hc_6m is not None:
+        try:
+            props["Headcount Growth 6M"] = {"number": round(float(hc_6m), 2)}
+        except (ValueError, TypeError):
+            pass
+
+    hc_12m = account.get("organization_headcount_twelve_month_growth") or account.get("headcount_twelve_month_growth")
+    if hc_12m is not None:
+        try:
+            props["Headcount Growth 12M"] = {"number": round(float(hc_12m), 2)}
+        except (ValueError, TypeError):
+            pass
+
+    hc_24m = account.get("organization_headcount_twenty_four_month_growth") or account.get("headcount_twenty_four_month_growth")
+    if hc_24m is not None:
+        try:
+            props["Headcount Growth 24M"] = {"number": round(float(hc_24m), 2)}
+        except (ValueError, TypeError):
+            pass
+
+    # NEW: AI Qualification from Apollo AI typed_custom_fields
+    typed_fields = account.get("typed_custom_fields") or {}
+
+    # AI Qualification Status (extract from first line: "Qualification Status: Qualified/Disqualified/Possible Fit")
+    ai_qual_raw = typed_fields.get("6913a64c52c2780001146d22")
+    if ai_qual_raw and isinstance(ai_qual_raw, str) and ai_qual_raw.strip():
+        # Extract status from first line
+        first_line = ai_qual_raw.strip().split("\n")[0]
+        qual_status = None
+        if "Disqualified" in first_line:
+            qual_status = "Disqualified"
+        elif "Qualified" in first_line and "Disqualified" not in first_line:
+            qual_status = "Qualified"
+        elif "Possible Fit" in first_line:
+            qual_status = "Possible Fit"
+
+        if qual_status:
+            props["AI Qualification Status"] = {"select": {"name": qual_status}}
+
+        # Extract detail (everything after "Detail: ")
+        detail_start = ai_qual_raw.find("Detail:")
+        if detail_start >= 0:
+            detail = ai_qual_raw[detail_start + 7:].strip()
+            props["AI Qualification Detail"] = _rt(detail)
+        else:
+            props["AI Qualification Detail"] = _rt(ai_qual_raw.strip())
+
     return props
 
 
@@ -611,10 +660,41 @@ def format_contact_from_api(contact: Dict, company_page_id: Optional[str] = None
         if apollo_key in contact and contact[apollo_key] is not None:
             props[notion_field] = {"checkbox": bool(contact[apollo_key])}
 
+    # NEW: Intent Strength (from Apollo intent data)
+    intent_strength = contact.get("intent_strength")
+    if intent_strength and str(intent_strength).strip():
+        props["Intent Strength"] = _rt(str(intent_strength).strip())
+
+    # NEW: Job Change Event + Date
+    job_change = contact.get("contact_job_change_event")
+    if job_change and isinstance(job_change, dict):
+        # Apollo returns job change as an object with details
+        change_type = job_change.get("type", "")
+        old_company = job_change.get("old_company_name", "")
+        new_company = job_change.get("new_company_name", "")
+        change_summary = f"{change_type}"
+        if old_company:
+            change_summary += f" | From: {old_company}"
+        if new_company:
+            change_summary += f" | To: {new_company}"
+        props["Job Change Event"] = _rt(change_summary.strip())
+
+        change_date = job_change.get("date") or job_change.get("changed_at")
+        if change_date:
+            props["Job Change Date"] = {"date": {"start": str(change_date)[:10]}}
+    elif job_change and isinstance(job_change, str) and job_change.strip():
+        props["Job Change Event"] = _rt(job_change.strip())
+
     # NEW: Last Contacted (date field)
     last_activity = contact.get("last_activity_date")
     if last_activity:
         props["Last Contacted"] = {"date": {"start": str(last_activity)[:10]}}
+
+    # NEW: AI Decision (from Apollo AI typed_custom_fields)
+    typed_fields = contact.get("typed_custom_fields") or {}
+    ai_decision = typed_fields.get("6913a64c52c2780001146ce9")
+    if ai_decision and isinstance(ai_decision, str) and ai_decision.strip():
+        props["AI Decision"] = _rt(ai_decision.strip())
 
     # Phone numbers
     for phone_obj in (contact.get("phone_numbers") or []):
@@ -863,7 +943,7 @@ def run_full(stats: SyncStats):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Apollo → Notion Sync (v2.0)",
+        description="Apollo → Notion Sync (v2.3)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Modes:

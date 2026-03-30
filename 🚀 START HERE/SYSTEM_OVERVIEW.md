@@ -27,16 +27,18 @@ The system runs itself. Your job is to close deals, not manage data.
 Apollo API
     │
     ▼
-daily_sync.py (v2.2)
+daily_sync.py (v2.3)
     ├─ Fetch contacts (contacts/search)
     │  ├─ Triple dedup (Apollo ID + Email + seen_ids)
     │  ├─ Local timestamp filter (drops records outside the requested window)
     │  ├─ Normalize seniority & engagement booleans
+    │  ├─ Extract Apollo Signals (Intent Strength, Job Change, AI Decision)
     │  ├─ Link to Company (by Apollo Account ID)
     │  └─ Create or Update in Notion
     │
     ├─ Fetch companies (accounts/search)
     │  ├─ Dedup by Apollo Account ID
+    │  ├─ Extract Apollo Signals (Headcount Growth 6/12/24M, AI Qualification)
     │  └─ Create or Update in Notion
     │
     └─ 3 Modes:
@@ -148,8 +150,8 @@ Notion Views
 
 | Database | Records | Key Fields |
 |----------|---------|------------|
-| **Contacts** | 44,875 | Name, Email, Title, Seniority, Lead Score, Lead Tier, Action Ready, Intent Score, Outreach Status |
-| **Companies** | 15,407 | Name, Domain, Industry, Employee Count, Job Postings Intent, Apollo Account ID |
+| **Contacts** | 44,875 | Name, Email, Title, Seniority, Lead Score, Lead Tier, Action Ready, Intent Score, Intent Strength, AI Decision, Job Change, Outreach Status |
+| **Companies** | 15,407 | Name, Domain, Industry, Employee Count, Job Postings Intent, Headcount Growth, AI Qualification Status, Apollo Account ID |
 | **Tasks** | Active | Title, Priority, Status (status type), Due Date, Contact, Company, Auto Created |
 | **Opportunities** | Active | Name, Value, Stage, Company, Contact, Deal Health |
 | **Meetings** | Active | Date, Attendees, Status, Outcome |

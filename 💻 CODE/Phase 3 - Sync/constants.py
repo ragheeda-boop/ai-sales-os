@@ -35,6 +35,11 @@ FIELD_REPLIED = "Replied"
 FIELD_MEETING_BOOKED = "Meeting Booked"
 FIELD_DEMOED = "Demoed"
 
+# Engagement counts (synced from Apollo Analytics)
+FIELD_EMAIL_OPEN_COUNT = "Email Open Count"
+FIELD_EMAILS_SENT_COUNT = "Emails Sent Count"
+FIELD_EMAILS_REPLIED_COUNT = "Emails Replied Count"
+
 # Stage & Status
 FIELD_LAST_CONTACTED = "Last Contacted"
 FIELD_OUTREACH_STATUS = "Outreach Status"
@@ -58,6 +63,21 @@ FIELD_INTENT_SCORE_SECONDARY = "Secondary Intent Score"
 FIELD_CONTACT_RESPONDED = "Contact Responded"
 FIELD_OPPORTUNITY_CREATED = "Opportunity Created"
 FIELD_FIRST_CONTACT_ATTEMPT = "First Contact Attempt"
+
+# Signals (synced from Apollo)
+FIELD_INTENT_STRENGTH = "Intent Strength"
+FIELD_JOB_CHANGE_EVENT = "Job Change Event"
+FIELD_JOB_CHANGE_DATE = "Job Change Date"
+
+# Apollo AI Fields (typed_custom_fields IDs)
+APOLLO_AI_CONTACT_DECISION_ID = "6913a64c52c2780001146ce9"
+APOLLO_AI_ICP_ANALYSIS_ID = "6913a64c52c2780001146cfd"
+APOLLO_AI_RESEARCH_ID = "6913a64c52c2780001146d0e"
+APOLLO_AI_QUALIFICATION_ID = "6913a64c52c2780001146d22"
+
+FIELD_AI_DECISION = "AI Decision"
+FIELD_AI_QUALIFICATION_STATUS = "AI Qualification Status"
+FIELD_AI_QUALIFICATION_DETAIL = "AI Qualification Detail"
 
 # Other
 FIELD_RECORD_SOURCE = "Record Source"
@@ -97,6 +117,9 @@ FIELD_KEYWORDS = "Keywords"
 FIELD_TECHNOLOGIES = "Technologies"
 FIELD_SHORT_DESCRIPTION = "Short Description"
 FIELD_ACCOUNT_STAGE = "Account Stage"
+FIELD_HEADCOUNT_GROWTH_6M = "Headcount Growth 6M"
+FIELD_HEADCOUNT_GROWTH_12M = "Headcount Growth 12M"
+FIELD_HEADCOUNT_GROWTH_24M = "Headcount Growth 24M"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TASKS FIELDS

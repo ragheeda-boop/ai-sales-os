@@ -42,7 +42,8 @@ from constants import (
     FIELD_EMAIL_SENT, FIELD_EMAIL_OPENED, FIELD_REPLIED,
     FIELD_MEETING_BOOKED, FIELD_OUTREACH_STATUS,
     FIELD_LAST_CONTACTED, FIELD_CONTACT_RESPONDED,
-    FIELD_APOLLO_CONTACT_ID,
+    FIELD_APOLLO_CONTACT_ID, FIELD_FULL_NAME,
+    FIELD_EMAIL_OPEN_COUNT, FIELD_EMAILS_SENT_COUNT, FIELD_EMAILS_REPLIED_COUNT,
 )
 
 # ─── Config ──────────────────────────────────────────────────────────────────
@@ -337,6 +338,188 @@ def sync_engagement_to_notion(dry_run: bool = False) -> Dict:
     return stats
 
 
+# ─── Sync Email Open Counts to Notion ───────────────────────────────────────
+
+def sync_email_open_counts(dry_run: bool = False) -> Dict:
+    """
+    Pull per-contact email open/sent/replied counts from Apollo Analytics
+    and write them to Notion's Email Open Count, Emails Sent Count,
+    Emails Replied Count number fields.
+
+    Flow:
+      1. Fetch per-contact counts from Apollo Analytics (group_by contact_id)
+      2. Pre-load Notion contacts with Apollo Contact IDs
+      3. Match by full name (Apollo analytics returns names + IDs)
+      4. Update Notion records with counts
+    """
+    stats = {"matched": 0, "updated": 0, "not_found": 0, "errors": 0}
+
+    # Step 1: Fetch per-contact email counts from Apollo Analytics
+    logger.info("  Fetching per-contact email open counts from Apollo Analytics...")
+    analytics_data = fetch_analytics_report(
+        metrics=["num_emails_opened", "num_emails_sent", "num_emails_replied"],
+        group_by=["contact_id"],
+        date_range={"modality": "all_time"},
+    )
+
+    if not analytics_data:
+        logger.warning("  No analytics data returned from Apollo")
+        return stats
+
+    rows = analytics_data.get("rows", [])
+    if not rows:
+        logger.warning("  No contact-level rows in analytics data")
+        return stats
+
+    logger.info(f"  Got {len(rows)} contacts with email activity from Apollo")
+
+    # Build lookup: contact_id or name → counts
+    # Apollo analytics rows typically have contact_id + contact_name
+    apollo_counts = {}
+    for row in rows:
+        contact_id = row.get("contact_id", "")
+        contact_name = row.get("contact_name", "")
+        opens = row.get("num_emails_opened", 0) or 0
+        sent = row.get("num_emails_sent", 0) or 0
+        replied = row.get("num_emails_replied", 0) or 0
+
+        if opens == 0 and sent == 0 and replied == 0:
+            continue
+
+        if contact_id:
+            apollo_counts[contact_id] = {
+                "name": contact_name,
+                "opens": opens,
+                "sent": sent,
+                "replied": replied,
+            }
+        elif contact_name:
+            # Fallback to name-based matching
+            apollo_counts[contact_name.strip().lower()] = {
+                "name": contact_name,
+                "opens": opens,
+                "sent": sent,
+                "replied": replied,
+            }
+
+    logger.info(f"  {len(apollo_counts)} contacts with non-zero email activity")
+
+    # Step 2: Pre-load Notion contacts that have Email Sent or Email Opened
+    logger.info("  Pre-loading Notion contacts for matching...")
+    notion_contacts = {}  # apollo_contact_id → {page_id, name, current_counts}
+    notion_names = {}     # lowercase name → page_id (fallback matching)
+    cursor = None
+
+    while True:
+        body = {
+            "page_size": 100,
+            "filter": {
+                "or": [
+                    {"property": FIELD_EMAIL_SENT, "checkbox": {"equals": True}},
+                    {"property": FIELD_EMAIL_OPENED, "checkbox": {"equals": True}},
+                    {"property": FIELD_OUTREACH_STATUS, "select": {"equals": "In Sequence"}},
+                    {"property": FIELD_OUTREACH_STATUS, "select": {"equals": "Sent"}},
+                    {"property": FIELD_OUTREACH_STATUS, "select": {"equals": "Opened"}},
+                    {"property": FIELD_OUTREACH_STATUS, "select": {"equals": "Replied"}},
+                ]
+            },
+        }
+        if cursor:
+            body["start_cursor"] = cursor
+
+        rate_limiter.wait()
+        try:
+            resp = notion_request("POST", f"{NOTION_BASE_URL}/databases/{NOTION_DATABASE_ID_CONTACTS}/query", json=body)
+            data = resp.json()
+        except Exception as e:
+            logger.error(f"  Error fetching Notion contacts: {e}")
+            break
+
+        for page in data.get("results", []):
+            props = page.get("properties", {})
+
+            # Get Apollo Contact ID
+            apollo_id_rt = props.get(FIELD_APOLLO_CONTACT_ID, {}).get("rich_text", [])
+            apollo_id = apollo_id_rt[0]["plain_text"].strip() if apollo_id_rt else ""
+
+            # Get name
+            name_items = props.get(FIELD_FULL_NAME, {}).get("title", [])
+            name = name_items[0]["text"]["content"] if name_items else ""
+
+            # Get current counts
+            current_opens = props.get(FIELD_EMAIL_OPEN_COUNT, {}).get("number") or 0
+            current_sent = props.get(FIELD_EMAILS_SENT_COUNT, {}).get("number") or 0
+            current_replied = props.get(FIELD_EMAILS_REPLIED_COUNT, {}).get("number") or 0
+
+            entry = {
+                "page_id": page["id"],
+                "name": name,
+                "current_opens": current_opens,
+                "current_sent": current_sent,
+                "current_replied": current_replied,
+            }
+
+            if apollo_id:
+                notion_contacts[apollo_id] = entry
+            if name:
+                notion_names[name.strip().lower()] = entry
+
+        if not data.get("has_more"):
+            break
+        cursor = data.get("next_cursor")
+
+    logger.info(f"  Loaded {len(notion_contacts)} Notion contacts by Apollo ID, {len(notion_names)} by name")
+
+    # Step 3: Match and update
+    for key, counts in apollo_counts.items():
+        # Try matching by Apollo Contact ID first, then by name
+        match = notion_contacts.get(key)
+        if not match:
+            match = notion_names.get(key.strip().lower() if isinstance(key, str) else "")
+        if not match and counts.get("name"):
+            match = notion_names.get(counts["name"].strip().lower())
+
+        if not match:
+            stats["not_found"] += 1
+            continue
+
+        stats["matched"] += 1
+
+        # Only update if counts changed
+        if (match["current_opens"] == counts["opens"] and
+            match["current_sent"] == counts["sent"] and
+            match["current_replied"] == counts["replied"]):
+            continue
+
+        updates = {
+            FIELD_EMAIL_OPEN_COUNT: {"number": counts["opens"]},
+            FIELD_EMAILS_SENT_COUNT: {"number": counts["sent"]},
+            FIELD_EMAILS_REPLIED_COUNT: {"number": counts["replied"]},
+        }
+
+        if dry_run:
+            logger.info(
+                f"  [DRY RUN] {counts['name']}: opens={counts['opens']}, "
+                f"sent={counts['sent']}, replied={counts['replied']}"
+            )
+        else:
+            try:
+                update_page(match["page_id"], updates)
+            except Exception as e:
+                logger.warning(f"  Error updating {counts['name']}: {e}")
+                stats["errors"] += 1
+                continue
+
+        stats["updated"] += 1
+        time.sleep(0.2)  # Rate limit
+
+    logger.info(
+        f"  Email Open Counts: matched={stats['matched']}, updated={stats['updated']}, "
+        f"not_found={stats['not_found']}, errors={stats['errors']}"
+    )
+    return stats
+
+
 # ─── Report Generation ──────────────────────────────────────────────────────
 
 def build_full_analytics_report(days: int = 30) -> str:
@@ -439,6 +622,19 @@ def main():
         logger.info(f"  Checked: {sync_stats['checked']} | Updated: {sync_stats['updated']} | Errors: {sync_stats['errors']}")
     else:
         logger.info("Step 1: Skipping Notion sync (--skip-sync)")
+        sync_stats = {"checked": 0, "updated": 0, "errors": 0}
+
+    # Step 1.5: Sync email open counts (per-contact numbers from Apollo Analytics)
+    open_count_stats = {"matched": 0, "updated": 0, "not_found": 0, "errors": 0}
+    if not args.skip_sync:
+        logger.info("Step 1.5: Syncing email open counts to Notion...")
+        open_count_stats = sync_email_open_counts(dry_run=args.dry_run)
+        logger.info(
+            f"  Matched: {open_count_stats['matched']} | Updated: {open_count_stats['updated']} | "
+            f"Not Found: {open_count_stats['not_found']} | Errors: {open_count_stats['errors']}"
+        )
+    else:
+        logger.info("Step 1.5: Skipping open count sync (--skip-sync)")
 
     # Step 2: Build analytics report
     logger.info("Step 2: Building analytics report...")
@@ -466,8 +662,11 @@ def main():
     try:
         with open(stats_file, "w") as f:
             json.dump({
-                "sync_checked": sync_stats["checked"] if not args.skip_sync else 0,
-                "sync_updated": sync_stats["updated"] if not args.skip_sync else 0,
+                "sync_checked": sync_stats["checked"],
+                "sync_updated": sync_stats["updated"],
+                "open_counts_matched": open_count_stats["matched"],
+                "open_counts_updated": open_count_stats["updated"],
+                "open_counts_not_found": open_count_stats["not_found"],
                 "report_generated": True,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }, f, indent=2)

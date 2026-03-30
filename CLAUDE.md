@@ -102,7 +102,7 @@ AI Sales OS/
 
 | Script | Purpose | Status |
 |--------|---------|--------|
-| `daily_sync.py` | Apollo → Notion sync engine (v2.2, 3 modes, local timestamp filter, seniority normalization, safe booleans) | **ACTIVE** |
+| `daily_sync.py` | Apollo → Notion sync engine (v2.3, 3 modes, local timestamp filter, seniority normalization, safe booleans, Apollo signals + AI fields) | **ACTIVE** |
 | `lead_score.py` | Lead Score calculator (0-100) + Lead Tier writer (HOT/WARM/COLD) | **ACTIVE** |
 | `constants.py` | Unified field names, score thresholds, SLA hours, seniority normalization map | **ACTIVE** |
 | `notion_helpers.py` | Shared Notion API utilities (create, update, preload, rate limiter) | **ACTIVE** |
@@ -127,7 +127,7 @@ Superseded scripts (still in CODE folder but replaced by daily_sync.py):
 
 ---
 
-## daily_sync.py — Sync Engine v2.1
+## daily_sync.py — Sync Engine v2.3
 
 ### Three Modes
 
@@ -147,6 +147,7 @@ Superseded scripts (still in CODE folder but replaced by daily_sync.py):
 - **Rate Limiting:** 5x exponential backoff on 429/500 errors.
 - **Parallel Workers:** `MAX_WORKERS = 3` for Notion writes.
 - **Local Timestamp Filter (v4.2):** After Apollo fetch, a client-side filter drops any record whose `updated_at` is before the requested `since` datetime. Fixes issue where Apollo's date-only API filter was returning all 44,877 contacts on every incremental run, causing 4-5 hour runtimes instead of minutes.
+- **Apollo Signals (v4.3):** Contacts sync now pulls Intent Strength, Job Change Event/Date, and AI Decision from `typed_custom_fields`. Companies sync now pulls Headcount Growth (6/12/24 month) and AI Qualification Status/Detail from `typed_custom_fields`.
 
 ### Commands
 
@@ -405,11 +406,11 @@ Key exports: `FIELD_*` constants, `SCORE_HOT`/`SCORE_WARM`, `SLA_*_HOURS`, `SENI
 
 ### Companies Database
 
-Key fields: Name, Domain, Industry, Employee Count, Apollo Account ID (primary key), Website, Phone, Country, City, Annual Revenue
+Key fields: Name, Domain, Industry, Employee Count, Apollo Account ID (primary key), Website, Phone, Country, City, Annual Revenue, Headcount Growth 6M/12M/24M, AI Qualification Status (Qualified/Disqualified/Possible Fit), AI Qualification Detail
 
 ### Contacts Database
 
-Key fields: Name, Email, Title, Seniority, Lead Score (number 0-100), Lead Tier (HOT/WARM/COLD select), Action Ready (checkbox), Intent Score, Outreach Status, Stage, Do Not Call, Email Sent/Opened/Bounced, Replied, Meeting Booked, Demoed, Last Contacted, Contact Responded, First Contact Attempt, Opportunity Created, Apollo Contact ID (primary key), Company (relation to Companies)
+Key fields: Name, Email, Title, Seniority, Lead Score (number 0-100), Lead Tier (HOT/WARM/COLD select), Action Ready (checkbox), Intent Score, Intent Strength, Outreach Status, Stage, Do Not Call, Email Sent/Opened/Bounced, Replied, Meeting Booked, Demoed, Last Contacted, Contact Responded, First Contact Attempt, Opportunity Created, Job Change Event, Job Change Date, AI Decision, Email Open Count, Emails Sent Count, Emails Replied Count, Apollo Contact ID (primary key), Company (relation to Companies)
 
 ### Tasks Database
 
@@ -577,6 +578,8 @@ The pipeline was exceeding GitHub's 6-hour per-job limit. Splitting into 2 seque
 11. **Action Ready Gating** — 5-condition check before any task is created. Prevents tasks for DNC, bounced, churned, or contacts without contact methods.
 12. **2-Job Pipeline** — Split daily_sync.yml into Job 1 (Sync/Score, 5h 50min) and Job 2 (Action/Track, 3h) to bypass GitHub Actions' 6-hour per-job limit. Stats passed via artifacts.
 13. **Local Timestamp Filter** — Apollo's `contact_updated_at_range` API filter uses day-granularity and was returning all 44,877 contacts even on incremental runs. Fixed in `_fetch_with_date_filter()` with a post-fetch client-side filter using exact `updated_at >= since` comparison. Incremental runs now complete in minutes, not hours.
+14. **Apollo Signals in Sync (v4.3)** — Intent Strength, Job Change Event/Date, Headcount Growth (6/12/24M), and Apollo AI fields (AI Decision, AI Qualification Status/Detail) are now extracted directly from contact/account responses during daily_sync.py. No separate enrichment scripts needed — signals flow with the regular sync.
+15. **Apollo AI Custom Field IDs** — Apollo's AI generates typed_custom_fields with fixed IDs: Contact Decision (`6913a64c52c2780001146ce9`), Account ICP Analysis (`6913a64c52c2780001146cfd`), Account Research (`6913a64c52c2780001146d0e`), Account Qualification (`6913a64c52c2780001146d22`). IDs are stored in constants.py for maintainability.
 
 ---
 
