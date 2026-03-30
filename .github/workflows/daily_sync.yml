@@ -243,7 +243,25 @@ jobs:
           echo "☀️ Generating morning brief..."
           python morning_brief.py --output file
 
-      # ─── 13. Upload All Logs ──────────────────────────────────────────────
+      # ─── 13. Sales Dashboard Generator ───────────────────────────────────
+      - name: "📈 Sales Dashboard Generator"
+        working-directory: "💻 CODE/Phase 3 - Sync"
+        continue-on-error: true
+        run: |
+          echo "📈 Regenerating Sales Dashboard from live Notion data..."
+          python dashboard_generator.py --output "../../Sales_Dashboard_Accounts.html"
+
+      # ─── 14. Commit Updated Dashboard ────────────────────────────────────
+      - name: "💾 Commit Updated Dashboard"
+        continue-on-error: true
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add Sales_Dashboard_Accounts.html
+          git diff --staged --quiet || git commit -m "📈 Auto-update Sales Dashboard [$(date '+%Y-%m-%d')]"
+          git push
+
+      # ─── 15. Upload All Logs ──────────────────────────────────────────────
       - name: "📋 Upload Logs"
         if: always()
         uses: actions/upload-artifact@v4
@@ -262,6 +280,7 @@ jobs:
             💻 CODE/Phase 3 - Sync/opportunity_manager.log
             💻 CODE/Phase 3 - Sync/morning_brief.log
             💻 CODE/Phase 3 - Sync/health_check.log
+            💻 CODE/Phase 3 - Sync/dashboard_generator.log
             💻 CODE/Phase 3 - Sync/last_sync_stats.json
             💻 CODE/Phase 3 - Sync/last_action_stats.json
             💻 CODE/Phase 3 - Sync/last_sequence_stats.json
@@ -270,10 +289,11 @@ jobs:
             💻 CODE/Phase 3 - Sync/last_meeting_tracker_stats.json
             💻 CODE/Phase 3 - Sync/last_analyzer_stats.json
             💻 CODE/Phase 3 - Sync/last_opportunity_stats.json
+            💻 CODE/Phase 3 - Sync/dashboard_stats.json
             💻 CODE/Phase 3 - Sync/morning_brief_*.md
           retention-days: 30
 
-      # ─── 14. Notify on Failure ────────────────────────────────────────────
+      # ─── 16. Notify on Failure ────────────────────────────────────────────
       - name: "❌ Notify on Failure"
         if: failure()
         run: |

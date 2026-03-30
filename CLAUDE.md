@@ -7,16 +7,17 @@ This is a production-grade Sales Operating System, not a hobby project.
 
 **System:** Apollo.io → Python Engine → Notion CRM → GitHub Actions → Odoo (future)
 **Owner:** Ragheed
-**Version:** 4.2 | March 2026 | Phase 3.5 Complete
+**Version:** 4.3 | March 2026 | Phase 3.5 Complete + Live Dashboard
 
 ---
 
 ## System Architecture
 
 ```
-Apollo.io (Data)  ──►  Python Scripts (18 scripts)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily + Weekly)
+Apollo.io (Data)  ──►  Python Scripts (19 scripts)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily + Weekly)
   44,875 contacts         Sync + Enrich + Score +            7 Databases            7:00 AM KSA
   15,407 companies        Action + Sequence + Meet           HOT/WARM/COLD          2-job pipeline + weekly calibration
+                          Dashboard (auto-regenerated HTML)  Live Sales Dashboard   Sales_Dashboard_Accounts.html
 ```
 
 **Autonomous Sales Loop:** Score → Task → Auto-Sequence → Track Results → Meet → Analyze → Opportunity → Calibrate → Better Score
@@ -34,7 +35,9 @@ AI Sales OS/
 ├── AI_Sales_OS_MindMap.html     → Interactive mind map v8.0 (Arabic)
 ├── Muhide.png                   → Brand logo
 │
-├── 💻 CODE/Phase 3 - Sync/      → All 18 production scripts
+├── Sales_Dashboard_Accounts.html → Account-based Sales Dashboard (auto-regenerated daily)
+│
+├── 💻 CODE/Phase 3 - Sync/      → All 19 production scripts
 │   ├── daily_sync.py            → Main sync engine v2.1 (3 modes)
 │   ├── lead_score.py            → Lead scoring engine (writes Score + Tier)
 │   ├── constants.py             → Unified field names & thresholds (single source of truth)
@@ -50,6 +53,7 @@ AI Sales OS/
 │   ├── meeting_tracker.py       → Meeting sync + Contact stage update [Phase 3.5]
 │   ├── meeting_analyzer.py      → AI meeting intelligence via Claude API [Phase 3.5]
 │   ├── opportunity_manager.py   → Meetings → Opportunities + stale deal detection [Phase 3.5]
+│   ├── dashboard_generator.py   → Pulls live Notion data → regenerates Sales_Dashboard_Accounts.html [v4.2]
 │   ├── doc_sync_checker.py      → Documentation drift validator [v4.1]
 │   ├── webhook_server.py        → Apollo webhook receiver
 │   ├── verify_links.py          → Contact-company link verifier
@@ -113,6 +117,7 @@ AI Sales OS/
 | `meeting_tracker.py` | Notion-native meeting sync; updates Contact (Meeting Booked, Stage, Outreach Status) | **ACTIVE (v4.1)** |
 | `meeting_analyzer.py` | Claude AI analysis of meeting notes → key takeaways, sentiment, next steps | **ACTIVE (v4.1) — requires ANTHROPIC_API_KEY** |
 | `opportunity_manager.py` | Positive meetings → Opportunities; stage advancement; stale deal detection (14 days) | **ACTIVE (v4.1)** |
+| `dashboard_generator.py` | Pulls live Notion Contacts + Companies data → aggregates by account → injects into Sales_Dashboard_Accounts.html via regex template injection | **ACTIVE (v4.2)** |
 | `doc_sync_checker.py` | Validates documentation vs codebase state — catches drift after development | **ACTIVE (v4.1)** |
 | `webhook_server.py` | Apollo webhook receiver | **ACTIVE** |
 | `verify_links.py` | Contact-company link verifier | **ACTIVE** |
@@ -466,8 +471,10 @@ The pipeline was exceeding GitHub's 6-hour per-job limit. Splitting into 2 seque
 8. `analytics_tracker.py --days 7` (sync engagement data, continue-on-error)
 9. `health_check.py` (validate pipeline run)
 10. `morning_brief.py --output file` (generate daily report, continue-on-error)
-11. Upload all logs as artifacts (30-day retention)
-12. Notify on failure
+11. `dashboard_generator.py` (regenerate Sales_Dashboard_Accounts.html from live Notion data, continue-on-error)
+12. Commit updated `Sales_Dashboard_Accounts.html` back to repo (auto-commit by github-actions bot)
+13. Upload all logs as artifacts (30-day retention), including `dashboard_generator.log` + `dashboard_stats.json`
+14. Notify on failure
 
 **Weekly Job (Sundays):** `score_calibrator.py --days 30 --export` — runs after Job 2, review-only, no auto-apply.
 

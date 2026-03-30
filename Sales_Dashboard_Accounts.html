@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUHIDE — Sales Dashboard | Account-Based View</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--orange:#E8771A;--ol:#F5A455;--dark:#1A1A1A;--d2:#242424;--d3:#2E2E2E;--card:#2A2A2A;--border:#3A3A3A;--text:#F0F0F0;--t2:#ABABAB;--green:#4CAF50;--blue:#4A9EDB;--yellow:#F5C842;--red:#E05050;--purple:#9B72CF;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--dark);color:var(--text);direction:rtl;}
+.header{background:linear-gradient(135deg,#1A1A1A 0%,#2A2020 100%);border-bottom:2px solid var(--orange);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-size:26px;font-weight:900;color:var(--orange);}
+.header-brand{display:flex;align-items:center;gap:14px;}
+.header-meta{display:flex;align-items:center;gap:20px;}
+.live-badge{background:var(--orange);color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.live-dot{width:7px;height:7px;background:white;border-radius:50%;animation:pulse 1.4s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hdate{font-size:13px;color:var(--t2);}
+.main{padding:24px 32px;max-width:1700px;margin:0 auto;}
+/* FILTER BAR */
+.fb{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:24px;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;}
+.fb label{font-size:11px;color:var(--t2);margin-bottom:4px;display:block;}
+.fg{display:flex;flex-direction:column;}
+.fb select,.fb input[type=text],.fb input[type=date]{background:var(--d3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px;min-width:125px;outline:none;cursor:pointer;transition:border-color .2s;}
+.fb select:hover,.fb input:hover{border-color:var(--orange);}
+.fb input[type=text]{min-width:170px;}
+.fb input[type=date]{min-width:125px;color-scheme:dark;}
+.dri{display:flex;gap:5px;align-items:center;}
+.dsep{font-size:11px;color:var(--t2);}
+.fstats{margin-right:auto;font-size:12px;color:var(--t2);align-self:flex-end;padding-bottom:2px;}
+.fstats span{color:var(--orange);font-weight:700;}
+.breset{background:transparent;border:1px solid var(--border);color:var(--t2);padding:6px 13px;border-radius:8px;cursor:pointer;font-size:12px;transition:all .2s;align-self:flex-end;}
+.breset:hover{border-color:var(--orange);color:var(--orange);}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;transition:border-color .2s;}
+.kpi:hover{border-color:var(--orange);}
+.kpi::before{content:'';position:absolute;top:0;right:0;width:4px;height:100%;}
+.kpi.orange::before{background:var(--orange)}.kpi.green::before{background:var(--green)}.kpi.blue::before{background:var(--blue)}.kpi.yellow::before{background:var(--yellow)}.kpi.purple::before{background:var(--purple);}
+.kv{font-size:32px;font-weight:900;line-height:1;}
+.kl{font-size:12px;color:var(--t2);margin-top:6px;}
+.ki{position:absolute;top:16px;left:16px;font-size:22px;opacity:.25;}
+/* SECTION */
+.sec{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.sec::after{content:'';flex:1;height:1px;background:var(--border);}
+/* CHARTS */
+.g3{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:16px;margin-bottom:24px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.g22{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:24px;}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.ct{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--orange);flex-shrink:0;}
+.cw{position:relative;height:200px;}
+.cwt{position:relative;height:300px;}
+.cwm{position:relative;height:240px;}
+/* FUNNEL */
+.fw{padding:4px 0;}
+.fr{display:flex;align-items:center;gap:12px;margin-bottom:9px;}
+.fl{width:105px;font-size:12px;color:var(--t2);text-align:right;}
+.fbw{flex:1;background:var(--d3);border-radius:6px;height:22px;}
+.fb2{height:100%;border-radius:6px;transition:width .5s;}
+.fn{width:38px;font-size:13px;font-weight:700;text-align:left;}
+.fp{width:38px;font-size:11px;color:var(--t2);text-align:left;}
+/* TABLE */
+.tc{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;}
+.th2{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.tt{font-size:15px;font-weight:700;}
+.tcnt{font-size:13px;color:var(--t2);}
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:#222;padding:9px 11px;text-align:right;color:var(--t2);font-weight:600;font-size:11px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+thead th:hover{color:var(--orange);}
+thead th.sa::after{content:' ↑';color:var(--orange);}
+thead th.sd::after{content:' ↓';color:var(--orange);}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+tbody tr:hover{background:rgba(232,119,26,.06);}
+tbody tr:last-child{border-bottom:none;}
+td{padding:9px 11px;vertical-align:middle;white-space:nowrap;}
+td.cn{font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
+.nd{color:var(--t2);opacity:.5;}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.bm{background:rgba(76,175,80,.15);color:#6fcf73;}
+.br2{background:rgba(74,158,219,.15);color:#7ac4f5;}
+.bo{background:rgba(245,200,66,.15);color:#f5c842;}
+.bs{background:rgba(232,119,26,.15);color:var(--orange);}
+.bb{background:rgba(224,80,80,.15);color:#e07070;}
+.bu{background:rgba(100,100,100,.15);color:#888;}
+.hot{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(224,80,80,.2);color:#ff7070;}
+.warm{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(245,200,66,.15);color:#f5c842;}
+.cold{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(74,158,219,.15);color:#7ac4f5;}
+.or{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(232,119,26,.2);color:var(--orange);}
+.oi{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(74,158,219,.2);color:var(--blue);}
+.dc{font-size:11px;color:var(--t2);}
+.dc.rc{color:#6fcf73;}.dc.oc{color:#e07070;}
+.empty{text-align:center;padding:40px;color:var(--t2);}
+/* INSIGHT BOX */
+.insight{background:rgba(232,119,26,.07);border:1px solid rgba(232,119,26,.25);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:var(--t2);line-height:1.7;}
+.insight strong{color:var(--orange);}
+@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.g3,.g2,.g22{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){.main{padding:16px}.kpi-grid{grid-template-columns:1fr 1fr}.g3,.g2,.g22{grid-template-columns:1fr}.header{padding:14px 16px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="logo">MUHIDE</div>
+    <div>
+      <div style="font-size:15px;font-weight:700;">Sales Dashboard — Account-Based View</div>
+      <div style="font-size:12px;color:var(--t2)">الشركات التي تم التواصل معها | بيانات حقيقية من Notion</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="hdate" id="liveDate"></div>
+    <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- FILTERS -->
+<div class="fb">
+  <div class="fg"><label>🔍 بحث الشركة</label><input type="text" id="searchInput" placeholder="اسم الشركة..." oninput="af()"></div>
+  <div class="fg"><label>👤 مسؤول الحساب</label>
+    <select id="ownerF" onchange="af()">
+      <option value="">الكل</option><option value="رغيد">رغيد</option>
+      <option value="إبراهيم">إبراهيم</option><option value="__u">غير محدد</option>
+    </select>
+  </div>
+  <div class="fg"><label>📧 حالة التواصل</label>
+    <select id="statusF" onchange="af()">
+      <option value="">الكل</option>
+      <option value="Meeting Booked">📅 اجتماع</option>
+      <option value="Replied">💬 ردّ</option>
+      <option value="Opened">👁 فتح</option>
+      <option value="Sent">✉️ أُرسل</option>
+      <option value="Bounced">⚠️ بانس</option>
+      <option value="Unknown">—</option>
+    </select>
+  </div>
+  <div class="fg"><label>🏭 القطاع</label><select id="industryF" onchange="af()"><option value="">الكل</option></select></div>
+  <div class="fg"><label>🌍 الدولة</label><select id="countryF" onchange="af()"><option value="">الكل</option></select></div>
+  <div class="fg"><label>🏙️ المدينة</label><select id="cityF" onchange="af()"><option value="">الكل</option></select></div>
+  <div class="fg"><label>🎯 المسمى الوظيفي</label>
+    <select id="seniorityF" onchange="af()">
+      <option value="">الكل</option><option value="C-Suite">C-Suite</option>
+      <option value="Director">Director</option><option value="Manager">Manager</option>
+      <option value="Owner">Owner</option><option value="Founder">Founder</option>
+    </select>
+  </div>
+  <div class="fg"><label>⭐ السكور</label>
+    <select id="scoreF" onchange="af()">
+      <option value="0">الكل</option><option value="80">HOT (80+)</option>
+      <option value="60">60+</option><option value="50">50+</option>
+    </select>
+  </div>
+  <div class="fg"><label>📅 Last Contacted</label>
+    <div class="dri">
+      <input type="date" id="dateFrom" onchange="af()">
+      <span class="dsep">—</span>
+      <input type="date" id="dateTo" onchange="af()">
+    </div>
+  </div>
+  <div class="fstats">يعرض <span id="vc">0</span> من <span id="tc">0</span> شركة</div>
+  <button class="breset" onclick="rf()">↺ إعادة تعيين</button>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid">
+  <div class="kpi orange"><div class="ki">🏢</div><div class="kv" id="k-co">0</div><div class="kl">شركة تم التواصل معها</div></div>
+  <div class="kpi green"><div class="ki">📅</div><div class="kv" id="k-mt">0</div><div class="kl">اجتماع محجوز</div></div>
+  <div class="kpi blue"><div class="ki">💬</div><div class="kv" id="k-rp">0</div><div class="kl">شركة ردّت</div></div>
+  <div class="kpi yellow"><div class="ki">👁</div><div class="kv" id="k-op">0</div><div class="kl">فتحت الإيميل</div></div>
+  <div class="kpi purple"><div class="ki">👥</div><div class="kv" id="k-ct">0</div><div class="kl">جهات اتصال</div></div>
+</div>
+
+<!-- ROW 1: Funnel + Status + City -->
+<div class="sec">📊 القمع والتوزيع</div>
+<div class="g3">
+  <div class="cc"><div class="ct"><div class="dot"></div>قمع المبيعات — مستوى الشركات</div><div class="fw" id="funnelWrap"></div></div>
+  <div class="cc"><div class="ct"><div class="dot" style="background:var(--green)"></div>توزيع حالة التواصل</div><div class="cw"><canvas id="statusChart"></canvas></div></div>
+  <div class="cc"><div class="ct"><div class="dot" style="background:var(--blue)"></div>توزيع المدن</div><div class="cw"><canvas id="cityChart"></canvas></div></div>
+</div>
+
+<!-- ROW 2: Leaderboard + Industry -->
+<div class="sec">🏆 أعلى الشركات — القطاعات</div>
+<div class="g22">
+  <div class="cc">
+    <div class="ct"><div class="dot" style="background:var(--green)"></div>Top 15 شركة — الاجتماعات المحجوزة</div>
+    <div class="cwt"><canvas id="leaderChart"></canvas></div>
+  </div>
+  <div class="cc">
+    <div class="ct"><div class="dot" style="background:var(--orange)"></div>توزيع القطاعات (القطاع)</div>
+    <div class="cwt"><canvas id="industryChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ROW 3: Score by Status + Score Distribution + Seniority -->
+<div class="sec">📈 تحليل السكور والمسمى الوظيفي</div>
+<div class="insight">
+  💡 <strong>رؤية في السكور:</strong> الشركات التي حجزت اجتماعات متوسط سكورها <strong>58.9</strong> (WARM) — بينما الشركات التي وصلها الإيميل فقط سكورها <strong>81.5</strong> (HOT). يعني الصيغة الحالية تُعطي وزناً عالياً للحجم والمسمى لكن ليس للتفاعل الفعلي.
+</div>
+<div class="g3">
+  <div class="cc">
+    <div class="ct"><div class="dot" style="background:var(--yellow)"></div>متوسط السكور حسب حالة التواصل</div>
+    <div class="cwm"><canvas id="scoreStatusChart"></canvas></div>
+  </div>
+  <div class="cc">
+    <div class="ct"><div class="dot" style="background:var(--purple)"></div>توزيع السكور (نطاقات)</div>
+    <div class="cwm"><canvas id="scoreDistChart"></canvas></div>
+  </div>
+  <div class="cc">
+    <div class="ct"><div class="dot" style="background:var(--blue)"></div>توزيع المسمى الوظيفي</div>
+    <div class="cwm"><canvas id="seniorityChart"></canvas></div>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="sec">📋 جدول الشركات</div>
+<div class="tc">
+  <div class="th2">
+    <div class="tt">📋 الشركات المُتواصَل معها — <span id="tcount" style="color:var(--orange)">0</span> شركة</div>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr>
+        <th onclick="st('company')"># الشركة</th>
+        <th onclick="st('owner')">مسؤول الحساب</th>
+        <th onclick="st('industry')">القطاع</th>
+        <th onclick="st('employees')">الموظفين</th>
+        <th onclick="st('city')">المدينة</th>
+        <th onclick="st('country')">الدولة</th>
+        <th onclick="st('cnt')">جهات الاتصال</th>
+        <th onclick="st('mtg')" style="color:var(--green)">اجتماعات</th>
+        <th onclick="st('rpl')">ردود</th>
+        <th onclick="st('status')">أفضل حالة</th>
+        <th onclick="st('score')">متوسط السكور</th>
+        <th onclick="st('lc')">آخر تواصل</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">🔍 لا توجد نتائج</div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+const GEN = "2026-03-30 — Notion Live Data";
+const SR = {"Meeting Booked":0,"Replied":1,"Opened":2,"In Sequence":3,"Sent":4,"Bounced":5,"Unknown":6};
+const THM = {company:0,owner:1,industry:2,employees:3,city:4,country:5,cnt:6,mtg:7,rpl:8,status:9,score:10,lc:11};
+const COMPANIES = [
+  {company:"Dr. Sulaiman Al Habib Medical Group",cnt:13,mtg:8,rpl:1,opn:9,snt:10,bnc:0,status:"Meeting Booked",score:79.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-04",city:"Riyadh",owner:"رغيد",industry:"الرعاية الصحية",employees:0},
+  {company:"Council Of Health Insurance",cnt:6,mtg:6,rpl:0,opn:6,snt:6,bnc:0,status:"Meeting Booked",score:69.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Basha Medical Group",cnt:3,mtg:3,rpl:1,opn:3,snt:3,bnc:0,status:"Meeting Booked",score:51.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-13",city:"Riyadh",owner:"",industry:"الرعاية الصحية",employees:0},
+  {company:"Imdad",cnt:3,mtg:3,rpl:0,opn:3,snt:3,bnc:0,status:"Meeting Booked",score:52.5,seniority:"Individual Contributor",country:"Saudi Arabia",lc:"2025-12-30",city:"Abha",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"kleen كلين",cnt:2,mtg:1,rpl:1,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:58.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-11",city:"Al Khobar",owner:"",industry:"اللوجستيات",employees:0},
+  {company:"AME Company for Medical Supplies",cnt:2,mtg:2,rpl:1,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:63.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Leejam Sports Company",cnt:2,mtg:2,rpl:0,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:69.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"Thimar Al Jazirah",cnt:2,mtg:2,rpl:0,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:60.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"الحكومة",employees:0},
+  {company:"Al-Hokail Group",cnt:2,mtg:2,rpl:0,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:57.9,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"Dammam",owner:"",industry:"الرعاية الصحية",employees:0},
+  {company:"King Faisal Specialist Hospital & Research Centre",cnt:2,mtg:1,rpl:0,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:75.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Riyadh",owner:"",industry:"الرعاية الصحية",employees:0},
+  {company:"aljeel Medical",cnt:2,mtg:2,rpl:0,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:70.6,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-29",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"SCIENTIFIC AND MEDICAL EQUIPMENT HOUSE CO.",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:87.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-28",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Glamera",cnt:1,mtg:1,rpl:1,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:65.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-02",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Khyal Studio",cnt:1,mtg:1,rpl:1,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:58.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-29",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"BrightWare L.L.C.",cnt:1,mtg:1,rpl:1,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:58.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-27",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Cargoz.com",cnt:1,mtg:1,rpl:1,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:65.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-25",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"TABsense",cnt:1,mtg:1,rpl:1,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:65.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-18",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Merkai | ميركاي",cnt:1,mtg:1,rpl:1,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:58.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-08",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Avnzor",cnt:1,mtg:1,rpl:1,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:45.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-04",city:"",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"MPS Bashirco",cnt:1,mtg:1,rpl:1,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:56.5,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"شركة عزم الانجاز للأدوات الصحية",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:52.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-10",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Arabian Castles for General Contracting (ACGC)",cnt:1,mtg:1,rpl:0,opn:0,snt:1,bnc:0,status:"Meeting Booked",score:72.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-09",city:"Al Khobar",owner:"",industry:"أخرى",employees:0},
+  {company:"Tajreed_",cnt:1,mtg:1,rpl:0,opn:0,snt:1,bnc:1,status:"Meeting Booked",score:56.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-11",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Mythod",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"صيدليات انوفا - Innova Pharmacy",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:66.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Haraakah | حركة",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Spa Ceylon KSA",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:52.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"Anwa BioSciences",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:51.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Tamer Healthcare",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:66.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Blue Ocean Medical Co.",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:48.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Amplifai Health",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:48.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"مصنع بانافع",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:46.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"SAJA Pharmaceuticals",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Saudi Rare Group",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:42.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Jeddah",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Sanar",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:62.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-04",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Fakeeh Care Group",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:64.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-04",city:"Jeddah",owner:"",industry:"التعليم",employees:0},
+  {company:"King Abdullah Medical City | مدينة الملك عبد الله الطبية",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:69.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Mecca",owner:"",industry:"أخرى",employees:0},
+  {company:"Allure Clinics",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:53.5,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"PIONEER DERMA KSA",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-02",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"Dr. Soliman Fakeeh Hospital Riyadh",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:64.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Riyadh",owner:"",industry:"الرعاية الصحية",employees:0},
+  {company:"Anfas Medical Care",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:69.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-02",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Canadian General Medical Center Company",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.0,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-01",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Medical Fakeeh",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:60.2,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"Jeddah",owner:"",industry:"التسويق والإعلام",employees:0},
+  {company:"LifeLab Integrated Wellness©",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:48.2,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Fakeeh Complementary",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:62.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"LIQA International",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:42.2,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"َQassim University Medical City (QUMC) - المدينة الطبية بجامعة القصيم",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:64.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"",owner:"",industry:"الرعاية الصحية",employees:0},
+  {company:"نودايت | Nodiet",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"Tabib Group",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:46.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Qawam",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:51.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"DAFCO - دافكو",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"UDAWI يداوي",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Trans-Mediterranean (TMT)",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Goldera Pharm",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:43.0,seniority:"Manager",country:"Saudi Arabia",lc:"2025-12-31",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"ALHOKAMA Eye Center",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:53.5,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"WTDcare | وتد الطبية",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"REFCON Arabia LLC",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:46.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"Al Jubail",owner:"",industry:"أخرى",employees:0},
+  {company:"Al Borg Diagnostics",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:64.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Volt Box",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:51.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"FLOW Medical Solutions",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:53.5,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Adel Care Medical Group",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:62.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Muttazen | مُتزن",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:51.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-30",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"VisionMedicalSA",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:63.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-29",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"WellPal",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-29",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Jedaani Hospitals",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:53.5,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-29",city:"Jeddah",owner:"",industry:"الرعاية الصحية",employees:0},
+  {company:"Gulf Medical Co Ltd",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:64.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-29",city:"",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Deryaq Care Medical Complex",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-29",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"Miran",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-29",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Extreme Nutrition",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:46.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-29",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"evercare",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-29",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Dr.Soliman Fakeeh Hospital Jeddah",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:79.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-28",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"Keuro Life",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.0,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-28",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Binary System Medical Co.",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:46.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-28",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Dallah Hospital",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:69.2,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-28",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Dr. Soliman Fakeeh Hospital- Madinah",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:69.2,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-26",city:"",owner:"",industry:"الرعاية الصحية",employees:0},
+  {company:"Change Your Body",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:51.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-26",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Jeddah National Hospital",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:64.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-26",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"Abeer Medical Group",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:73.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-26",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Dr. Abdul Rahman Al Mishari Hospital",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:60.2,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-26",city:"Riyadh",owner:"",industry:"اللوجستيات",employees:0},
+  {company:"Abha Private Hospital",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:60.2,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-26",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Saudi German Health",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:73.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-25",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"AlSharif Group Holding (ASG) | مجموعة الشريف القابضة",cnt:2,mtg:0,rpl:1,opn:2,snt:2,bnc:0,status:"Replied",score:71.8,seniority:"C-Suite",country:"Egypt",lc:"2026-02-20",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Samsung Electronics",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:88.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-19",city:"Riyadh",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Lendo | ليندو",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:63.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-09",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Estate Management Solutions LLC KSA",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-04",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Core Insight",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-02",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Project 300 Company",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-01",city:"Riyadh",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Avenix Partners",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-01",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"SQUAD",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-24",city:"",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"شركة تجربة للاستشارات الإدارية",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-18",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Permasteelisa Gartner Middle East",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:70.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-16",city:"",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Herfy Food Service Co. Limited",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:55.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-13",city:"Riyadh",owner:"",industry:"التسويق والإعلام",employees:0},
+  {company:"Builtop",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-12",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Catchers Agency",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-10",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Watad",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Riyadh",owner:"",industry:"التسويق والإعلام",employees:0},
+  {company:"RedexGO",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Mathnasium KSA",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"CLEAR Engineering Consultants",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:63.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Jadarah Business Consulting",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Digico Solutions",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Muroj Al Jazira Industrial",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:42.7,seniority:"Manager",country:"Saudi Arabia",lc:"2026-01-26",city:"Dammam",owner:"",industry:"أخرى",employees:0},
+  {company:"Arbete Careers",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:55.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-25",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Moteelz | موتيلز",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-25",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Rubix Consulting",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:63.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-25",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"iStoria",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:63.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-23",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Tech Flow Co.",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:42.7,seniority:"Manager",country:"Saudi Arabia",lc:"2026-01-20",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"DaleelStore",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-20",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Pure Life Filters Company",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-19",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"Respect Services",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:63.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-19",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Geoharbour Middle East",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:61.5,seniority:"Director",country:"United Arab Emirates",lc:"2026-01-15",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"SPM Consultants",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:55.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-15",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Saudi Arabian Trading & Construction Co. - SATCO",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:77.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-15",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Dunes Aero | دونز ايرو",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-15",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"HUED | هيود",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:63.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-14",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Aumet inc",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:63.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-14",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"StandardTouch",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-14",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Injaz Company",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-13",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Furqan Group",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:62.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-13",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"MacQueen",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-12",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Upt House",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-12",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"Aura Centers",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-11",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"Maison Pyramide",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:63.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-11",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"CPTIT",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:62.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-11",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Milk Network",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-07",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"VoM",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:63.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Future Institute",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:62.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Saudi Binladin Group",cnt:19,mtg:0,rpl:0,opn:9,snt:12,bnc:0,status:"Opened",score:77.7,seniority:"C suite",country:"Saudi Arabia",lc:"2026-03-12",city:"Jeddah",owner:"رغيد",industry:"الخدمات المالية",employees:0},
+  {company:"IKK Group – Isam Khairi Kabbani Group",cnt:7,mtg:0,rpl:0,opn:3,snt:7,bnc:0,status:"Opened",score:76.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-03",city:"Jeddah",owner:"إبراهيم",industry:"التكنولوجيا",employees:0},
+  {company:"Rezayat Group",cnt:4,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:75.7,seniority:"C suite",country:"Saudi Arabia",lc:"2026-02-15",city:"Al Khobar",owner:"رغيد",industry:"الخدمات المالية",employees:0},
+  {company:"Ministry of National Guard Health Affairs (MNGHA)",cnt:3,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:79.1,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-29",city:"Riyadh",owner:"",industry:"الرعاية الصحية",employees:0},
+  {company:"Philips",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:76.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"",industry:"التسويق والإعلام",employees:0},
+  {company:"King Saud University- Medical City",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:77.9,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-02",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Juffali",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:74.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Jeddah",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Alkholi Group (AKG)",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:74.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Bahra Electric",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:70.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"Jeddah",owner:"",industry:"أخرى",employees:0},
+  {company:"Dräger",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:83.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Eram Holdings",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:83.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Al Khobar",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"King Saud University",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:75.0,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Public Investment Fund (PIF)",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:74.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Bayut KSA - بيوت السعودية",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:74.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-10",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Bawan Company",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:74.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"Riyadh",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Al-Babtain Power & Telecommunication Co.",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:74.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"DAR ENGINEERING",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:74.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-03",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Yapı Merkezi",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:74.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-11",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Saudi Iron and Steel Company ( Hadeed )",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:74.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Al Jubail",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Johnson Controls Arabia",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:74.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-04",city:"Jeddah",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Palladium LLC",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:74.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-01",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"HungerStation | هنقرستيشن",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:74.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"King Khalid University Hospital",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:73.5,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"National Company for Mechanical Systems - NCMS",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:73.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"FMCO",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:73.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Dammam",owner:"",industry:"أخرى",employees:0},
+  {company:"El Seif Engineering Contracting",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:73.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Takamol Business Solutions",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:73.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-11",city:"Riyadh",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"BEC Arabia",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:73.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"geidea",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:73.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Riyadh",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Almoosa Doors",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:70.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-03",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"TruKKer",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:70.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Foodics",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:70.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"IMAN-GROUP",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:69.8,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-09",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"Soudah Development",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:68.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-11",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"NAQI نقي",cnt:1,mtg:0,rpl:0,opn:1,snt:1,bnc:0,status:"Opened",score:68.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Nesma & Partners",cnt:5,mtg:0,rpl:0,opn:0,snt:4,bnc:0,status:"Sent",score:80.6,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Al Khobar",owner:"إبراهيم",industry:"الخدمات المالية",employees:0},
+  {company:"Albawani | البواني",cnt:5,mtg:0,rpl:0,opn:2,snt:4,bnc:0,status:"Sent",score:77.4,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-15",city:"Riyadh",owner:"إبراهيم",industry:"أخرى",employees:0},
+  {company:"AECOM",cnt:4,mtg:0,rpl:0,opn:2,snt:3,bnc:0,status:"Sent",score:77.0,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-17",city:"Riyadh",owner:"إبراهيم",industry:"الخدمات المالية",employees:0},
+  {company:"Ajlan & Bros Holding",cnt:3,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:80.3,seniority:"C suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Riyadh",owner:"رغيد",industry:"الخدمات المالية",employees:0},
+  {company:"pladis Global",cnt:2,mtg:0,rpl:0,opn:0,snt:2,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Deloitte and Touche & Co. - Chartered Accountants",cnt:2,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:81.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-03",city:"Riyadh",owner:"رغيد",industry:"الخدمات المالية",employees:0},
+  {company:"RATP Dev",cnt:2,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:81.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Riyadh",owner:"رغيد",industry:"الخدمات المالية",employees:0},
+  {company:"Procter & Gamble",cnt:2,mtg:0,rpl:0,opn:0,snt:2,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"Jeddah",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Zahran Holding Company",cnt:2,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:81.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-10",city:"Riyadh",owner:"رغيد",industry:"القانوني والامتثال",employees:0},
+  {company:"almajal Group",cnt:2,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:81.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Jeddah",owner:"رغيد",industry:"أخرى",employees:0},
+  {company:"MSC Mediterranean Shipping Company",cnt:2,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:81.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Dhahran",owner:"رغيد",industry:"الخدمات المالية",employees:0},
+  {company:"3M",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Eastern Health Cluster | تجمع الشرقية الصحي",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-26",city:"Dammam",owner:"",industry:"أخرى",employees:0},
+  {company:"Citi",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Tenaris",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"PetSmart",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-02",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"TK Elevator",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-04",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Honeywell",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-04",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Applus+",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-01",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Goldman Sachs",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Bayer",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Jeddah",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Worley",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"CBRE Global Workplace Solutions (GWS)",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-02",city:"Riyadh",owner:"",industry:"التكنولوجيا",employees:0},
+  {company:"Kimberly-Clark",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Jeddah",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"CMA CGM",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"WSP",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:82.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-04",city:"",owner:"",industry:"أخرى",employees:0},
+  {company:"The Boston Consulting Group International Inc.",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:80.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-11",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"Northern Trust",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:0,status:"Sent",score:80.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Riyadh",owner:"",industry:"القانوني والامتثال",employees:0},
+  {company:"Initial Facilities Management",cnt:4,mtg:0,rpl:0,opn:0,snt:1,bnc:1,status:"Bounced",score:80.5,seniority:"C suite",country:"Saudi Arabia",lc:"2026-01-29",city:"Riyadh",owner:"رغيد",industry:"الخدمات المالية",employees:0},
+  {company:"Webuild",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:2,status:"Bounced",score:78.9,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-15",city:"Riyadh",owner:"إبراهيم",industry:"الخدمات المالية",employees:0},
+  {company:"Schneider Electric",cnt:2,mtg:0,rpl:0,opn:0,snt:2,bnc:2,status:"Bounced",score:82.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-22",city:"Riyadh",owner:"",industry:"الخدمات المالية",employees:0},
+  {company:"Olayan Saudi Holding Company",cnt:2,mtg:0,rpl:0,opn:0,snt:1,bnc:1,status:"Bounced",score:81.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Riyadh",owner:"رغيد",industry:"الخدمات المالية",employees:0},
+  {company:"Jacobs",cnt:1,mtg:0,rpl:0,opn:0,snt:1,bnc:1,status:"Bounced",score:80.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-16",city:"Riyadh",owner:"",industry:"أخرى",employees:0},
+  {company:"RATL Technology",cnt:2,mtg:0,rpl:2,opn:2,snt:2,bnc:0,status:"Unknown",score:31.9,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-18T14:23:00.000Z",city:"Jeddah",owner:"رغيد",industry:"أخرى",employees:0},
+  {company:"United Carton Industries Company",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:48.5,seniority:"C suite",country:"Saudi Arabia",lc:"2026-03-15T09:19:00.000Z",city:"Jeddah",owner:"إبراهيم",industry:"الخدمات المالية",employees:0},
+  {company:"NexChemia",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:41.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-12",city:"Al Jubail",owner:"إبراهيم",industry:"أخرى",employees:0},
+  {company:"إنتاج | Entaj",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:50.0,seniority:"C suite",country:"Saudi Arabia",lc:"2026-03-12",city:"Riyadh",owner:"إبراهيم",industry:"أخرى",employees:0},
+  {company:"NADEC Foods",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:39.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-11T14:01:00.000Z",city:"Riyadh",owner:"إبراهيم",industry:"اللوجستيات",employees:0},
+  {company:"Bboxgroup",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:48.2,seniority:"Owner",country:"Saudi Arabia",lc:"2026-03-11",city:"Riyadh",owner:"إبراهيم",industry:"التكنولوجيا",employees:0},
+  {company:"KALPATARU PROJECTS INTERNATIONAL LIMITED",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:34.5,seniority:"Manager",country:"Saudi Arabia",lc:"2026-03-11",city:"Riyadh",owner:"إبراهيم",industry:"أخرى",employees:0},
+  {company:"Horizon Design & Contracting Co.",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:46.8,seniority:"Founder",country:"Saudi Arabia",lc:"2026-03-11",city:"",owner:"إبراهيم",industry:"أخرى",employees:0},
+  {company:"sa-aag.net",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:24.0,seniority:"",country:"Saudi Arabia",lc:"2026-02-15",city:"",owner:"رغيد",industry:"أخرى",employees:0},
+  {company:"Arabian Food Supplies",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:39.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-26",city:"Jeddah",owner:"إبراهيم",industry:"التكنولوجيا",employees:0},
+  {company:"White Crystal For Filling & Packing",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:44.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-25",city:"Riyadh",owner:"إبراهيم",industry:"أخرى",employees:0},
+  {company:"Arla Foods",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:39.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-12",city:"Riyadh",owner:"إبراهيم",industry:"اللوجستيات",employees:0},
+  {company:"Egypt",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:22.2,seniority:"Entry",country:"Saudi Arabia",lc:"2026-01-10",city:"",owner:"رغيد",industry:"الخدمات المالية",employees:0},
+  {company:"AL-JUBRAN EST FOR TRADING",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:34.5,seniority:"Manager",country:"Saudi Arabia",lc:"2026-01-04",city:"Riyadh",owner:"إبراهيم",industry:"أخرى",employees:0},
+  {company:"almohadded.com.sa",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:25.5,seniority:"",country:"Saudi Arabia",lc:"2025-12-31T11:15:00.000Z",city:"",owner:"رغيد",industry:"أخرى",employees:0},
+  {company:"Offices Zone",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:39.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-11-19",city:"Riyadh",owner:"إبراهيم",industry:"أخرى",employees:0},
+  {company:"CEMFA",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:45.0,seniority:"Partner",country:"Saudi Arabia",lc:"2025-09-29",city:"",owner:"إبراهيم",industry:"أخرى",employees:0},
+  {company:"Mace",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:39.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-09-14",city:"Riyadh",owner:"إبراهيم",industry:"أخرى",employees:0},
+  {company:"MUHIDE",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Unknown",score:39.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-08-18",city:"Jeddah",owner:"رغيد",industry:"أخرى",employees:0},
+];
+let SC='status', SD='asc', CUR=[...COMPANIES];
+
+// ── HELPERS ──
+function sb(s){const m={"Meeting Booked":'<span class="badge bm">📅 اجتماع</span>',"Replied":'<span class="badge br2">💬 ردّ</span>',"Opened":'<span class="badge bo">👁 فتح</span>',"Sent":'<span class="badge bs">✉️ أُرسل</span>',"Bounced":'<span class="badge bb">⚠️ بانس</span>',"Unknown":'<span class="badge bu">—</span>'};return m[s]||`<span class="badge">${s}</span>`;}
+function sc2(v){if(!v)return'<span class="nd">—</span>';let c=v>=80?'hot':v>=60?'warm':'cold',i=v>=80?'🔥':v>=60?'🌡️':'❄️';return`<span class="${c}">${i} ${v}</span>`;}
+function ob(o){if(o==='رغيد')return'<span class="or">رغيد</span>';if(o==='إبراهيم')return'<span class="oi">إبراهيم</span>';return'<span class="nd">—</span>';}
+function fd(d){if(!d)return'<span class="nd">—</span>';const dt=new Date(d+'T00:00:00'),diff=Math.floor((new Date()-dt)/86400000),lbl=dt.toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'});return`<span class="dc ${diff<=30?'rc':diff>90?'oc':''}">${lbl}</span>`;}
+function cby(arr,key){const m={};arr.forEach(r=>{const v=r[key]||'غير محدد';m[v]=(m[v]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);}
+function avgByStatus(arr,status){const s=arr.filter(r=>r.status===status&&r.score>0);return s.length?Math.round(s.reduce((a,r)=>a+r.score,0)/s.length*10)/10:0;}
+
+// ── FILTERS ──
+function af(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const ow=document.getElementById('ownerF').value;
+  const st2=document.getElementById('statusF').value;
+  const ind=document.getElementById('industryF').value;
+  const co=document.getElementById('countryF').value;
+  const ci=document.getElementById('cityF').value;
+  const se=document.getElementById('seniorityF').value;
+  const ms=parseFloat(document.getElementById('scoreF').value)||0;
+  const df=document.getElementById('dateFrom').value;
+  const dt=document.getElementById('dateTo').value;
+  CUR=COMPANIES.filter(r=>{
+    if(q&&!r.company.toLowerCase().includes(q))return false;
+    if(ow==='__u'&&r.owner)return false;
+    if(ow&&ow!=='__u'&&r.owner!==ow)return false;
+    if(st2&&r.status!==st2)return false;
+    if(ind&&r.industry!==ind)return false;
+    if(co&&r.country!==co)return false;
+    if(ci&&r.city!==ci)return false;
+    if(se&&r.seniority!==se)return false;
+    if(ms&&r.score<ms)return false;
+    if(df&&r.lc&&r.lc<df)return false;
+    if(dt&&r.lc&&r.lc>dt)return false;
+    if((df||dt)&&!r.lc)return false;
+    return true;
+  });
+  scd();render();
+}
+function rf(){
+  ['searchInput','ownerF','statusF','industryF','countryF','cityF','seniorityF','dateFrom','dateTo'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('scoreF').value='0';
+  CUR=[...COMPANIES];scd();render();
+}
+function scd(){CUR.sort((a,b)=>{let va=a[SC],vb=b[SC];if(SC==='status'){va=SR[va]??99;vb=SR[vb]??99;}if(typeof va==='string')return SD==='asc'?(va||'').localeCompare(vb||'','ar'):(vb||'').localeCompare(va||'','ar');return SD==='asc'?(va||0)-(vb||0):(vb||0)-(va||0);});}
+function st(col){if(SC===col)SD=SD==='asc'?'desc':'asc';else{SC=col;SD=col==='status'||col==='company'?'asc':'desc';}
+  document.querySelectorAll('thead th').forEach(t=>t.classList.remove('sa','sd'));
+  const i=THM[col];if(i!==undefined){const t=document.querySelectorAll('thead th')[i];if(t)t.classList.add(SD==='asc'?'sa':'sd');}
+  scd();rtb();}
+
+// ── RENDER ──
+function render(){rtb();rkpi();rfunnel();uc();}
+function rtb(){
+  const tb=document.getElementById('tbody'),em=document.getElementById('empty');
+  document.getElementById('vc').textContent=CUR.length;
+  document.getElementById('tc').textContent=COMPANIES.length;
+  document.getElementById('tcount').textContent=CUR.length;
+  if(!CUR.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=CUR.map((r,i)=>`<tr>
+    <td class="cn" title="${r.company}">${i+1}. ${r.company}</td>
+    <td>${ob(r.owner)}</td>
+    <td style="color:var(--t2);font-size:11px">${r.industry||'<span class="nd">—</span>'}</td>
+    <td style="color:var(--t2);text-align:center">${r.employees>0?r.employees:'<span class="nd">—</span>'}</td>
+    <td style="color:var(--t2)">${r.city||'<span class="nd">—</span>'}</td>
+    <td style="color:var(--t2)">${r.country||'—'}</td>
+    <td style="text-align:center;font-weight:700;color:var(--orange)">${r.cnt}</td>
+    <td style="text-align:center">${r.mtg>0?`<span style="font-weight:700;color:var(--green)">✅ ${r.mtg}</span>`:'<span class="nd">—</span>'}</td>
+    <td style="text-align:center">${r.rpl>0?`<span style="font-weight:700;color:var(--blue)">${r.rpl}</span>`:'<span class="nd">—</span>'}</td>
+    <td>${sb(r.status)}</td>
+    <td>${sc2(r.score)}</td>
+    <td>${fd(r.lc)}</td>
+  </tr>`).join('');
+}
+function rkpi(){const d=CUR;
+  document.getElementById('k-co').textContent=d.length;
+  document.getElementById('k-mt').textContent=d.filter(r=>r.status==='Meeting Booked').length;
+  document.getElementById('k-rp').textContent=d.filter(r=>['Meeting Booked','Replied'].includes(r.status)).length;
+  document.getElementById('k-op').textContent=d.filter(r=>['Meeting Booked','Replied','Opened'].includes(r.status)).length;
+  document.getElementById('k-ct').textContent=d.reduce((s,r)=>s+r.cnt,0);
+}
+function rfunnel(){const d=CUR,total=d.length;
+  if(!total){document.getElementById('funnelWrap').innerHTML='<div style="color:var(--t2);text-align:center;padding:16px">لا توجد بيانات</div>';return;}
+  const stages=[
+    {l:'أُرسل إيميل',c:total,col:'#E8771A'},
+    {l:'فتح الإيميل',c:d.filter(r=>['Meeting Booked','Replied','Opened'].includes(r.status)).length,col:'#F5C842'},
+    {l:'ردّ',c:d.filter(r=>['Meeting Booked','Replied'].includes(r.status)).length,col:'#4A9EDB'},
+    {l:'اجتماع',c:d.filter(r=>r.status==='Meeting Booked').length,col:'#4CAF50'},
+  ];
+  document.getElementById('funnelWrap').innerHTML=stages.map(s=>{
+    const p=Math.round(s.c/total*100),w=Math.max(s.c/total*100,3);
+    return`<div class="fr"><div class="fl">${s.l}</div><div class="fbw"><div class="fb2" style="width:${w}%;background:${s.col}"></div></div><div class="fn">${s.c}</div><div class="fp">${p}%</div></div>`;
+  }).join('');
+}
+
+// ── CHARTS ──
+let cStatus,cCity,cLeader,cIndustry,cScoreStatus,cScoreDist,cSeniority;
+const DK={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+  scales:{x:{ticks:{color:'#888',font:{size:10}},grid:{color:'#333'}},y:{ticks:{color:'#888',font:{size:10}},grid:{color:'#333'}}}};
+
+function uc(){const d=CUR;
+  // Status donut
+  const sts=['Meeting Booked','Replied','Opened','Sent','Bounced','Unknown'];
+  if(cStatus){cStatus.data.datasets[0].data=sts.map(s=>d.filter(r=>r.status===s).length);cStatus.update();}
+  // City donut
+  const cities=cby(d,'city').filter(x=>x[0]!=='غير محدد').slice(0,8);
+  if(cCity){cCity.data.labels=cities.map(x=>x[0]);cCity.data.datasets[0].data=cities.map(x=>x[1]);cCity.update();}
+  // Leaderboard
+  const top=[...d].filter(r=>r.mtg>0).sort((a,b)=>b.mtg-a.mtg).slice(0,15);
+  if(cLeader){cLeader.data.labels=top.map(r=>r.company.length>32?r.company.slice(0,30)+'…':r.company);cLeader.data.datasets[0].data=top.map(r=>r.mtg);cLeader.data.datasets[1].data=top.map(r=>r.rpl);cLeader.update();}
+  // Industry
+  const inds=cby(d,'industry').filter(x=>x[0]&&x[0]!=='أخرى').slice(0,10);
+  if(cIndustry){cIndustry.data.labels=inds.map(x=>x[0]);cIndustry.data.datasets[0].data=inds.map(x=>x[1]);cIndustry.update();}
+  // Score by status
+  const ssLabels=['اجتماع\nمحجوز','ردّ','فتح\nالإيميل','تم\nالإرسال','بانس'];
+  const ssKeys=['Meeting Booked','Replied','Opened','Sent','Bounced'];
+  const ssVals=ssKeys.map(k=>avgByStatus(d,k));
+  if(cScoreStatus){cScoreStatus.data.datasets[0].data=ssVals;cScoreStatus.update();}
+  // Score dist
+  const bc=[
+    d.filter(r=>r.score>0&&r.score<40).length,d.filter(r=>r.score>=40&&r.score<50).length,
+    d.filter(r=>r.score>=50&&r.score<60).length,d.filter(r=>r.score>=60&&r.score<70).length,
+    d.filter(r=>r.score>=70&&r.score<80).length,d.filter(r=>r.score>=80&&r.score<90).length,
+    d.filter(r=>r.score>=90).length,
+  ];
+  if(cScoreDist){cScoreDist.data.datasets[0].data=bc;cScoreDist.update();}
+  // Seniority
+  const sm={'C-Suite':0,'C suite':0,'Director':0,'Manager':0,'Owner':0,'Founder':0,'Other':0};
+  d.forEach(r=>{const s=r.seniority;if(s in sm)sm[s]++;else if(s)sm['Other']++;});
+  const sl=Object.keys(sm).filter(k=>sm[k]>0);
+  if(cSeniority){cSeniority.data.labels=sl;cSeniority.data.datasets[0].data=sl.map(k=>sm[k]);cSeniority.update();}
+}
+
+function ic(){const d=CUR;
+  // Status donut
+  cStatus=new Chart(document.getElementById('statusChart'),{type:'doughnut',
+    data:{labels:['اجتماع','ردّ','فتح','أُرسل','بانس','—'],datasets:[{data:['Meeting Booked','Replied','Opened','Sent','Bounced','Unknown'].map(s=>d.filter(r=>r.status===s).length),backgroundColor:['#4CAF50','#4A9EDB','#F5C842','#E8771A','#E05050','#555'],borderWidth:2,borderColor:'#2A2A2A'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{color:'#aaa',font:{size:10},boxWidth:10}}}}});
+  // City donut
+  const cities=cby(d,'city').filter(x=>x[0]!=='غير محدد').slice(0,8);
+  cCity=new Chart(document.getElementById('cityChart'),{type:'doughnut',
+    data:{labels:cities.map(x=>x[0]),datasets:[{data:cities.map(x=>x[1]),backgroundColor:['#E8771A','#4A9EDB','#4CAF50','#F5C842','#9B72CF','#E05050','#F5A455','#7AC4F5'],borderWidth:2,borderColor:'#2A2A2A'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{color:'#aaa',font:{size:10},boxWidth:10}}}}});
+  // Leaderboard
+  const top=[...d].filter(r=>r.mtg>0).sort((a,b)=>b.mtg-a.mtg).slice(0,15);
+  cLeader=new Chart(document.getElementById('leaderChart'),{type:'bar',
+    data:{labels:top.map(r=>r.company.length>35?r.company.slice(0,33)+'…':r.company),datasets:[
+      {label:'اجتماعات',data:top.map(r=>r.mtg),backgroundColor:'#4CAF50',borderRadius:4,stack:'s'},
+      {label:'ردود',data:top.map(r=>r.rpl),backgroundColor:'#4A9EDB',borderRadius:4,stack:'s'},
+    ]},
+    options:{...DK,indexAxis:'y',plugins:{legend:{display:true,labels:{color:'#aaa',font:{size:11}}}},
+      scales:{x:{stacked:true,ticks:{color:'#888',font:{size:11}},grid:{color:'#333'}},
+              y:{stacked:true,ticks:{color:'#ccc',font:{size:10}},grid:{display:false}}}}});
+  // Industry horizontal bar
+  const inds=cby(d,'industry').filter(x=>x[0]&&x[0]!=='أخرى').slice(0,10);
+  cIndustry=new Chart(document.getElementById('industryChart'),{type:'bar',
+    data:{labels:inds.map(x=>x[0]),datasets:[{data:inds.map(x=>x[1]),
+      backgroundColor:['#E8771A','#4A9EDB','#4CAF50','#F5C842','#9B72CF','#E05050','#F5A455','#7AC4F5','#aaa','#888'],
+      borderRadius:5}]},
+    options:{...DK,indexAxis:'y',plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#888',font:{size:11}},grid:{color:'#333'}},
+              y:{ticks:{color:'#ccc',font:{size:11}},grid:{display:false}}}}});
+  // Score by Status bar
+  const ssLabels=['اجتماع','ردّ','فتح','أُرسل','بانس'];
+  const ssKeys=['Meeting Booked','Replied','Opened','Sent','Bounced'];
+  const ssVals=ssKeys.map(k=>avgByStatus(d,k));
+  cScoreStatus=new Chart(document.getElementById('scoreStatusChart'),{type:'bar',
+    data:{labels:ssLabels,datasets:[{data:ssVals,
+      backgroundColor:['#4CAF50','#4A9EDB','#F5C842','#E8771A','#E05050'],borderRadius:6}]},
+    options:{...DK,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`متوسط السكور: ${ctx.raw}`}}},
+      scales:{
+        x:{ticks:{color:'#ccc',font:{size:12}},grid:{color:'#333'}},
+        y:{min:0,max:100,ticks:{color:'#888',font:{size:10},stepSize:20},grid:{color:'#333'},
+           title:{display:true,text:'متوسط السكور',color:'#888',font:{size:10}}}
+      }
+    }});
+  // Score dist
+  cScoreDist=new Chart(document.getElementById('scoreDistChart'),{type:'bar',
+    data:{labels:['<40','40–49','50–59','60–69','70–79','80–89','90–100'],
+      datasets:[{data:[0,0,0,0,0,0,0],backgroundColor:['#555','#666','#4A9EDB','#F5C842','#F5A455','#E8771A','#E05050'],borderRadius:5}]},
+    options:{...DK,plugins:{legend:{display:false}}}});
+  // Seniority donut
+  const sm={'C-Suite':0,'C suite':0,'Director':0,'Manager':0,'Owner':0,'Founder':0,'Other':0};
+  d.forEach(r=>{const s=r.seniority;if(s in sm)sm[s]++;else if(s)sm['Other']++;});
+  const sl=Object.keys(sm).filter(k=>sm[k]>0);
+  cSeniority=new Chart(document.getElementById('seniorityChart'),{type:'doughnut',
+    data:{labels:sl,datasets:[{data:sl.map(k=>sm[k]),backgroundColor:['#E8771A','#F5A455','#4A9EDB','#9B72CF','#4CAF50','#F5C842','#888'],borderWidth:2,borderColor:'#2A2A2A'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{color:'#aaa',font:{size:10},boxWidth:10}}}}});
+  uc();
+}
+
+// ── POPULATE DROPDOWNS ──
+function pd(){
+  const cityEl=document.getElementById('cityF');
+  [...new Set(COMPANIES.map(r=>r.city).filter(Boolean))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;cityEl.appendChild(o);});
+  const ctryEl=document.getElementById('countryF');
+  [...new Set(COMPANIES.map(r=>r.country).filter(Boolean))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;ctryEl.appendChild(o);});
+  const indEl=document.getElementById('industryF');
+  [...new Set(COMPANIES.map(r=>r.industry).filter(x=>x&&x!=='أخرى'))].sort().forEach(i=>{const o=document.createElement('option');o.value=i;o.textContent=i;indEl.appendChild(o);});
+}
+
+window.onload=()=>{
+  CUR=[...COMPANIES].sort((a,b)=>(SR[a.status]??99)-(SR[b.status]??99));
+  pd();render();ic();
+  document.getElementById('liveDate').textContent='آخر تحديث: '+GEN;
+};
+</script>
+</body>
+</html>
