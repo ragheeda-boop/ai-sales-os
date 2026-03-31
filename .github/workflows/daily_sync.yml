@@ -43,6 +43,9 @@ on:
           - 'yes'
           - 'no'
 
+permissions:
+  contents: write
+
 jobs:
   # ═══════════════════════════════════════════════════════════════════════════
   # JOB 1: Sync → Enrich → Score (heavy — up to 5h)
