@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
 """
-AI Sales OS — Opportunity Manager v1.0
+AI Sales OS — Opportunity Manager v2.0 (Company-Centric)
 
 Closes the revenue loop: Meetings → Opportunities → Pipeline Tracking.
+v2.0: ONE active Opportunity per Company (not per Contact).
 
 What it does:
   1. Reads Meetings with Outcome="Positive" that have no linked Opportunity
-  2. Auto-creates Opportunity records (Stage=Discovery, linked to Contact+Company)
-  3. Reads existing Opportunities and advances stages based on new meetings
-  4. Detects stale deals (no update in 14+ days) and creates follow-up tasks
-  5. Updates Contact fields: Opportunity Created=True
+  2. Groups meetings by Company (not Contact)
+  3. Checks if Company already has an open Opportunity → update it
+  4. If not → creates ONE Opportunity per Company (with all stakeholders)
+  5. Advances existing Opportunity stages based on new meeting types
+  6. Detects stale deals (no update in 14+ days) → creates follow-up tasks
+  7. Updates Contact fields: Opportunity Created=True
 
-Data Flow:
-  Notion Meetings DB (Outcome=Positive)
-    → Check if Contact already has an Opportunity
-    → If not: Create Opportunity (Discovery stage)
-    → If yes: Check if Meeting Type warrants stage advancement
-  Notion Opportunities DB (open deals)
-    → Flag stale deals → Create follow-up tasks
+Company-Centric Rules:
+  - One active Opportunity per Company (enforced)
+  - Opportunity named: "Company Name — Stage" (not Contact Name)
+  - Stakeholder Contacts = all contacts involved in meetings
+  - Task Owner = Primary Company Owner
+  - Buying Committee Size = count of unique stakeholder contacts
 
 Usage:
     python opportunity_manager.py                  # run full cycle
@@ -40,6 +42,7 @@ load_dotenv()
 sys.path.insert(0, os.path.dirname(__file__))
 from notion_helpers import (
     NOTION_DATABASE_ID_CONTACTS,
+    NOTION_DATABASE_ID_COMPANIES,
     rate_limiter,
     notion_request,
     create_page,
@@ -50,6 +53,10 @@ from constants import (
     # Contact fields
     FIELD_FULL_NAME, FIELD_EMAIL, FIELD_LEAD_SCORE, FIELD_LEAD_TIER,
     FIELD_SENIORITY, FIELD_OPPORTUNITY_CREATED, FIELD_COMPANY_RELATION,
+    FIELD_CONTACT_OWNER,
+    # Company fields
+    FIELD_COMPANY_NAME, FIELD_PRIMARY_COMPANY_OWNER, FIELD_COMPANY_STAGE,
+    COMPANY_STAGE_OPPORTUNITY,
     # Meeting fields
     FIELD_MEETING_TITLE, FIELD_MEETING_TYPE, FIELD_MEETING_OUTCOME,
     FIELD_MEETING_CONTACT, FIELD_MEETING_COMPANY, FIELD_MEETING_OPPORTUNITY,
@@ -59,6 +66,9 @@ from constants import (
     FIELD_OPP_NAME, FIELD_OPP_STAGE, FIELD_OPP_DEAL_HEALTH,
     FIELD_OPP_PROBABILITY, FIELD_OPP_NEXT_ACTION, FIELD_OPP_CONTACT,
     FIELD_OPP_COMPANY, FIELD_OPP_RECORD_SOURCE, FIELD_OPP_EXPECTED_CLOSE,
+    FIELD_OPP_STAKEHOLDER_CONTACTS,
+    FIELD_OPP_COMPANY_OWNER_SNAPSHOT, FIELD_OPP_BUYING_COMMITTEE_SIZE,
+    FIELD_OPP_DECISION_MAKER_IDENTIFIED, FIELD_OPP_REVENUE_PRIORITY,
     OPP_STAGE_DISCOVERY, OPP_STAGE_PROPOSAL, OPP_STAGE_NEGOTIATION,
     OPP_STAGE_CLOSED_WON, OPP_STAGE_CLOSED_LOST,
     OPP_HEALTH_GREEN, OPP_HEALTH_YELLOW, OPP_HEALTH_RED,
@@ -68,8 +78,10 @@ from constants import (
     FIELD_TASK_DUE_DATE, FIELD_TASK_TYPE, FIELD_TASK_CONTACT,
     FIELD_TASK_COMPANY, FIELD_TASK_OPPORTUNITY, FIELD_TASK_CONTEXT,
     FIELD_TASK_EXPECTED_OUTCOME, FIELD_TASK_AUTO_CREATED,
-    FIELD_TASK_AUTOMATION_TYPE,
+    FIELD_TASK_AUTOMATION_TYPE, FIELD_TASK_OWNER, FIELD_OWNER_SOURCE,
     TASK_STATUS_NOT_STARTED,
+    # Score tiers
+    TIER_HOT, TIER_WARM,
 )
 
 # ─── Config ──────────────────────────────────────────────────────────────────
@@ -166,8 +178,26 @@ def fetch_positive_meetings_without_opportunity() -> List[Dict]:
     return results
 
 
+def fetch_company_info(company_id: str) -> Optional[Dict]:
+    """Fetch company name and primary owner for opportunity naming."""
+    try:
+        resp = notion_request("GET", f"{NOTION_BASE_URL}/pages/{company_id}")
+        props = resp.json().get("properties", {})
+
+        name_items = props.get(FIELD_COMPANY_NAME, {}).get("title", [])
+        name = name_items[0]["text"]["content"] if name_items else "Unknown"
+
+        primary_owner_sel = props.get(FIELD_PRIMARY_COMPANY_OWNER, {}).get("select")
+        primary_owner = primary_owner_sel.get("name", "") if primary_owner_sel else ""
+
+        return {"name": name, "primary_owner": primary_owner}
+    except Exception as e:
+        logger.warning(f"Could not fetch company {company_id}: {e}")
+        return None
+
+
 def fetch_contact_info(contact_id: str) -> Optional[Dict]:
-    """Fetch contact name and company for opportunity naming."""
+    """Fetch contact name, tier, score, seniority for stakeholder tracking."""
     try:
         resp = notion_request("GET", f"{NOTION_BASE_URL}/pages/{contact_id}")
         props = resp.json().get("properties", {})
@@ -180,30 +210,34 @@ def fetch_contact_info(contact_id: str) -> Optional[Dict]:
 
         score = props.get(FIELD_LEAD_SCORE, {}).get("number", 0) or 0
 
-        return {"name": name, "tier": tier, "score": score}
+        seniority_sel = props.get(FIELD_SENIORITY, {}).get("select")
+        seniority = seniority_sel.get("name", "") if seniority_sel else ""
+
+        return {"name": name, "tier": tier, "score": score, "seniority": seniority}
     except Exception as e:
         logger.warning(f"Could not fetch contact {contact_id}: {e}")
         return None
 
 
-def fetch_existing_opportunities_for_contacts(contact_ids: List[str]) -> Dict[str, str]:
+def fetch_existing_opportunities_for_companies(company_ids: List[str]) -> Dict[str, Dict]:
     """
-    Check if any of the given contact IDs already have an open Opportunity.
-    Returns: { contact_page_id: opportunity_page_id }
+    Check if any of the given company IDs already have an open Opportunity.
+    v2.0: Company-Centric — ONE opportunity per company.
+    Returns: { company_page_id: {"opp_id": str, "stage": str, "contact_ids": list} }
     """
-    if not NOTION_DATABASE_ID_OPPORTUNITIES or not contact_ids:
+    if not NOTION_DATABASE_ID_OPPORTUNITIES or not company_ids:
         return {}
 
     existing = {}
 
-    for contact_id in contact_ids:
+    for company_id in company_ids:
         cursor = None
         while True:
             body = {
                 "page_size": 10,
                 "filter": {
                     "and": [
-                        {"property": FIELD_OPP_CONTACT, "relation": {"contains": contact_id}},
+                        {"property": FIELD_OPP_COMPANY, "relation": {"contains": company_id}},
                         {
                             "or": [
                                 {"property": FIELD_OPP_STAGE, "status": {"equals": OPP_STAGE_DISCOVERY}},
@@ -225,11 +259,24 @@ def fetch_existing_opportunities_for_contacts(contact_ids: List[str]) -> Dict[st
                 )
                 data = resp.json()
             except Exception as e:
-                logger.warning(f"Error checking opportunities for {contact_id}: {e}")
+                logger.warning(f"Error checking opportunities for company {company_id}: {e}")
                 break
 
             for page in data.get("results", []):
-                existing[contact_id] = page["id"]
+                props = page.get("properties", {})
+                stage_prop = props.get(FIELD_OPP_STAGE, {}).get("status")
+                stage = stage_prop.get("name", "") if stage_prop else ""
+
+                contact_rel = props.get(FIELD_OPP_CONTACT, {}).get("relation", [])
+                opp_contact_ids = [r["id"] for r in contact_rel]
+
+                # Keep only the first (most recent) open opportunity per company
+                if company_id not in existing:
+                    existing[company_id] = {
+                        "opp_id": page["id"],
+                        "stage": stage,
+                        "contact_ids": opp_contact_ids,
+                    }
 
             if not data.get("has_more"):
                 break
@@ -308,33 +355,119 @@ def fetch_open_opportunities() -> List[Dict]:
     return results
 
 
-# ─── Opportunity Creation ────────────────────────────────────────────────────
+# ─── Grouping ────────────────────────────────────────────────────────────────
+
+def group_meetings_by_company(meetings: List[Dict]) -> Dict[str, List[Dict]]:
+    """
+    Group meetings by company_id. Meetings without a company
+    are grouped under their first contact's company (fetched from Notion).
+    v2.0: Company is the primary grouping entity.
+    """
+    company_meetings: Dict[str, List[Dict]] = {}
+
+    for meeting in meetings:
+        company_id = None
+
+        # Prefer direct company link on the meeting
+        if meeting.get("company_ids"):
+            company_id = meeting["company_ids"][0]
+        elif meeting.get("contact_ids"):
+            # Fall back: look up the contact's company
+            contact_id = meeting["contact_ids"][0]
+            try:
+                resp = notion_request("GET", f"{NOTION_BASE_URL}/pages/{contact_id}")
+                props = resp.json().get("properties", {})
+                comp_rel = props.get(FIELD_COMPANY_RELATION, {}).get("relation", [])
+                if comp_rel:
+                    company_id = comp_rel[0]["id"]
+            except Exception as e:
+                logger.warning(f"Could not resolve company for contact {contact_id}: {e}")
+
+        if not company_id:
+            logger.warning(f"Skipping meeting '{meeting['title']}' — no company resolvable")
+            continue
+
+        # Ensure meeting has the company_id set for downstream use
+        if not meeting.get("company_ids"):
+            meeting["company_ids"] = [company_id]
+
+        company_meetings.setdefault(company_id, []).append(meeting)
+
+    return company_meetings
+
+
+# ─── Opportunity Creation (Company-Centric) ──────────────────────────────────
 
 def create_opportunity(
-    meeting: Dict,
-    contact_info: Optional[Dict],
+    company_id: str,
+    company_info: Optional[Dict],
+    meetings: List[Dict],
+    all_contact_ids: List[str],
+    stakeholder_infos: List[Dict],
     dry_run: bool = False,
 ) -> Optional[str]:
-    """Create an Opportunity from a positive meeting."""
+    """
+    Create ONE Opportunity for a Company from its positive meetings.
+    v2.0: Company-Centric naming, stakeholder tracking, owner snapshot.
+    """
     if not NOTION_DATABASE_ID_OPPORTUNITIES:
         logger.error("NOTION_DATABASE_ID_OPPORTUNITIES not set")
         return None
 
-    contact_name = contact_info["name"] if contact_info else "Unknown"
-    opp_name = f"{contact_name} — {meeting['meeting_type'] or 'Discovery'}"
+    company_name = company_info["name"] if company_info else "Unknown"
+    primary_owner = company_info.get("primary_owner", "") if company_info else ""
 
-    # Expected close: 90 days from meeting date
+    # Pick the highest-priority meeting type for initial stage
+    best_meeting_type = ""
+    latest_next_steps = ""
+    latest_scheduled = ""
+    for m in meetings:
+        mt = m.get("meeting_type", "")
+        if mt in STAGE_ADVANCE_MAP:
+            # Pick the most advanced meeting type
+            if not best_meeting_type or \
+               list(STAGE_ADVANCE_MAP.keys()).index(mt) > list(STAGE_ADVANCE_MAP.keys()).index(best_meeting_type):
+                best_meeting_type = mt
+        if m.get("next_steps"):
+            latest_next_steps = m["next_steps"]
+        sd = m.get("scheduled_date", "")
+        if sd > latest_scheduled:
+            latest_scheduled = sd
+
+    initial_stage = STAGE_ADVANCE_MAP.get(best_meeting_type, OPP_STAGE_DISCOVERY)
+    probability = STAGE_PROBABILITY.get(initial_stage, "25%")
+    opp_name = f"{company_name} — {initial_stage}"
+
+    # Expected close: 90 days from most recent meeting
     try:
-        if meeting.get("scheduled_date"):
-            base = datetime.fromisoformat(meeting["scheduled_date"][:10])
+        if latest_scheduled:
+            base = datetime.fromisoformat(latest_scheduled[:10])
         else:
             base = datetime.now(timezone.utc)
         expected_close = (base + timedelta(days=90)).strftime("%Y-%m-%d")
     except Exception:
         expected_close = (datetime.now(timezone.utc) + timedelta(days=90)).strftime("%Y-%m-%d")
 
-    initial_stage = STAGE_ADVANCE_MAP.get(meeting.get("meeting_type", ""), OPP_STAGE_DISCOVERY)
-    probability = STAGE_PROBABILITY.get(initial_stage, "25%")
+    # Build stakeholder summary
+    stakeholder_names = [s["name"] for s in stakeholder_infos if s]
+    stakeholder_summary = ", ".join(stakeholder_names) if stakeholder_names else ""
+
+    # Check for decision maker among stakeholders
+    decision_maker_found = any(
+        s.get("seniority", "") in ("C-Suite", "VP", "Director", "Owner", "Founder", "Partner")
+        for s in stakeholder_infos if s
+    )
+
+    # Determine revenue priority from best contact tier
+    best_tier = ""
+    for s in stakeholder_infos:
+        if s and s.get("tier") == TIER_HOT:
+            best_tier = TIER_HOT
+            break
+        if s and s.get("tier") == TIER_WARM and best_tier != TIER_HOT:
+            best_tier = TIER_WARM
+
+    revenue_priority = "Tier 1" if best_tier == TIER_HOT else "Tier 2" if best_tier == TIER_WARM else "Tier 3"
 
     properties = {
         FIELD_OPP_NAME: {"title": [{"text": {"content": opp_name[:100]}}]},
@@ -343,35 +476,53 @@ def create_opportunity(
         FIELD_OPP_DEAL_HEALTH: {"select": {"name": OPP_HEALTH_GREEN}},
         FIELD_OPP_EXPECTED_CLOSE: {"date": {"start": expected_close}},
         FIELD_OPP_RECORD_SOURCE: {"select": {"name": "Apollo"}},
+        # Company-Centric v2.0 fields
+        FIELD_OPP_BUYING_COMMITTEE_SIZE: {"number": len(all_contact_ids)},
+        FIELD_OPP_DECISION_MAKER_IDENTIFIED: {"checkbox": decision_maker_found},
+        FIELD_OPP_REVENUE_PRIORITY: {"select": {"name": revenue_priority}},
     }
 
-    # Next Action from meeting next steps
-    next_steps = meeting.get("next_steps", "")
-    if next_steps:
-        properties[FIELD_OPP_NEXT_ACTION] = {
-            "rich_text": [{"text": {"content": next_steps[:2000]}}]
+    # Owner = Primary Company Owner
+    # NOTE: "Opportunity Owner" is a person-type field in Notion (requires user IDs).
+    # We write the owner name to Company Owner Snapshot (rich_text) instead.
+    if primary_owner:
+        properties[FIELD_OPP_COMPANY_OWNER_SNAPSHOT] = {
+            "rich_text": [{"text": {"content": primary_owner}}]
         }
 
-    # Relations
-    if meeting.get("contact_ids"):
-        properties[FIELD_OPP_CONTACT] = {
-            "relation": [{"id": meeting["contact_ids"][0]}]
+    # Stakeholder Contacts summary (rich_text — names + seniority)
+    if stakeholder_summary:
+        properties[FIELD_OPP_STAKEHOLDER_CONTACTS] = {
+            "rich_text": [{"text": {"content": stakeholder_summary[:2000]}}]
         }
-    if meeting.get("company_ids"):
-        properties[FIELD_OPP_COMPANY] = {
-            "relation": [{"id": meeting["company_ids"][0]}]
+
+    # Next Action from latest meeting next steps
+    if latest_next_steps:
+        properties[FIELD_OPP_NEXT_ACTION] = {
+            "rich_text": [{"text": {"content": latest_next_steps[:2000]}}]
         }
+
+    # Company relation
+    properties[FIELD_OPP_COMPANY] = {"relation": [{"id": company_id}]}
+
+    # Primary Contact = highest-scored contact
+    if all_contact_ids:
+        properties[FIELD_OPP_CONTACT] = {"relation": [{"id": all_contact_ids[0]}]}
 
     if dry_run:
         logger.info(
             f"  [DRY RUN] Would create opportunity: {opp_name} "
-            f"| Stage: {initial_stage} | Close: {expected_close}"
+            f"| Stage: {initial_stage} | Close: {expected_close} "
+            f"| Stakeholders: {len(all_contact_ids)} | Owner: {primary_owner}"
         )
         return "dry-run-id"
 
     try:
         page_id = create_page(NOTION_DATABASE_ID_OPPORTUNITIES, properties)
-        logger.info(f"  Created opportunity: {opp_name} → {page_id}")
+        logger.info(
+            f"  Created opportunity: {opp_name} → {page_id} "
+            f"| Stakeholders: {len(all_contact_ids)} | Owner: {primary_owner}"
+        )
         return page_id
     except Exception as e:
         logger.error(f"  Failed to create opportunity '{opp_name}': {e}")
@@ -379,7 +530,7 @@ def create_opportunity(
 
 
 def link_meeting_to_opportunity(meeting_id: str, opp_id: str, dry_run: bool = False) -> bool:
-    """Link the meeting record to the newly created opportunity."""
+    """Link the meeting record to the opportunity."""
     if dry_run:
         return True
     try:
@@ -403,6 +554,21 @@ def update_contact_opportunity_created(contact_id: str, dry_run: bool = False) -
         return True
     except Exception as e:
         logger.warning(f"Could not update contact opportunity flag: {e}")
+        return False
+
+
+def update_company_stage_to_opportunity(company_id: str, dry_run: bool = False) -> bool:
+    """Set Company Stage = Opportunity when an opportunity is created."""
+    if dry_run:
+        return True
+    try:
+        update_page(company_id, {
+            FIELD_COMPANY_STAGE: {"select": {"name": COMPANY_STAGE_OPPORTUNITY}}
+        })
+        logger.info(f"  Updated Company Stage → Opportunity for {company_id}")
+        return True
+    except Exception as e:
+        logger.warning(f"Could not update company stage: {e}")
         return False
 
 
@@ -445,6 +611,33 @@ def advance_opportunity_stage(
         return False
 
 
+def update_opportunity_stakeholders(
+    opp_id: str,
+    new_contact_ids: List[str],
+    existing_contact_ids: List[str],
+    dry_run: bool = False,
+) -> bool:
+    """Add new stakeholder contacts to an existing opportunity."""
+    # Merge existing + new, deduplicate
+    all_ids = list(dict.fromkeys(existing_contact_ids + new_contact_ids))
+    if set(all_ids) == set(existing_contact_ids):
+        return False  # No new stakeholders
+
+    if dry_run:
+        logger.info(f"  [DRY RUN] Would update stakeholders: {len(existing_contact_ids)} → {len(all_ids)}")
+        return True
+
+    try:
+        update_page(opp_id, {
+            FIELD_OPP_BUYING_COMMITTEE_SIZE: {"number": len(all_ids)},
+        })
+        logger.info(f"  Updated buying committee: {len(existing_contact_ids)} → {len(all_ids)}")
+        return True
+    except Exception as e:
+        logger.warning(f"Could not update opportunity stakeholders: {e}")
+        return False
+
+
 # ─── Stale Deal Detection ───────────────────────────────────────────────────
 
 def detect_stale_deals(opportunities: List[Dict], dry_run: bool = False) -> Dict:
@@ -484,8 +677,8 @@ def detect_stale_deals(opportunities: List[Dict], dry_run: bool = False) -> Dict
                 logger.info(f"  [DRY RUN] Would set deal health to Yellow")
                 stale_stats["health_updated"] += 1
 
-        # Create follow-up task if Tasks DB is configured
-        if NOTION_DATABASE_ID_TASKS and opp.get("contact_ids"):
+        # Create follow-up task (Company-Centric: uses company, not contact)
+        if NOTION_DATABASE_ID_TASKS and opp.get("company_ids"):
             task_created = create_stale_deal_task(opp, dry_run)
             if task_created:
                 stale_stats["tasks_created"] += 1
@@ -494,12 +687,15 @@ def detect_stale_deals(opportunities: List[Dict], dry_run: bool = False) -> Dict
 
 
 def create_stale_deal_task(opp: Dict, dry_run: bool = False) -> bool:
-    """Create a follow-up task for a stale deal."""
+    """
+    Create a follow-up task for a stale deal.
+    v2.0: Task Owner from Primary Company Owner, linked to Company.
+    """
     title = f"STALE DEAL: Follow up on {opp['title']}"
     due = (datetime.now(timezone.utc) + timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S.000+00:00")
     context = (
         f"This deal ({opp['stage']}) has not been updated in {STALE_DEAL_DAYS}+ days. "
-        f"Follow up with the contact to check status and update the opportunity."
+        f"Follow up with the company to check status and update the opportunity."
     )
 
     properties = {
@@ -516,10 +712,19 @@ def create_stale_deal_task(opp: Dict, dry_run: bool = False) -> bool:
         FIELD_TASK_AUTOMATION_TYPE: {"select": {"name": "Stale Deal Alert"}},
     }
 
-    if opp.get("contact_ids"):
-        properties[FIELD_TASK_CONTACT] = {"relation": [{"id": opp["contact_ids"][0]}]}
+    # Company relation (primary link in v2.0)
     if opp.get("company_ids"):
         properties[FIELD_TASK_COMPANY] = {"relation": [{"id": opp["company_ids"][0]}]}
+
+        # Fetch Primary Company Owner for Task Owner
+        company_info = fetch_company_info(opp["company_ids"][0])
+        if company_info and company_info.get("primary_owner"):
+            properties[FIELD_TASK_OWNER] = {"select": {"name": company_info["primary_owner"]}}
+            properties[FIELD_OWNER_SOURCE] = {"select": {"name": "Company Primary"}}
+
+    # Contact relation (secondary — first contact if available)
+    if opp.get("contact_ids"):
+        properties[FIELD_TASK_CONTACT] = {"relation": [{"id": opp["contact_ids"][0]}]}
 
     # Link to opportunity
     properties[FIELD_TASK_OPPORTUNITY] = {"relation": [{"id": opp["page_id"]}]}
@@ -540,14 +745,14 @@ def create_stale_deal_task(opp: Dict, dry_run: bool = False) -> bool:
 # ─── Main Pipeline ───────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="AI Sales OS — Opportunity Manager v1.0")
+    parser = argparse.ArgumentParser(description="AI Sales OS — Opportunity Manager v2.0 (Company-Centric)")
     parser.add_argument("--dry-run", action="store_true", help="Preview without writing")
     parser.add_argument("--limit", type=int, default=50, help="Max opportunities to create")
     parser.add_argument("--stale-only", action="store_true", help="Only check for stale deals")
     args = parser.parse_args()
 
     logger.info("=" * 70)
-    logger.info(f"OPPORTUNITY MANAGER v1.0 | Dry Run: {args.dry_run}")
+    logger.info(f"OPPORTUNITY MANAGER v2.0 (Company-Centric) | Dry Run: {args.dry_run}")
     logger.info("=" * 70)
 
     start_time = time.time()
@@ -558,87 +763,142 @@ def main():
 
     stats = {
         "meetings_found": 0,
+        "companies_with_meetings": 0,
         "opps_created": 0,
         "opps_advanced": 0,
         "contacts_updated": 0,
         "skipped_existing": 0,
+        "stakeholders_updated": 0,
+        "company_stages_updated": 0,
         "stale_deals": 0,
         "stale_tasks": 0,
         "errors": 0,
     }
 
-    # ── Part 1: Create Opportunities from Positive Meetings ──
+    # ── Part 1: Create/Update Opportunities from Positive Meetings ──
 
     if not args.stale_only:
-        logger.info("Part 1: Processing positive meetings → opportunities...")
+        logger.info("Part 1: Processing positive meetings → opportunities (Company-Centric)...")
 
         meetings = fetch_positive_meetings_without_opportunity()
         stats["meetings_found"] = len(meetings)
 
         if meetings:
-            # Collect all contact IDs to batch-check existing opportunities
-            all_contact_ids = []
-            for m in meetings:
-                all_contact_ids.extend(m.get("contact_ids", []))
+            # v2.0: Group meetings by COMPANY, not by contact
+            company_meetings = group_meetings_by_company(meetings)
+            stats["companies_with_meetings"] = len(company_meetings)
+            logger.info(f"  Grouped into {len(company_meetings)} companies")
 
-            existing_opps = fetch_existing_opportunities_for_contacts(list(set(all_contact_ids)))
+            # Batch-check which companies already have open opportunities
+            company_ids = list(company_meetings.keys())
+            existing_opps = fetch_existing_opportunities_for_companies(company_ids)
 
             processed = 0
-            for meeting in meetings:
+            for company_id, comp_meetings in company_meetings.items():
                 if processed >= args.limit:
                     break
 
-                if not meeting.get("contact_ids"):
-                    logger.warning(f"  Skipping meeting '{meeting['title']}' — no contact linked")
+                # Collect all unique contact IDs across all meetings for this company
+                all_contact_ids = []
+                for m in comp_meetings:
+                    for cid in m.get("contact_ids", []):
+                        if cid not in all_contact_ids:
+                            all_contact_ids.append(cid)
+
+                if not all_contact_ids:
+                    logger.warning(f"  Skipping company {company_id} — no contacts in meetings")
                     continue
 
-                primary_contact_id = meeting["contact_ids"][0]
+                # Fetch stakeholder info for all contacts
+                stakeholder_infos = []
+                for cid in all_contact_ids:
+                    info = fetch_contact_info(cid)
+                    if info:
+                        stakeholder_infos.append(info)
 
-                # Check if contact already has an open opportunity
-                existing_opp_id = existing_opps.get(primary_contact_id)
+                # Sort stakeholders by score (highest first) for primary contact selection
+                scored_contacts = sorted(
+                    zip(all_contact_ids, stakeholder_infos),
+                    key=lambda x: x[1].get("score", 0) if x[1] else 0,
+                    reverse=True,
+                )
+                all_contact_ids = [c[0] for c in scored_contacts]
+                stakeholder_infos = [c[1] for c in scored_contacts]
 
-                if existing_opp_id:
-                    # Try to advance the stage
-                    logger.info(
-                        f"  Contact already has opportunity — checking stage advancement "
-                        f"for meeting type: {meeting.get('meeting_type', 'N/A')}"
-                    )
+                existing = existing_opps.get(company_id)
+
+                if existing:
+                    # Company already has an open opportunity → advance stage + update stakeholders
                     stats["skipped_existing"] += 1
+                    opp_id = existing["opp_id"]
+                    current_stage = existing["stage"]
 
-                    # Fetch current stage to check advancement
-                    open_opps = fetch_open_opportunities()
-                    for opp in open_opps:
-                        if opp["page_id"] == existing_opp_id:
+                    logger.info(
+                        f"  Company {company_id} already has opportunity {opp_id} "
+                        f"(Stage: {current_stage}) — checking advancement"
+                    )
+
+                    # Try to advance stage with the best meeting type
+                    for m in comp_meetings:
+                        mt = m.get("meeting_type", "")
+                        if mt:
                             advanced = advance_opportunity_stage(
-                                existing_opp_id, opp["stage"],
-                                meeting.get("meeting_type", ""),
-                                dry_run=args.dry_run,
+                                opp_id, current_stage, mt, dry_run=args.dry_run
                             )
                             if advanced:
                                 stats["opps_advanced"] += 1
+                                # Update current_stage so subsequent meetings don't regress
+                                target = STAGE_ADVANCE_MAP.get(mt, current_stage)
+                                current_stage = target
+                                break
 
-                            # Link meeting to opportunity
-                            link_meeting_to_opportunity(
-                                meeting["page_id"], existing_opp_id, args.dry_run
-                            )
-                            break
+                    # Update stakeholder count if new contacts appeared
+                    updated = update_opportunity_stakeholders(
+                        opp_id, all_contact_ids, existing.get("contact_ids", []),
+                        dry_run=args.dry_run,
+                    )
+                    if updated:
+                        stats["stakeholders_updated"] += 1
+
+                    # Link all meetings to the existing opportunity
+                    for m in comp_meetings:
+                        link_meeting_to_opportunity(m["page_id"], opp_id, args.dry_run)
+
+                    # Mark contacts as opportunity-created
+                    for cid in all_contact_ids:
+                        if update_contact_opportunity_created(cid, args.dry_run):
+                            stats["contacts_updated"] += 1
+
                     continue
 
-                # Fetch contact info for naming
-                contact_info = fetch_contact_info(primary_contact_id)
+                # No existing opportunity → create one for the company
+                company_info = fetch_company_info(company_id)
 
-                # Create opportunity
-                opp_id = create_opportunity(meeting, contact_info, dry_run=args.dry_run)
+                opp_id = create_opportunity(
+                    company_id=company_id,
+                    company_info=company_info,
+                    meetings=comp_meetings,
+                    all_contact_ids=all_contact_ids,
+                    stakeholder_infos=stakeholder_infos,
+                    dry_run=args.dry_run,
+                )
+
                 if opp_id:
                     stats["opps_created"] += 1
                     processed += 1
 
-                    # Link meeting to opportunity
-                    link_meeting_to_opportunity(meeting["page_id"], opp_id, args.dry_run)
+                    # Link all meetings to the new opportunity
+                    for m in comp_meetings:
+                        link_meeting_to_opportunity(m["page_id"], opp_id, args.dry_run)
 
-                    # Update contact: Opportunity Created = True
-                    if update_contact_opportunity_created(primary_contact_id, args.dry_run):
-                        stats["contacts_updated"] += 1
+                    # Mark all contacts as opportunity-created
+                    for cid in all_contact_ids:
+                        if update_contact_opportunity_created(cid, args.dry_run):
+                            stats["contacts_updated"] += 1
+
+                    # Update Company Stage → Opportunity
+                    if update_company_stage_to_opportunity(company_id, args.dry_run):
+                        stats["company_stages_updated"] += 1
                 else:
                     stats["errors"] += 1
 
@@ -665,16 +925,19 @@ def main():
     # Summary
     logger.info("")
     logger.info("=" * 50)
-    logger.info("OPPORTUNITY MANAGER SUMMARY")
-    logger.info(f"  Positive meetings found: {stats['meetings_found']}")
-    logger.info(f"  Opportunities created:   {stats['opps_created']}")
-    logger.info(f"  Opportunities advanced:  {stats['opps_advanced']}")
-    logger.info(f"  Skipped (existing opp):  {stats['skipped_existing']}")
-    logger.info(f"  Contacts updated:        {stats['contacts_updated']}")
-    logger.info(f"  Stale deals detected:    {stats['stale_deals']}")
-    logger.info(f"  Stale deal tasks:        {stats['stale_tasks']}")
-    logger.info(f"  Errors:                  {stats['errors']}")
-    logger.info(f"  Runtime:                 {elapsed:.1f}s")
+    logger.info("OPPORTUNITY MANAGER v2.0 SUMMARY")
+    logger.info(f"  Positive meetings found:   {stats['meetings_found']}")
+    logger.info(f"  Companies with meetings:   {stats['companies_with_meetings']}")
+    logger.info(f"  Opportunities created:     {stats['opps_created']}")
+    logger.info(f"  Opportunities advanced:    {stats['opps_advanced']}")
+    logger.info(f"  Skipped (existing opp):    {stats['skipped_existing']}")
+    logger.info(f"  Stakeholders updated:      {stats['stakeholders_updated']}")
+    logger.info(f"  Company stages updated:    {stats['company_stages_updated']}")
+    logger.info(f"  Contacts updated:          {stats['contacts_updated']}")
+    logger.info(f"  Stale deals detected:      {stats['stale_deals']}")
+    logger.info(f"  Stale deal tasks:          {stats['stale_tasks']}")
+    logger.info(f"  Errors:                    {stats['errors']}")
+    logger.info(f"  Runtime:                   {elapsed:.1f}s")
     logger.info("=" * 50)
 
 

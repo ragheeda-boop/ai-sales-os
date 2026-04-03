@@ -7,18 +7,22 @@ This is a production-grade Sales Operating System, not a hobby project.
 
 **System:** Apollo.io → Python Engine → Notion CRM → GitHub Actions → Odoo (future)
 **Owner:** Ragheed
-**Version:** 4.3 | March 2026 | Phase 3.5 Complete + Live Dashboard
+**Version:** 5.0 | April 2026 | Company-Centric Operating Model + Phase 3.5 Complete + Live Dashboard
 
 ---
 
 ## System Architecture
 
 ```
-Apollo.io (Data)  ──►  Python Scripts (19 scripts)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily + Weekly)
-  44,875 contacts         Sync + Enrich + Score +            7 Databases            7:00 AM KSA
-  15,407 companies        Action + Sequence + Meet           HOT/WARM/COLD          2-job pipeline + weekly calibration
-                          Dashboard (auto-regenerated HTML)  Live Sales Dashboard   Sales_Dashboard_Accounts.html
+Apollo.io (Data)  ──►  Python Scripts (20 scripts)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily + Weekly)
+  45,086 contacts         Sync + Filter + Enrich +           7 Databases            7:00 AM KSA
+  15,407 companies        Score + Action + Sequence +        HOT/WARM/COLD          2-job pipeline + weekly calibration
+                          Meet + Dashboard                   Live Sales Dashboard   Sales_Dashboard_Accounts.html
+                          Company-Centric (v5.0)             Primary/Supporting Owners
+                                                             Company Stage Machine
 ```
+
+**Company-Centric Model (v5.0):** Company = Primary Entity. ONE task per company. ONE opportunity per company. Primary Owner = most contacts. Company Stage state machine: Prospect → Outreach → Engaged → Meeting → Opportunity → Customer → Churned → Archived.
 
 **Autonomous Sales Loop:** Score → Task → Auto-Sequence → Track Results → Meet → Analyze → Opportunity → Calibrate → Better Score
 
@@ -55,6 +59,7 @@ AI Sales OS/
 │   ├── opportunity_manager.py   → Meetings → Opportunities + stale deal detection [Phase 3.5]
 │   ├── dashboard_generator.py   → Pulls live Notion data → regenerates Sales_Dashboard_Accounts.html [v4.2]
 │   ├── doc_sync_checker.py      → Documentation drift validator [v4.1]
+│   ├── archive_unqualified.py   → Archive contacts without owner/email [v4.4]
 │   ├── webhook_server.py        → Apollo webhook receiver
 │   ├── verify_links.py          → Contact-company link verifier
 │   ├── .env                     → API credentials (NEVER commit)
@@ -102,11 +107,11 @@ AI Sales OS/
 
 | Script | Purpose | Status |
 |--------|---------|--------|
-| `daily_sync.py` | Apollo → Notion sync engine (v2.3, 3 modes, local timestamp filter, seniority normalization, safe booleans, Apollo signals + AI fields) | **ACTIVE** |
+| `daily_sync.py` | Apollo → Notion sync engine (v3.0, Company-Centric: Primary/Supporting Owner, Company Metrics, Company Stage derivation, 3 modes, local timestamp filter, seniority normalization, safe booleans, Apollo signals + AI fields) | **ACTIVE** |
 | `lead_score.py` | Lead Score calculator (0-100) + Lead Tier writer (HOT/WARM/COLD) | **ACTIVE** |
 | `constants.py` | Unified field names, score thresholds, SLA hours, seniority normalization map | **ACTIVE** |
 | `notion_helpers.py` | Shared Notion API utilities (create, update, preload, rate limiter) | **ACTIVE** |
-| `auto_tasks.py` | Action Engine — creates SLA-based tasks for Action Ready contacts | **ACTIVE** |
+| `auto_tasks.py` | Action Engine v2.0 — Company-Centric: ONE task per company per tier, Task Owner from Primary Company Owner, company-level dedup | **ACTIVE** |
 | `action_ready_updater.py` | Evaluates 5 conditions to set Action Ready checkbox | **ACTIVE** |
 | `health_check.py` | Post-pipeline health validator (checks stats files for anomalies) | **ACTIVE** |
 | `job_postings_enricher.py` | Intent proxy — uses Apollo Job Postings API for intent scoring | **ACTIVE (v4.0)** |
@@ -114,11 +119,12 @@ AI Sales OS/
 | `analytics_tracker.py` | Pulls Apollo Analytics, syncs engagement data back to Notion | **ACTIVE (v4.0)** |
 | `score_calibrator.py` | Self-learning weight adjustment based on actual outcomes | **ACTIVE (v4.0)** |
 | `morning_brief.py` | Daily intelligence report (urgent calls, tasks, replies, stats) | **ACTIVE (v4.0)** |
-| `meeting_tracker.py` | Notion-native meeting sync; updates Contact (Meeting Booked, Stage, Outreach Status) | **ACTIVE (v4.1)** |
+| `meeting_tracker.py` | Meeting sync v2.0 — Company-Centric: auto-links Company from Contact, propagates Company Stage → Meeting, assigns Meeting Owner from Primary Company Owner | **ACTIVE** |
 | `meeting_analyzer.py` | Claude AI analysis of meeting notes → key takeaways, sentiment, next steps | **ACTIVE (v4.1) — requires ANTHROPIC_API_KEY** |
-| `opportunity_manager.py` | Positive meetings → Opportunities; stage advancement; stale deal detection (14 days) | **ACTIVE (v4.1)** |
+| `opportunity_manager.py` | Opportunity Manager v2.0 — Company-Centric: ONE active opportunity per company, stakeholder tracking, Buying Committee Size, company-level stage advancement, stale deal detection (14 days) | **ACTIVE** |
 | `dashboard_generator.py` | Pulls live Notion Contacts + Companies data → aggregates by account → injects into Sales_Dashboard_Accounts.html via regex template injection | **ACTIVE (v4.2)** |
 | `doc_sync_checker.py` | Validates documentation vs codebase state — catches drift after development | **ACTIVE (v4.1)** |
+| `archive_unqualified.py` | Archives contacts without owner or email sent → Stage = Archived | **ACTIVE (v4.4)** |
 | `webhook_server.py` | Apollo webhook receiver | **ACTIVE** |
 | `verify_links.py` | Contact-company link verifier | **ACTIVE** |
 
@@ -127,7 +133,7 @@ Superseded scripts (still in CODE folder but replaced by daily_sync.py):
 
 ---
 
-## daily_sync.py — Sync Engine v2.3
+## daily_sync.py — Sync Engine v3.0 (Company-Centric)
 
 ### Three Modes
 
@@ -147,6 +153,11 @@ Superseded scripts (still in CODE folder but replaced by daily_sync.py):
 - **Rate Limiting:** 5x exponential backoff on 429/500 errors.
 - **Parallel Workers:** `MAX_WORKERS = 3` for Notion writes.
 - **Local Timestamp Filter (v4.2):** After Apollo fetch, a client-side filter drops any record whose `updated_at` is before the requested `since` datetime. Fixes issue where Apollo's date-only API filter was returning all 44,877 contacts on every incremental run, causing 4-5 hour runtimes instead of minutes.
+- **Contact Qualification Filter (v4.4):** After fetching contacts, applies two hard gates before sync: (1) `owner_id` must exist, (2) `emailer_campaign_ids` must be non-empty with at least one non-failed campaign. Contacts that fail either condition are skipped entirely. This ensures only real, owned, outreached contacts enter Notion.
+- **Contact Owner Sync (v4.4):** Maps Apollo `owner_id` to display names (Ibrahim/Ragheed/Soha) via `APOLLO_OWNER_MAP` in constants.py. Writes to `Contact Owner` select field in Notion.
+- **Company Ownership (v5.0):** After contact sync, runs `compute_company_ownership()` to derive Primary Company Owner (owner with most contacts, tie-break: most recent activity) and Supporting Owners (all other owners). Writes Primary Company Owner as select, Supporting Owners as rich_text.
+- **Company Metrics (v5.0):** `compute_company_metrics()` writes Active Contacts count, Emailed Contacts count, Engaged Contacts count, Last Engagement Date, and Sales OS Active checkbox per company.
+- **Company Stage (v5.0):** `compute_company_stage()` derives stage from contact signals: Meeting Booked → "Meeting", Replied/Opened → "Engaged", Email Sent → "Outreach", else → "Prospect". Respects priority — does NOT overwrite Meeting, Opportunity, Customer, or Churned stages.
 - **Apollo Signals (v4.3):** Contacts sync now pulls Intent Strength, Job Change Event/Date, and AI Decision from `typed_custom_fields`. Companies sync now pulls Headcount Growth (6/12/24 month) and AI Qualification Status/Detail from `typed_custom_fields`.
 
 ### Commands
@@ -205,9 +216,9 @@ python lead_score.py --dry-run      # calculate but don't write
 
 ---
 
-## auto_tasks.py — Action Engine
+## auto_tasks.py — Action Engine v2.0 (Company-Centric)
 
-Creates Notion tasks for contacts where Action Ready = True, based on Lead Tier and SLA deadlines.
+Creates Notion tasks at the **company level** for Action Ready contacts. ONE task per company per tier, not one per contact.
 
 ### Priority Rules
 
@@ -216,9 +227,17 @@ Creates Notion tasks for contacts where Action Ready = True, based on Lead Tier 
 | **HOT** | ≥ 80 | Critical | CALL | Phone | 24 hours |
 | **WARM** | ≥ 50 | High | FOLLOW-UP | Email | 48 hours |
 
+### Company-Centric Rules (v5.0)
+
+- **ONE task per company per task type** — contacts are grouped by company, best-scored contact selected as primary
+- **Task Owner** = Primary Company Owner (from Companies DB) → fallback to Contact Owner
+- **Owner Source** field tracks provenance: "Company Primary" or "Contact Owner"
+- **Company context** in task description shows all contacts at the company with scores
+- **Company Stage at Creation** recorded for audit trail
+
 ### Duplicate Prevention
 
-Before creating a task, checks the Tasks DB for any existing open task (Status ≠ "Completed") linked to the same contact. If one exists, the contact is skipped.
+Before creating a task, checks the Tasks DB for any existing open task (Status ≠ "Completed") linked to the same **company** with the same task type. If one exists, the company is skipped.
 
 ### Commands
 
@@ -398,7 +417,7 @@ python morning_brief.py --days 1        # look back N days for activity
 
 Single source of truth for all field names, score thresholds, SLA hours, and seniority normalization. Changing a field name here changes it across all scripts that import from constants.
 
-Key exports: `FIELD_*` constants, `SCORE_HOT`/`SCORE_WARM`, `SLA_*_HOURS`, `SENIORITY_NORMALIZE`, `OUTREACH_BLOCKED`
+Key exports: `FIELD_*` constants, `SCORE_HOT`/`SCORE_WARM`, `SLA_*_HOURS`, `SENIORITY_NORMALIZE`, `OUTREACH_BLOCKED`, `COMPANY_STAGE_*` values, `TEAM_MEMBERS` set, `APOLLO_OWNER_MAP`
 
 ---
 
@@ -406,21 +425,29 @@ Key exports: `FIELD_*` constants, `SCORE_HOT`/`SCORE_WARM`, `SLA_*_HOURS`, `SENI
 
 ### Companies Database
 
-Key fields: Name, Domain, Industry, Employee Count, Apollo Account ID (primary key), Website, Phone, Country, City, Annual Revenue, Headcount Growth 6M/12M/24M, AI Qualification Status (Qualified/Disqualified/Possible Fit), AI Qualification Detail
+Key fields: Name, Domain, Industry, Employee Count, Apollo Account ID (primary key), Website, Phone, Country, City, Annual Revenue, Headcount Growth 6M/12M/24M, AI Qualification Status (Qualified/Disqualified/Possible Fit), AI Qualification Detail, Company Owners (multi-select: derived from Contact Owners), **Primary Company Owner** (select: Ibrahim/Ragheed/Soha — owner with most contacts), **Supporting Owners** (rich_text: other owners), **Company Stage** (select: Prospect/Outreach/Engaged/Meeting/Opportunity/Customer/Churned/Archived), **Active Contacts** (number), **Emailed Contacts** (number), **Engaged Contacts** (number), **Last Engagement Date** (date), **Account Engagement Score** (number 0-100), **Buying Committee Strength** (select: Strong/Moderate/Weak), **Company Health** (select: Green/Yellow/Red), **Sales OS Active** (checkbox)
 
 ### Contacts Database
 
-Key fields: Name, Email, Title, Seniority, Lead Score (number 0-100), Lead Tier (HOT/WARM/COLD select), Action Ready (checkbox), Intent Score, Intent Strength, Outreach Status, Stage, Do Not Call, Email Sent/Opened/Bounced, Replied, Meeting Booked, Demoed, Last Contacted, Contact Responded, First Contact Attempt, Opportunity Created, Job Change Event, Job Change Date, AI Decision, Email Open Count, Emails Sent Count, Emails Replied Count, Apollo Contact ID (primary key), Company (relation to Companies)
+Key fields: Name, Email, Title, Seniority, Lead Score (number 0-100), Lead Tier (HOT/WARM/COLD select), Action Ready (checkbox), Contact Owner (select: Ibrahim/Ragheed/Soha), Intent Score, Intent Strength, Outreach Status, Stage, Do Not Call, Email Sent/Opened/Bounced, Replied, Meeting Booked, Demoed, Last Contacted, Contact Responded, First Contact Attempt, Opportunity Created, Job Change Event, Job Change Date, AI Decision, Email Open Count, Emails Sent Count, Emails Replied Count, Apollo Contact ID (primary key), Company (relation to Companies)
 
 ### Tasks Database
 
-Key fields: Task Title (title), Priority (select: Critical/High/Medium/Low), Status (**status type** — NOT select — values: "Not Started"/"In Progress"/"Completed"), Due Date, Start Date, Task Type, Team, Contact (relation), Company (relation), Opportunity (relation), Context, Description, Expected Outcome, Auto Created (checkbox), Automation Type (select), Trigger Rule, Completed At
+Key fields: Task Title (title), Priority (select: Critical/High/Medium/Low), Status (**status type** — NOT select — values: "Not Started"/"In Progress"/"Completed"), Due Date, Start Date, Task Type, Team, Contact (relation), Company (relation), Opportunity (relation), Context, Description, Expected Outcome, Auto Created (checkbox), Automation Type (select), Trigger Rule, Completed At, **Task Owner** (select: Ibrahim/Ragheed/Soha), **Owner Source** (select: Company Primary/Contact Owner/Manual), **Company Stage at Creation** (rich_text)
 
 **IMPORTANT:** Tasks DB Status field is `status` type, not `select`. Use `{"status": {"name": "Not Started"}}` not `{"select": ...}`.
 
+### Opportunities Database (v5.0 Company-Centric)
+
+Key fields: Opportunity Name (title), Stage (**status type**: Discovery/Proposal/Negotiation/Closed Won/Closed Lost), Deal Value, ARR, Probability (select), Expected Close Date, Actual Close Date, Deal Health (select: Green/Yellow/Red), Risk Level, Blockers, Next Action, Notes, Primary Contact (relation), Company (relation), Opportunity Owner (select), Team, Currency, Contract Term, Record Source, Opportunity ID, **Stakeholder Contacts** (rich_text: names of all involved contacts), **Company Owner Snapshot** (rich_text), **Buying Committee Size** (number), **Decision Maker Identified** (checkbox), **Revenue Priority** (select: Tier 1/Tier 2/Tier 3)
+
+### Meetings Database (v5.0 Company-Centric)
+
+Key fields: Meeting Title (title), Meeting Type (select), Scheduled Date, Duration, Outcome (select), Meeting Notes, Key Takeaways, Decision Made, Next Steps, Meeting Link, Number of Attendees, Meeting Organizer, Timezone, Primary Contact (relation), Company (relation), Opportunity (relation), Agenda, **Meeting Owner** (select: Ibrahim/Ragheed/Soha), **Participants** (rich_text), **Outcome Impact** (select: Stage Advance/No Change/Stage Regress), **Next Step Owner** (select: Ibrahim/Ragheed/Soha)
+
 ### Other Databases
 
-Opportunities, Meetings, Activities, Email Hub — used for execution workflow.
+Activities, Email Hub — used for execution workflow.
 
 ---
 
@@ -440,6 +467,9 @@ Opportunities, Meetings, Activities, Email Hub — used for execution workflow.
 3. **No orphan contacts.** Every contact MUST be linked to a company. If no company found: log as orphan, do NOT create.
 4. **Companies before Contacts.** Company sync must complete before contact sync.
 5. **No invented data.** Never guess or fabricate values for empty fields.
+6. **No unowned contacts.** Every contact synced MUST have an Apollo owner_id. Contacts without owners are filtered before sync.
+7. **No untouched contacts.** Every contact synced MUST have been enrolled in at least one email campaign with a non-failed status. Raw Apollo data with no outreach is not synced.
+8. **Company Owners = derived.** Company Owners multi-select is computed from Contact Owners, NOT from Apollo Account owner_id (which is usually null).
 
 ---
 
@@ -530,11 +560,38 @@ The pipeline was exceeding GitHub's 6-hour per-job limit. Splitting into 2 seque
 - [ ] First real meeting logged in Meetings DB — **activate the loop**
 - **Architecture assessment:** `Meeting_Call_Intelligence_Architecture_Assessment.md`
 
+### Phase 3.7: COMPANY-CENTRIC — CODE COMPLETE (v5.0)
+- [x] `constants.py` — 50+ new Company-Centric field constants, Company Stage values, TEAM_MEMBERS set
+- [x] `daily_sync.py` v3.0 — compute_company_ownership(), compute_company_metrics(), compute_company_stage()
+- [x] `auto_tasks.py` v2.0 — ONE task per company per tier, Task Owner from Primary Company Owner
+- [x] `opportunity_manager.py` v2.0 — ONE opportunity per company, stakeholder tracking, Buying Committee
+- [x] `meeting_tracker.py` v2.0 — auto-link Company, propagate Company Stage → Meeting, Meeting Owner
+- [ ] Add new Notion properties via API (Phase 5 of migration plan)
+- [ ] First run: `daily_sync.py --mode incremental` → verify Company Ownership + Metrics + Stage populate
+- [ ] Validate: `auto_tasks.py --dry-run` → confirm company-level dedup
+- **Gate:** All v5.0 scripts must compile and new Notion fields must exist before first live run
+
 ### Phase 4: OPTIMIZE
 - [ ] Odoo ERP integration (push qualified opportunities)
 - [ ] Revenue pipeline tracking
 - [ ] Advanced analytics
 - [ ] Full end-to-end automation
+
+---
+
+## archive_unqualified.py — Contact Archiver (v4.4)
+
+One-time (or periodic) script to archive Notion contacts that don't meet qualification criteria. Reads ALL contacts from Notion Contacts DB, checks for Contact Owner and Email Sent, and sets Stage = "Archived" for those that fail.
+
+### Commands
+
+```bash
+python archive_unqualified.py              # archive all unqualified contacts
+python archive_unqualified.py --dry-run    # show what would be archived (no changes)
+python archive_unqualified.py --limit 50   # limit to first N contacts
+```
+
+**IMPORTANT:** Run `--dry-run` first to verify the count before archiving. This operation is reversible (you can un-archive by changing Stage back) but affects many records.
 
 ---
 
@@ -580,6 +637,11 @@ The pipeline was exceeding GitHub's 6-hour per-job limit. Splitting into 2 seque
 13. **Local Timestamp Filter** — Apollo's `contact_updated_at_range` API filter uses day-granularity and was returning all 44,877 contacts even on incremental runs. Fixed in `_fetch_with_date_filter()` with a post-fetch client-side filter using exact `updated_at >= since` comparison. Incremental runs now complete in minutes, not hours.
 14. **Apollo Signals in Sync (v4.3)** — Intent Strength, Job Change Event/Date, Headcount Growth (6/12/24M), and Apollo AI fields (AI Decision, AI Qualification Status/Detail) are now extracted directly from contact/account responses during daily_sync.py. No separate enrichment scripts needed — signals flow with the regular sync.
 15. **Apollo AI Custom Field IDs** — Apollo's AI generates typed_custom_fields with fixed IDs: Contact Decision (`6913a64c52c2780001146ce9`), Account ICP Analysis (`6913a64c52c2780001146cfd`), Account Research (`6913a64c52c2780001146d0e`), Account Qualification (`6913a64c52c2780001146d22`). IDs are stored in constants.py for maintainability.
+16. **Owner & Outreach Gating (v4.4)** — Contacts must have an Apollo `owner_id` AND at least one non-failed email campaign before being synced to Notion. This prevents unowned or untouched contacts from cluttering the CRM. Existing contacts that don't meet criteria are archived (Stage = "Archived") via `archive_unqualified.py`.
+17. **Company Owners from Contacts (v4.4)** — Instead of relying on Apollo's Account `owner_id` (which is null for most accounts), Company Owners is derived automatically from Contact Owners. This creates a multi-select field showing all team members who own contacts at that company.
+18. **Company-Centric Operating Model (v5.0)** — Company = Primary Operating Entity. All automation operates at the company level: ONE task per company per tier (auto_tasks.py v2.0), ONE active opportunity per company (opportunity_manager.py v2.0). Primary Company Owner = owner with most contacts (tie-break: most recent activity). Company Stage state machine: Prospect → Outreach → Engaged → Meeting → Opportunity → Customer → Churned → Archived. Higher-priority stages are never overwritten by lower ones.
+19. **Company-Level Task Dedup (v5.0)** — Tasks are deduplicated by Company + Task Type, not by Contact. All contacts at a company are listed in the task context. Task Owner cascades: Primary Company Owner → Contact Owner fallback.
+20. **Meeting-to-Company Auto-Linking (v5.0)** — meeting_tracker.py v2.0 auto-resolves Company from Contact's company relation when meetings lack a direct Company link. Propagates Company Stage → "Meeting" (respects priority). Assigns Meeting Owner from Primary Company Owner.
 
 ---
 

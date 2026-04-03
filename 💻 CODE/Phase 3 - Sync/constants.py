@@ -79,6 +79,73 @@ FIELD_AI_DECISION = "AI Decision"
 FIELD_AI_QUALIFICATION_STATUS = "AI Qualification Status"
 FIELD_AI_QUALIFICATION_DETAIL = "AI Qualification Detail"
 
+# Ownership — Contact Level
+FIELD_CONTACT_OWNER = "Contact Owner"
+
+# Ownership — Company Level (v5.0 Company-Centric)
+FIELD_COMPANY_OWNERS = "Company Owners"              # legacy: all owners comma-separated
+FIELD_PRIMARY_COMPANY_OWNER = "Primary Company Owner" # select: single accountable owner
+FIELD_SUPPORTING_OWNERS = "Supporting Owners"          # rich_text: other owners
+
+# Company-Centric Lifecycle & Metrics (v5.0)
+FIELD_COMPANY_STAGE = "Company Stage"                  # select: Prospect/Outreach/Engaged/Meeting/Opportunity/Customer/Churned/Archived
+FIELD_ACTIVE_CONTACTS = "Active Contacts"              # number
+FIELD_EMAILED_CONTACTS = "Emailed Contacts"            # number
+FIELD_ENGAGED_CONTACTS = "Engaged Contacts"            # number
+FIELD_LAST_ENGAGEMENT_DATE = "Last Engagement Date"    # date
+FIELD_ACCOUNT_ENGAGEMENT_SCORE = "Account Engagement Score"  # number 0-100
+FIELD_BUYING_COMMITTEE_STRENGTH = "Buying Committee Strength"  # select: Strong/Moderate/Weak
+FIELD_COMPANY_HEALTH = "Company Health"                # select: Green/Yellow/Red
+FIELD_SALES_OS_ACTIVE = "Sales OS Active"              # checkbox
+
+# Company Stage values
+COMPANY_STAGE_PROSPECT = "Prospect"
+COMPANY_STAGE_OUTREACH = "Outreach"
+COMPANY_STAGE_ENGAGED = "Engaged"
+COMPANY_STAGE_MEETING = "Meeting"
+COMPANY_STAGE_OPPORTUNITY = "Opportunity"
+COMPANY_STAGE_CUSTOMER = "Customer"
+COMPANY_STAGE_CHURNED = "Churned"
+COMPANY_STAGE_ARCHIVED = "Archived"
+
+# Contacts — Company-Centric additions (v5.0)
+FIELD_ROLE_IN_ACCOUNT = "Role in Account"              # select: Champion/Decision Maker/Influencer/Blocker/End User/Unknown
+FIELD_STAKEHOLDER_PRIORITY = "Stakeholder Priority"    # select: Primary/Secondary/Tertiary
+FIELD_ACTIVE_IN_SALES_OS = "Active in Sales OS"        # checkbox
+FIELD_ARCHIVE_REASON = "Archive Reason"                # select: No Owner/No Email/Bounced/DNC/Manual
+
+# Tasks — Company-Centric additions (v5.0)
+FIELD_TASK_OWNER = "Task Owner"                        # select: Ibrahim/Ragheed/Soha
+FIELD_OWNER_SOURCE = "Owner Source"                    # select: Company Primary/Contact Owner/Manual
+FIELD_COMPANY_STAGE_AT_CREATION = "Company Stage at Creation"  # rich_text
+
+# Meetings — Company-Centric additions (v5.0)
+FIELD_MEETING_OWNER = "Meeting Owner"                  # select: Ibrahim/Ragheed/Soha
+FIELD_MEETING_PARTICIPANTS = "Participants"             # rich_text
+FIELD_OUTCOME_IMPACT = "Outcome Impact"                # select: Stage Advance/No Change/Stage Regress
+FIELD_NEXT_STEP_OWNER = "Next Step Owner"              # select: Ibrahim/Ragheed/Soha
+
+# Opportunities — Company-Centric additions (v5.0)
+FIELD_OPP_STAKEHOLDER_CONTACTS = "Stakeholder Contacts"  # relation (multi)
+FIELD_OPP_COMPANY_OWNER_SNAPSHOT = "Company Owner Snapshot"  # rich_text
+FIELD_OPP_BUYING_COMMITTEE_SIZE = "Buying Committee Size"    # number
+FIELD_OPP_DECISION_MAKER_IDENTIFIED = "Decision Maker Identified"  # checkbox
+FIELD_OPP_REVENUE_PRIORITY = "Revenue Priority"        # select: Tier 1/Tier 2/Tier 3
+
+# Apollo User ID → Display Name mapping
+# These are the team members who own contacts in Apollo.
+APOLLO_OWNER_MAP = {
+    "67cfce7e366f0d000dd6a10d": "Ibrahim",
+    "68a5a043e0c973001d8c35b4": "Ragheed",
+    "68d55ac428d3f4000d260a02": "Soha",
+}
+
+# Team members set (for quick membership checks)
+TEAM_MEMBERS = set(APOLLO_OWNER_MAP.values())
+
+# Campaign statuses that indicate email was NOT actually sent
+CAMPAIGN_FAILED_STATUSES = {"failed"}
+
 # Other
 FIELD_RECORD_SOURCE = "Record Source"
 FIELD_DATA_STATUS = "Data Status"

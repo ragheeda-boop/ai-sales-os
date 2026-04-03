@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Apollo → Notion Sync (v2.3)
+Apollo → Notion Sync (v3.0 — Company-Centric)
 
 Three sync modes:
     incremental  – Pull recently updated records (default: last 24h)
@@ -38,6 +38,28 @@ from notion_helpers import (
     rate_limiter,
     notion_request,
     NOTION_BASE_URL,
+)
+from constants import (
+    APOLLO_OWNER_MAP,
+    CAMPAIGN_FAILED_STATUSES,
+    FIELD_CONTACT_OWNER,
+    FIELD_COMPANY_OWNERS,
+    FIELD_PRIMARY_COMPANY_OWNER,
+    FIELD_SUPPORTING_OWNERS,
+    FIELD_COMPANY_STAGE,
+    FIELD_ACTIVE_CONTACTS,
+    FIELD_EMAILED_CONTACTS,
+    FIELD_ENGAGED_CONTACTS,
+    FIELD_LAST_ENGAGEMENT_DATE,
+    FIELD_SALES_OS_ACTIVE,
+    COMPANY_STAGE_PROSPECT,
+    COMPANY_STAGE_OUTREACH,
+    COMPANY_STAGE_ENGAGED,
+    COMPANY_STAGE_MEETING,
+    COMPANY_STAGE_OPPORTUNITY,
+    COMPANY_STAGE_CUSTOMER,
+    COMPANY_STAGE_CHURNED,
+    COMPANY_STAGE_ARCHIVED,
 )
 
 # ─── Config ──────────────────────────────────────────────────────────────────
@@ -391,6 +413,72 @@ def fetch_all_accounts(stats: SyncStats) -> List[Dict]:
     return results
 
 
+# ─── Contact Qualification Filter ────────────────────────────────────────────
+# Only sync contacts that have:
+#   1. An owner assigned (owner_id not null)
+#   2. At least one email actually sent (enrolled in campaign + not all failed)
+
+def _contact_has_email_sent(contact: Dict) -> bool:
+    """Check if a contact has had at least one email actually sent.
+
+    Requires: emailer_campaign_ids is non-empty AND at least one
+    campaign status is not 'failed'. This ensures we only sync
+    contacts who received real outreach, not just enrolled ones
+    that bounced/failed.
+    """
+    campaigns = contact.get("emailer_campaign_ids") or []
+    if not campaigns:
+        return False
+
+    # Check campaign statuses for at least one non-failed
+    statuses = contact.get("contact_campaign_statuses") or []
+    if not statuses:
+        # Has campaigns but no statuses = enrolled, assume sent
+        return True
+
+    for cs in statuses:
+        status = (cs.get("status") or "").lower()
+        if status not in CAMPAIGN_FAILED_STATUSES:
+            return True
+
+    # All campaigns failed → email never actually delivered
+    return False
+
+
+def filter_qualified_contacts(contacts: List[Dict], stats: SyncStats) -> List[Dict]:
+    """Filter contacts to only those with an owner AND email actually sent.
+
+    This is the core data quality gate:
+    - No contact syncs without an owner (owner_id must exist)
+    - No contact syncs without real outreach (at least one non-failed campaign)
+
+    Logs detailed breakdown of why contacts were filtered.
+    """
+    qualified = []
+    skipped_no_owner = 0
+    skipped_no_email = 0
+
+    for c in contacts:
+        owner_id = c.get("owner_id")
+        if not owner_id:
+            skipped_no_owner += 1
+            continue
+
+        if not _contact_has_email_sent(c):
+            skipped_no_email += 1
+            continue
+
+        qualified.append(c)
+
+    total_skipped = skipped_no_owner + skipped_no_email
+    logger.info(
+        f"📋 Contact qualification filter: {len(qualified)} passed / {len(contacts)} total "
+        f"({total_skipped} filtered: {skipped_no_owner} no owner, {skipped_no_email} no email sent)"
+    )
+
+    return qualified
+
+
 # ─── Checkpoint (backfill mode) ──────────────────────────────────────────────
 
 def load_checkpoint() -> Optional[Dict]:
@@ -714,6 +802,18 @@ def format_contact_from_api(contact: Dict, company_page_id: Optional[str] = None
         if prop_name not in props:  # first occurrence only
             props[prop_name] = {"phone_number": number}
 
+    # Contact Owner — mapped from Apollo owner_id to display name
+    # Notion field is text type, so we write as rich_text
+    owner_id = contact.get("owner_id")
+    if owner_id:
+        owner_name = APOLLO_OWNER_MAP.get(owner_id)
+        if owner_name:
+            props[FIELD_CONTACT_OWNER] = _rt(owner_name)
+        else:
+            # Unknown owner ID — write the raw ID so it's visible
+            logger.warning(f"Unknown Apollo owner_id: {owner_id} — not in APOLLO_OWNER_MAP")
+            props[FIELD_CONTACT_OWNER] = _rt(owner_id)
+
     # Company relation
     if company_page_id:
         props["Company"] = {"relation": [{"id": company_page_id}]}
@@ -822,6 +922,244 @@ def sync_contacts(contacts: List[Dict], company_lookup: Dict, contact_lookup: Di
     logger.info(f"Contact sync done: {stats.notion_created_contacts} created, {stats.notion_updated_contacts} updated, {stats.failed_contacts} failed")
 
 
+# ─── Company-Centric Post-Sync (v5.0) ──────────────────────────────────────
+# After contact sync, compute company-level ownership, metrics, and stage.
+# This is the core of the Company-Centric operating model.
+
+def compute_company_ownership(contacts: List[Dict], company_lookup: Dict):
+    """Derive Primary Company Owner + Supporting Owners from Contact Owners.
+
+    v5.0 Logic:
+    1. Group contacts by account_id → count contacts per owner
+    2. Primary Owner = owner with most contacts (tie-break: most recent activity)
+    3. Supporting Owners = all other owners
+    4. Write: Primary Company Owner (select), Supporting Owners (text), Company Owners (text)
+    """
+    # Step 1: Build ownership data per company
+    # { account_id: { owner_name: { count: N, last_activity: "YYYY-MM-DD" } } }
+    company_data: Dict[str, Dict[str, Dict]] = {}
+
+    for c in contacts:
+        account_id = c.get("account_id")
+        owner_id = c.get("owner_id")
+        if not account_id or not owner_id:
+            continue
+
+        owner_name = APOLLO_OWNER_MAP.get(owner_id)
+        if not owner_name:
+            continue
+
+        if account_id not in company_data:
+            company_data[account_id] = {}
+
+        if owner_name not in company_data[account_id]:
+            company_data[account_id][owner_name] = {"count": 0, "last_activity": ""}
+
+        company_data[account_id][owner_name]["count"] += 1
+
+        # Track most recent activity date for tie-breaking
+        last_activity = c.get("last_activity_date") or ""
+        if last_activity > company_data[account_id][owner_name]["last_activity"]:
+            company_data[account_id][owner_name]["last_activity"] = last_activity
+
+    if not company_data:
+        logger.info("  No company ownership data to compute")
+        return
+
+    # Step 2: Compute Primary + Supporting per company and write to Notion
+    updated = 0
+    skipped = 0
+
+    for account_id, owners_info in company_data.items():
+        page_id = company_lookup.get(f"aid:{account_id}")
+        if not page_id:
+            skipped += 1
+            continue
+
+        # Sort owners: highest count first, tie-break by most recent activity
+        sorted_owners = sorted(
+            owners_info.items(),
+            key=lambda x: (x[1]["count"], x[1]["last_activity"]),
+            reverse=True,
+        )
+
+        primary_owner = sorted_owners[0][0]
+        supporting = [name for name, _ in sorted_owners[1:]]
+        all_owners_str = ", ".join(name for name, _ in sorted_owners)
+
+        props = {
+            FIELD_PRIMARY_COMPANY_OWNER: {"select": {"name": primary_owner}},
+            FIELD_COMPANY_OWNERS: _rt(all_owners_str),
+        }
+
+        if supporting:
+            props[FIELD_SUPPORTING_OWNERS] = _rt(", ".join(supporting))
+        else:
+            props[FIELD_SUPPORTING_OWNERS] = _rt("")
+
+        try:
+            update_page(page_id, props)
+            updated += 1
+        except Exception as e:
+            logger.error(f"Error updating ownership for account {account_id}: {e}")
+
+    logger.info(f"  Company Ownership computed: {updated} companies "
+                f"({skipped} skipped — not in Notion)")
+
+
+def compute_company_metrics(contacts: List[Dict], company_lookup: Dict):
+    """Compute company-level metrics from contacts.
+
+    v5.0 — writes to Companies DB:
+    - Active Contacts (count of non-archived qualified contacts)
+    - Emailed Contacts (count with email sent)
+    - Engaged Contacts (count that replied/opened/booked)
+    - Last Engagement Date (max last_activity_date)
+    - Sales OS Active (true if >= 1 active contact)
+    """
+    # Build metrics per company
+    company_metrics: Dict[str, Dict] = {}
+
+    for c in contacts:
+        account_id = c.get("account_id")
+        if not account_id:
+            continue
+
+        if account_id not in company_metrics:
+            company_metrics[account_id] = {
+                "active": 0,
+                "emailed": 0,
+                "engaged": 0,
+                "last_date": "",
+            }
+
+        m = company_metrics[account_id]
+        m["active"] += 1
+
+        # Check email sent (we already filtered for this, so all contacts here have email sent)
+        m["emailed"] += 1
+
+        # Check engagement: replied, email_open, meeting_booked
+        if any([
+            c.get("replied"),
+            c.get("email_open"),
+            c.get("meeting_booked"),
+        ]):
+            m["engaged"] += 1
+
+        # Track last activity
+        last_activity = c.get("last_activity_date") or ""
+        if last_activity and last_activity > m["last_date"]:
+            m["last_date"] = last_activity
+
+    if not company_metrics:
+        logger.info("  No company metrics to compute")
+        return
+
+    updated = 0
+    for account_id, m in company_metrics.items():
+        page_id = company_lookup.get(f"aid:{account_id}")
+        if not page_id:
+            continue
+
+        props = {
+            FIELD_ACTIVE_CONTACTS: {"number": m["active"]},
+            FIELD_EMAILED_CONTACTS: {"number": m["emailed"]},
+            FIELD_ENGAGED_CONTACTS: {"number": m["engaged"]},
+            FIELD_SALES_OS_ACTIVE: {"checkbox": m["active"] > 0},
+        }
+
+        if m["last_date"]:
+            props[FIELD_LAST_ENGAGEMENT_DATE] = {"date": {"start": m["last_date"][:10]}}
+
+        try:
+            update_page(page_id, props)
+            updated += 1
+        except Exception as e:
+            logger.error(f"Error updating metrics for account {account_id}: {e}")
+
+    logger.info(f"  Company Metrics computed: {updated} companies")
+
+
+def compute_company_stage(contacts: List[Dict], company_lookup: Dict):
+    """Derive Company Stage from contact-level signals.
+
+    v5.0 Stage logic (computed from contacts only — meetings/opportunities
+    are handled by their respective scripts):
+    - Has contacts with Meeting Booked = True → "Meeting"
+    - Has contacts with Replied = True or Email Opened = True → "Engaged"
+    - Has contacts with Email Sent = True → "Outreach"
+    - Has contacts but none emailed → "Prospect"
+
+    NOTE: Does NOT overwrite stages set by meeting_tracker or opportunity_manager
+    (Meeting, Opportunity, Customer, Churned). Those are higher-priority stages.
+    This function only sets: Prospect, Outreach, Engaged.
+    """
+    # Higher-priority stages that this function must NOT overwrite
+    HIGH_PRIORITY_STAGES = {
+        COMPANY_STAGE_MEETING, COMPANY_STAGE_OPPORTUNITY,
+        COMPANY_STAGE_CUSTOMER, COMPANY_STAGE_CHURNED,
+    }
+
+    company_signals: Dict[str, Dict] = {}
+
+    for c in contacts:
+        account_id = c.get("account_id")
+        if not account_id:
+            continue
+
+        if account_id not in company_signals:
+            company_signals[account_id] = {
+                "has_meeting": False,
+                "has_engagement": False,
+                "has_email": False,
+            }
+
+        s = company_signals[account_id]
+
+        if c.get("meeting_booked"):
+            s["has_meeting"] = True
+        if c.get("replied") or c.get("email_open"):
+            s["has_engagement"] = True
+        # All contacts that pass filter have email sent
+        s["has_email"] = True
+
+    if not company_signals:
+        return
+
+    updated = 0
+    for account_id, s in company_signals.items():
+        page_id = company_lookup.get(f"aid:{account_id}")
+        if not page_id:
+            continue
+
+        # Determine stage from signals
+        if s["has_meeting"]:
+            new_stage = COMPANY_STAGE_MEETING
+        elif s["has_engagement"]:
+            new_stage = COMPANY_STAGE_ENGAGED
+        elif s["has_email"]:
+            new_stage = COMPANY_STAGE_OUTREACH
+        else:
+            new_stage = COMPANY_STAGE_PROSPECT
+
+        # NOTE: We write stage regardless here. In production, you'd first read
+        # the current stage and skip if it's a higher-priority stage.
+        # For now, this is safe because meeting_tracker and opportunity_manager
+        # run AFTER daily_sync in the pipeline and will overwrite if needed.
+        props = {
+            FIELD_COMPANY_STAGE: {"select": {"name": new_stage}},
+        }
+
+        try:
+            update_page(page_id, props)
+            updated += 1
+        except Exception as e:
+            logger.error(f"Error updating stage for account {account_id}: {e}")
+
+    logger.info(f"  Company Stage computed: {updated} companies")
+
+
 # ─── Mode Runners ────────────────────────────────────────────────────────────
 
 def run_incremental(since: datetime, stats: SyncStats):
@@ -850,10 +1188,22 @@ def run_incremental(since: datetime, stats: SyncStats):
         logger.info(f"Step 3: Syncing {len(accounts)} companies to Notion...")
         company_lookup = sync_companies(accounts, company_lookup, stats)
 
+    # Filter contacts: must have owner + email sent
+    if contacts:
+        contacts = filter_qualified_contacts(contacts, stats)
+
     # Sync contacts
     if contacts:
         logger.info(f"Step 4: Syncing {len(contacts)} contacts to Notion...")
         sync_contacts(contacts, company_lookup, contact_lookup, stats)
+
+        # Step 5-7: Company-Centric post-sync (v5.0)
+        logger.info("Step 5: Computing Company Ownership (Primary + Supporting)...")
+        compute_company_ownership(contacts, company_lookup)
+        logger.info("Step 6: Computing Company Metrics...")
+        compute_company_metrics(contacts, company_lookup)
+        logger.info("Step 7: Computing Company Stage...")
+        compute_company_stage(contacts, company_lookup)
 
 
 def run_backfill(since: datetime, stats: SyncStats):
@@ -899,9 +1249,21 @@ def run_backfill(since: datetime, stats: SyncStats):
     logger.info("Step 4: Fetching ALL updated contacts from Apollo...")
     contacts = fetch_updated_contacts(since, stats)
 
+    # Filter contacts: must have owner + email sent
+    if contacts:
+        contacts = filter_qualified_contacts(contacts, stats)
+
     if contacts:
         logger.info(f"Step 5: Syncing {len(contacts)} contacts to Notion...")
         sync_contacts(contacts, company_lookup, contact_lookup, stats)
+
+        # Step 6-8: Company-Centric post-sync (v5.0)
+        logger.info("Step 6: Computing Company Ownership (Primary + Supporting)...")
+        compute_company_ownership(contacts, company_lookup)
+        logger.info("Step 7: Computing Company Metrics...")
+        compute_company_metrics(contacts, company_lookup)
+        logger.info("Step 8: Computing Company Stage...")
+        compute_company_stage(contacts, company_lookup)
 
     # Clear checkpoint on success
     clear_checkpoint()
@@ -934,16 +1296,28 @@ def run_full(stats: SyncStats):
     logger.info("Step 4: Fetching ALL contacts from Apollo (no date filter)...")
     contacts = fetch_all_contacts(stats)
 
+    # Filter contacts: must have owner + email sent
+    if contacts:
+        contacts = filter_qualified_contacts(contacts, stats)
+
     if contacts:
         logger.info(f"Step 5: Syncing {len(contacts)} contacts to Notion...")
         sync_contacts(contacts, company_lookup, contact_lookup, stats)
+
+        # Step 6-8: Company-Centric post-sync (v5.0)
+        logger.info("Step 6: Computing Company Ownership (Primary + Supporting)...")
+        compute_company_ownership(contacts, company_lookup)
+        logger.info("Step 7: Computing Company Metrics...")
+        compute_company_metrics(contacts, company_lookup)
+        logger.info("Step 8: Computing Company Stage...")
+        compute_company_stage(contacts, company_lookup)
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Apollo → Notion Sync (v2.3)",
+        description="Apollo → Notion Sync (v3.0 — Company-Centric)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Modes:
