@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html lang="en-ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company-Centric Enforcement Plan | AI Sales OS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #12121a 100%);
+            color: #e0e0e0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* HEADER & NAVIGATION */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(10, 10, 15, 0.95);
+            border-bottom: 2px solid #1e1e2e;
+            padding: 1rem 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        header .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: #F57C1E;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .nav-menu a {
+            color: #e0e0e0;
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(245, 124, 30, 0.1);
+            color: #F57C1E;
+        }
+
+        /* MAIN CONTAINER */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* HERO SECTION */
+        .hero {
+            text-align: center;
+            margin: 3rem 0;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, rgba(245, 124, 30, 0.1), rgba(59, 130, 246, 0.1));
+            border: 1px solid #1e1e2e;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(245, 124, 30, 0.05), transparent);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            color: #F57C1E;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: #a0a0a0;
+            max-width: 800px;
+            margin: 0 auto 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin: 2rem 0;
+            border-bottom: 2px solid #1e1e2e;
+            overflow-x: auto;
+        }
+
+        .tabs button {
+            background: transparent;
+            border: none;
+            color: #a0a0a0;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .tabs button.active {
+            color: #F57C1E;
+        }
+
+        .tabs button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #F57C1E;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        /* SECTIONS */
+        .section {
+            margin: 3rem 0;
+        }
+
+        .section h3 {
+            font-size: 2rem;
+            color: #F57C1E;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: #a0a0a0;
+            margin-bottom: 2rem;
+        }
+
+        /* CARDS */
+        .card {
+            background: #12121a;
+            border: 1px solid #1e1e2e;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: #F57C1E;
+            box-shadow: 0 0 20px rgba(245, 124, 30, 0.2);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #F57C1E, transparent);
+            animation: slideRight 0.6s ease;
+        }
+
+        @keyframes slideRight {
+            to { left: 100%; }
+        }
+
+        .card h4 {
+            color: #F57C1E;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-content p {
+            margin: 0.5rem 0;
+            color: #d0d0d0;
+        }
+
+        /* VIOLATION METER */
+        .violation-meter {
+            background: #12121a;
+            border: 1px solid #1e1e2e;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .meter-item {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            gap: 1rem;
+        }
+
+        .meter-label {
+            flex: 0 0 180px;
+            font-weight: 500;
+        }
+
+        .meter-bar {
+            flex: 1;
+            background: #1e1e2e;
+            height: 24px;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #eab308, #22c55e);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 0.5rem;
+            font-weight: bold;
+            font-size: 0.8rem;
+            animation: fillBar 1s ease-out;
+        }
+
+        @keyframes fillBar {
+            from { width: 0; }
+        }
+
+        .meter-value {
+            flex: 0 0 80px;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        /* COLLAPSIBLE */
+        .collapsible {
+            background: #12121a;
+            border: 1px solid #1e1e2e;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .collapsible:hover {
+            border-color: #F57C1E;
+        }
+
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            color: #F57C1E;
+        }
+
+        .collapsible-toggle {
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible.active .collapsible-toggle {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #1e1e2e;
+        }
+
+        .collapsible.active .collapsible-content {
+            max-height: 1000px;
+        }
+
+        /* CODE BLOCKS */
+        .code-block {
+            background: #0a0a0f;
+            border-left: 3px solid #F57C1E;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-label {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: #1e1e2e;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: #F57C1E;
+        }
+
+        .code-copy {
+            position: absolute;
+            top: 0.5rem;
+            right: 120px;
+            background: #F57C1E;
+            color: #0a0a0f;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .code-copy:hover {
+            background: #e0691d;
+        }
+
+        .code-copy.copied {
+            background: #22c55e;
+            color: #0a0a0f;
+        }
+
+        code {
+            color: #3b82f6;
+        }
+
+        /* RULES MATRIX */
+        .rules-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            background: #12121a;
+            border: 1px solid #1e1e2e;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+
+        .rules-matrix th {
+            background: #1e1e2e;
+            color: #F57C1E;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-right: 1px solid #2a2a38;
+        }
+
+        .rules-matrix td {
+            padding: 1rem;
+            border-right: 1px solid #1e1e2e;
+            border-bottom: 1px solid #1e1e2e;
+        }
+
+        .rules-matrix tr:last-child td {
+            border-bottom: none;
+        }
+
+        .rules-matrix td:last-child {
+            border-right: none;
+        }
+
+        .rule-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .rule-badge.critical {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .rule-badge.high {
+            background: rgba(235, 179, 8, 0.2);
+            color: #eab308;
+            border: 1px solid #eab308;
+        }
+
+        .rule-badge.medium {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border: 1px solid #3b82f6;
+        }
+
+        .rule-badge.low {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid #22c55e;
+        }
+
+        /* TIMELINE */
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #1e1e2e;
+        }
+
+        .timeline-item {
+            margin-bottom: 2rem;
+            padding-left: 100px;
+            position: relative;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 20px;
+            top: 5px;
+            width: 20px;
+            height: 20px;
+            background: #F57C1E;
+            border: 2px solid #0a0a0f;
+            border-radius: 50%;
+        }
+
+        .timeline-item.completed .timeline-dot {
+            background: #22c55e;
+        }
+
+        .timeline-phase {
+            font-weight: 600;
+            color: #F57C1E;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-desc {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+        }
+
+        /* STATS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-box {
+            background: #12121a;
+            border: 1px solid #1e1e2e;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-box:hover {
+            border-color: #F57C1E;
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #F57C1E;
+            margin: 1rem 0;
+        }
+
+        .stat-label {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+        }
+
+        /* FOOTER */
+        footer {
+            border-top: 1px solid #1e1e2e;
+            padding: 2rem;
+            text-align: center;
+            color: #808080;
+            margin-top: 3rem;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.3rem;
+            }
+
+            .nav-menu {
+                gap: 0.5rem;
+            }
+
+            .nav-menu a {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .rules-matrix {
+                font-size: 0.9rem;
+            }
+
+            .rules-matrix th, .rules-matrix td {
+                padding: 0.75rem;
+            }
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        /* ARABIC TEXT */
+        .ar-header {
+            font-size: 1.3rem;
+            color: #F57C1E;
+            font-weight: 600;
+            margin: 2rem 0 1rem;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .tabpanel {
+            display: none;
+        }
+
+        .tabpanel.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>⚙️ Company-Centric Enforcement</h1>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="#diagnosis">Diagnosis</a></li>
+                    <li><a href="#enforcement">Enforcement</a></li>
+                    <li><a href="#modifications">Code</a></li>
+                    <li><a href="#cleanup">Cleanup</a></li>
+                    <li><a href="#execution">Execution</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="hero">
+            <h2>التشخيص والتطبيق</h2>
+            <h2>System Enforcement Plan</h2>
+            <p>The current AI Sales OS implementation has 4 critical non-negotiable rules that are broken across all 5 databases. This plan identifies the gaps, quantifies the violations, and provides a step-by-step enforcement roadmap.</p>
+            <p><strong>Current State:</strong> Task Theater (auto-created, auto-completed, zero human owners). Meeting pipeline disconnected. Opportunities DB empty.</p>
+        </div>
+
+        <!-- SECTION 1: DIAGNOSIS -->
+        <section class="section" id="diagnosis">
+            <h3>🔍 التشخيص | Diagnosis: 4 Non-Negotiable Rules</h3>
+            <p class="section-subtitle">These rules are foundational to a working company-centric sales system. Every violation breaks the enforcement chain.</p>
+
+            <div class="card">
+                <h4>The 4 Non-Negotiable Rules</h4>
+                <table class="rules-matrix">
+                    <thead>
+                        <tr>
+                            <th>Rule</th>
+                            <th>Definition</th>
+                            <th>Severity</th>
+                            <th>Current Violations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Rule 1: No Owner = No Record</strong></td>
+                            <td>Every record (Company, Contact, Task, Meeting, Opportunity) MUST have exactly one primary owner. Records without owners are invalid.</td>
+                            <td><span class="rule-badge critical">CRITICAL</span></td>
+                            <td><strong>~4,900+ records</strong> (Tasks 100%, Opportunities N/A)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rule 2: Company = Primary Entity</strong></td>
+                            <td>Company is the root entity. All contacts, tasks, meetings, opportunities flow through the company. No orphans allowed.</td>
+                            <td><span class="rule-badge critical">CRITICAL</span></td>
+                            <td><strong>Partially enforced:</strong> Contacts linked (good). Meetings, Opportunities disconnected (bad).</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rule 3: Company Owner = Master Owner</strong></td>
+                            <td>Primary Company Owner cascades down to all company-linked records. Task Owner, Meeting Owner, Opportunity Owner derive from Primary Company Owner.</td>
+                            <td><span class="rule-badge critical">CRITICAL</span></td>
+                            <td><strong>~14,750 companies</strong> with no Primary Company Owner. ~4,900 tasks with no Task Owner.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rule 4: One Flow Only</strong></td>
+                            <td>Company → Contact → Task/Meeting → Opportunity → Revenue. Every transition must be enforced. No dead ends.</td>
+                            <td><span class="rule-badge critical">CRITICAL</span></td>
+                            <td><strong>Chain broken:</strong> Tasks created (100% no owner). Meetings logged (0 linked to companies). Opportunities DB empty.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="violation-meter">
+                <h4 style="color: #F57C1E; margin-bottom: 1.5rem;">Violation Severity by Database</h4>
+
+                <div class="meter-item">
+                    <div class="meter-label">CONTACTS DB</div>
+                    <div class="meter-bar">
+                        <div class="meter-fill" style="width: 15%; background: linear-gradient(90deg, #22c55e);"><span style="color: #0a0a0f;">15%</span></div>
+                    </div>
+                    <div class="meter-value" style="color: #22c55e;">✓ OK</div>
+                </div>
+
+                <div class="meter-item">
+                    <div class="meter-label">COMPANIES DB</div>
+                    <div class="meter-bar">
+                        <div class="meter-fill" style="width: 95%; background: linear-gradient(90deg, #ef4444);"><span style="color: #e0e0e0;">95%</span></div>
+                    </div>
+                    <div class="meter-value" style="color: #ef4444;">CRITICAL</div>
+                </div>
+
+                <div class="meter-item">
+                    <div class="meter-label">TASKS DB</div>
+                    <div class="meter-bar">
+                        <div class="meter-fill" style="width: 100%; background: linear-gradient(90deg, #ef4444);"><span style="color: #e0e0e0;">100%</span></div>
+                    </div>
+                    <div class="meter-value" style="color: #ef4444;">CRITICAL</div>
+                </div>
+
+                <div class="meter-item">
+                    <div class="meter-label">MEETINGS DB</div>
+                    <div class="meter-bar">
+                        <div class="meter-fill" style="width: 100%; background: linear-gradient(90deg, #ef4444);"><span style="color: #e0e0e0;">100%</span></div>
+                    </div>
+                    <div class="meter-value" style="color: #ef4444;">CRITICAL</div>
+                </div>
+
+                <div class="meter-item">
+                    <div class="meter-label">OPPORTUNITIES DB</div>
+                    <div class="meter-bar">
+                        <div class="meter-fill" style="width: 100%; background: linear-gradient(90deg, #ef4444);"><span style="color: #e0e0e0;">100%</span></div>
+                    </div>
+                    <div class="meter-value" style="color: #ef4444;">EMPTY</div>
+                </div>
+            </div>
+
+            <h4 class="ar-header">التفاصيل | Root Cause Analysis</h4>
+
+            <div class="collapsible">
+                <div class="collapsible-header">
+                    <span>CONTACTS DB: Contact Owner = rich_text (not select)</span>
+                    <span class="collapsible-toggle">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <p><strong>Current State (v5.0):</strong> Contact Owner written by daily_sync.py from APOLLO_OWNER_MAP (Ibrahim/Ragheed/Soha) as rich_text field.</p>
+                    <p><strong>Problem:</strong> Written as rich_text, not select. Cannot cascade to Task Owner or Meeting Owner. Notion relations and aggregations don't work on text.</p>
+                    <p><strong>Violation Count:</strong> ~600 contacts affected (only synced contacts have owners written). Remaining ~3,200 synced contacts have no Contact Owner written.</p>
+                    <p><strong>Impact:</strong> PRIMARY OWNER ISOLATION. Even when Contact Owner is written, it's in the wrong field type.</p>
+                    <div class="code-block">
+                        <span class="code-label">daily_sync.py Line 1117</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>contact_owner = APOLLO_OWNER_MAP.get(owner_id, "")
+update_data = {"Contact Owner": contact_owner}  # Writes as rich_text</code>
+                    </div>
+                    <p><strong>Fix Required:</strong> Change Contact Owner field from rich_text to select. Update daily_sync.py to write as select value.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header">
+                    <span>COMPANIES DB: Primary Company Owner = Never Computed</span>
+                    <span class="collapsible-toggle">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <p><strong>Current State (v5.0):</strong> compute_company_ownership() exists in daily_sync.py. Runs after contact sync.</p>
+                    <p><strong>Problem:</strong> SCOPED TO SYNC BATCH ONLY. Only recomputes ownership for companies whose contacts were updated in the current sync. ~14,750 companies with no recent contact updates never get ownership recomputed. Result: 0% populated across the full Companies DB.</p>
+                    <p><strong>Violation Count:</strong> ~14,750 companies (~95% of total) have empty Primary Company Owner.</p>
+                    <p><strong>Impact:</strong> MASTER OWNER MISSING. No cascading ownership possible. Tasks cannot derive Task Owner from company.</p>
+                    <div class="code-block">
+                        <span class="code-label">daily_sync.py Line 1136-1148</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>def compute_company_ownership(self, synced_company_ids):
+    # NOTE: synced_company_ids is the set of companies from THIS sync batch
+    # Companies not in this batch are NEVER recomputed
+    for company_id in synced_company_ids:
+        # Only companies in the current batch get updated</code>
+                    </div>
+                    <p><strong>Fix Required:</strong> Run compute_company_ownership() ONCE on ALL companies in Notion, not just the sync batch. Then make it incremental for future runs.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header">
+                    <span>TASKS DB: 100% No Task Owner (Task Theater)</span>
+                    <span class="collapsible-toggle">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <p><strong>Current State:</strong> auto_tasks.py creates tasks. Task Owner field exists and is empty on 100% of auto-created tasks.</p>
+                    <p><strong>Problem:</strong> Line 338 allows None owners. No validation blocking tasks without owners. Fallback cascades: Company Primary Owner → Contact Owner → None. If both fail, task is created with empty Task Owner.</p>
+                    <p><strong>Violation Count:</strong> 100+ tasks checked, 100% have empty Task Owner. Status = Completed (auto-closed immediately).</p>
+                    <p><strong>Impact:</strong> TASK THEATER. Tasks created and auto-completed with no human accountability. Not a CRM action system. Just logging noise.</p>
+                    <div class="code-block">
+                        <span class="code-label">auto_tasks.py Line 338</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>task_owner = company_owner or best_contact.get("contact_owner") or None
+# ^ Allows None. No validation. Task created anyway.</code>
+                    </div>
+                    <p><strong>Fix Required:</strong> (1) BLOCK task creation if owner is None. (2) Require Primary Company Owner to exist before creating any task.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header">
+                    <span>MEETINGS DB: Completely Disconnected (0 links to company)</span>
+                    <span class="collapsible-toggle">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <p><strong>Current State:</strong> meeting_tracker.py syncs meetings from Notion Meeting table. 2 records checked (both internal review meetings, not sales).</p>
+                    <p><strong>Problem:</strong> fetch_company_primary_owner() returns empty string if no owner found. No blocking validation. Meetings created with empty Meeting Owner. No Company link enforced.</p>
+                    <p><strong>Violation Count:</strong> 2 records checked, both have: Meeting Owner = empty, Company = not linked.</p>
+                    <p><strong>Impact:</strong> PIPELINE BREAK. Meetings logged outside the company flow. No stage transition. No opportunity creation.</p>
+                    <div class="code-block">
+                        <span class="code-label">meeting_tracker.py fetch_company_primary_owner()</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>if "properties" in company_info:
+    return company_info["properties"].get("Primary Company Owner", {}).get("select", {}).get("name", "")
+# ^ Returns empty string. No error. No blocking.</code>
+                    </div>
+                    <p><strong>Fix Required:</strong> (1) REQUIRE Company link before creating meeting. (2) REQUIRE Meeting Owner from Primary Company Owner. (3) Block meetings without both.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header">
+                    <span>OPPORTUNITIES DB: Completely Empty (0/0 records)</span>
+                    <span class="collapsible-toggle">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <p><strong>Current State:</strong> opportunity_manager.py created to convert meetings → opportunities. Zero opportunities created so far.</p>
+                    <p><strong>Problem:</strong> Meetings DB has zero sales meetings. No positive outcome detected. No Company link means no opportunity possible anyway.</p>
+                    <p><strong>Violation Count:</strong> 0/0 records. Cannot test owner cascade.</p>
+                    <p><strong>Impact:</strong> REVENUE PIPELINE MISSING. No way to track deal value, probability, close date. System reports activities (tasks, meetings) but not revenue.</p>
+                    <p><strong>Fix Required:</strong> After fixing Meeting → Company link, opportunities can flow. Then enforce: (1) Company link required. (2) Opportunity Owner = Primary Company Owner. (3) One active opportunity per company maximum.</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Contacts with Owner</div>
+                    <div class="stat-number">~600</div>
+                    <div class="stat-label">of ~3,800 synced (15%)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Companies with Owner</div>
+                    <div class="stat-number">~650</div>
+                    <div class="stat-label">of ~15,400 total (4%)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Tasks with Owner</div>
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">of 100+ auto-created (0%)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Meetings with Owner</div>
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">of 2 total (0%)</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: ENFORCEMENT PLAN -->
+        <section class="section" id="enforcement">
+            <h3>📋 خطة التطبيق | Enforcement Plan by Database</h3>
+            <p class="section-subtitle">For each database, enforcement rules and validation gates that must be added.</p>
+
+            <div class="tabs">
+                <button class="active" onclick="switchTab('tab-contacts')">Contacts DB</button>
+                <button onclick="switchTab('tab-companies')">Companies DB</button>
+                <button onclick="switchTab('tab-tasks')">Tasks DB</button>
+                <button onclick="switchTab('tab-meetings')">Meetings DB</button>
+                <button onclick="switchTab('tab-opportunities')">Opportunities DB</button>
+            </div>
+
+            <!-- CONTACTS TAB -->
+            <div id="tab-contacts" class="tabpanel active">
+                <div class="card">
+                    <h4>Current State</h4>
+                    <div class="card-content">
+                        <p><strong>Violation Count:</strong> ~600 contacts have Contact Owner (as rich_text). ~3,200 have no owner written.</p>
+                        <p><strong>Company Link:</strong> 100% enforced during daily_sync.py. No orphans allowed.</p>
+                        <p><strong>Schema Issue:</strong> Contact Owner field is rich_text. Must be select for cascading.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Enforcement Rules</h4>
+                    <div class="card-content">
+                        <p><strong>Rule 1:</strong> Contact Owner field type = SELECT (not rich_text). Values: Ibrahim, Ragheed, Soha.</p>
+                        <p><strong>Rule 2:</strong> Every synced contact MUST have Contact Owner set from APOLLO_OWNER_MAP.</p>
+                        <p><strong>Rule 3:</strong> If owner_id missing in Apollo, contact is skipped (not synced). Already enforced in v4.4.</p>
+                        <p><strong>Rule 4:</strong> Company relation MUST exist. No orphans. Already enforced in daily_sync.py.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Schema Adjustments Required</h4>
+                    <div class="card-content">
+                        <p>Contact Owner: Change from rich_text → select field.</p>
+                        <p>No other changes needed. Company relation already exists.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Validation Gates (What Blocks Record Creation)</h4>
+                    <div class="card-content">
+                        <p><strong>Gate 1 (Pre-sync):</strong> Apollo owner_id exists. BLOCKS missing owner_id.</p>
+                        <p><strong>Gate 2 (Pre-sync):</strong> Email campaigns non-empty with non-failed status. BLOCKS raw data.</p>
+                        <p><strong>Gate 3 (During sync):</strong> Company exists in Notion. BLOCKS orphans.</p>
+                        <p><strong>Gate 4 (Post-sync):</strong> Contact Owner select field populated from APOLLO_OWNER_MAP.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMPANIES TAB -->
+            <div id="tab-companies" class="tabpanel">
+                <div class="card">
+                    <h4>Current State</h4>
+                    <div class="card-content">
+                        <p><strong>Violation Count:</strong> ~14,750 companies (~95%) have empty Primary Company Owner.</p>
+                        <p><strong>Root Cause:</strong> compute_company_ownership() only runs on sync batch. Never covers full DB.</p>
+                        <p><strong>Schema:</strong> Primary Company Owner (select), Supporting Owners (rich_text) exist but are empty.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Enforcement Rules</h4>
+                    <div class="card-content">
+                        <p><strong>Rule 1:</strong> Primary Company Owner = owner with most contacts at that company. Tie-break: most recent activity date.</p>
+                        <p><strong>Rule 2:</strong> Supporting Owners = all other owners with contacts at the company (shown as rich_text list).</p>
+                        <p><strong>Rule 3:</strong> Recompute primary owner whenever any contact's owner changes.</p>
+                        <p><strong>Rule 4:</strong> If company has zero contacts, mark as "Archived" (Rule 2: No Orphans).</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Schema Adjustments Required</h4>
+                    <div class="card-content">
+                        <p>Primary Company Owner: Exists as select. OK.</p>
+                        <p>Supporting Owners: Exists as rich_text. OK.</p>
+                        <p>No schema changes needed. Recomputation logic only.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Validation Gates (What Blocks Record Creation)</h4>
+                    <div class="card-content">
+                        <p><strong>Gate 1 (Pre-archive):</strong> Company has at least one contact with owner. BLOCKS archiving active companies.</p>
+                        <p><strong>Gate 2 (Post-sync):</strong> Primary Company Owner computed from all linked contacts. No NULL values.</p>
+                        <p><strong>Gate 3 (Cascade check):</strong> Primary Company Owner is used to derive Task Owner, Meeting Owner, Opportunity Owner.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TASKS TAB -->
+            <div id="tab-tasks" class="tabpanel">
+                <div class="card">
+                    <h4>Current State</h4>
+                    <div class="card-content">
+                        <p><strong>Violation Count:</strong> 100/100 auto-created tasks have empty Task Owner (0%).</p>
+                        <p><strong>Root Cause:</strong> auto_tasks.py Line 338 allows None owners. No blocking validation.</p>
+                        <p><strong>Schema:</strong> Task Owner (select) exists but 100% empty. Status = Completed (theater).</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Enforcement Rules</h4>
+                    <div class="card-content">
+                        <p><strong>Rule 1:</strong> Task Owner MUST be set from Primary Company Owner (cascade from company).</p>
+                        <p><strong>Rule 2:</strong> If Primary Company Owner is NULL, BLOCK task creation. Fail loudly in logs.</p>
+                        <p><strong>Rule 3:</strong> Task type and priority derived from Lead Tier (HOT = Call/Critical/24h, WARM = Follow-up/High/48h).</p>
+                        <p><strong>Rule 4:</strong> Status = "Not Started" on creation (not auto-completed).</p>
+                        <p><strong>Rule 5:</strong> Company link MUST exist. No orphan tasks.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Schema Adjustments Required</h4>
+                    <div class="card-content">
+                        <p>Task Owner: Exists as select. OK.</p>
+                        <p>Status: Exists as status type. OK.</p>
+                        <p>Change: Status should start as "Not Started", not "Completed".</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Validation Gates (What Blocks Record Creation)</h4>
+                    <div class="card-content">
+                        <p><strong>Gate 1 (Pre-create):</strong> Company exists in Notion. Linked to task.</p>
+                        <p><strong>Gate 2 (Pre-create):</strong> Primary Company Owner NOT NULL. If NULL, log error and skip company entirely.</p>
+                        <p><strong>Gate 3 (Pre-create):</strong> Check for existing open task (Status ≠ "Completed") on same company + task type. Skip if exists (no duplicates).</p>
+                        <p><strong>Gate 4 (Create):</strong> Task Owner = Primary Company Owner. Mandatory field.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MEETINGS TAB -->
+            <div id="tab-meetings" class="tabpanel">
+                <div class="card">
+                    <h4>Current State</h4>
+                    <div class="card-content">
+                        <p><strong>Violation Count:</strong> 2 meetings checked, both have empty Meeting Owner (0%) and no Company link.</p>
+                        <p><strong>Root Cause:</strong> meeting_tracker.py returns empty string for missing owner. No blocking validation.</p>
+                        <p><strong>Schema:</strong> Meeting Owner (select), Company (relation) exist but both empty.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Enforcement Rules</h4>
+                    <div class="card-content">
+                        <p><strong>Rule 1:</strong> Meeting MUST be linked to Company via relation or auto-resolved from Primary Contact's company.</p>
+                        <p><strong>Rule 2:</strong> Meeting Owner MUST be Primary Company Owner (derived from company).</p>
+                        <p><strong>Rule 3:</strong> If Primary Contact exists but no company resolved, BLOCK meeting creation.</p>
+                        <p><strong>Rule 4:</strong> Meeting outcome (select: Stage Advance/No Change/Stage Regress) drives Company Stage transition.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Schema Adjustments Required</h4>
+                    <div class="card-content">
+                        <p>Meeting Owner: Exists as select. OK.</p>
+                        <p>Company: Exists as relation. OK.</p>
+                        <p>No schema changes. Linking logic needs enforcement.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Validation Gates (What Blocks Record Creation)</h4>
+                    <div class="card-content">
+                        <p><strong>Gate 1 (Pre-create):</strong> Company link must be resolvable. Either explicit relation or from Primary Contact's company.</p>
+                        <p><strong>Gate 2 (Pre-create):</strong> Primary Company Owner NOT NULL. BLOCK if missing.</p>
+                        <p><strong>Gate 3 (Create):</strong> Meeting Owner = Primary Company Owner. Mandatory field.</p>
+                        <p><strong>Gate 4 (Post-create):</strong> If Outcome = "Stage Advance", set Company Stage = "Meeting" (or higher priority if already there).</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OPPORTUNITIES TAB -->
+            <div id="tab-opportunities" class="tabpanel">
+                <div class="card">
+                    <h4>Current State</h4>
+                    <div class="card-content">
+                        <p><strong>Violation Count:</strong> 0/0 records. DB is empty. Cannot test owner cascade yet.</p>
+                        <p><strong>Root Cause:</strong> No positive meetings (prerequisite). No Company links on existing meetings.</p>
+                        <p><strong>Schema:</strong> Opportunity Owner (select), Company (relation) exist but no data to populate.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Enforcement Rules</h4>
+                    <div class="card-content">
+                        <p><strong>Rule 1:</strong> Opportunity created only from meeting with positive outcome (Outcome = "Stage Advance").</p>
+                        <p><strong>Rule 2:</strong> ONE active opportunity per company maximum. If new one created, close previous (Closed Lost or archive).</p>
+                        <p><strong>Rule 3:</strong> Opportunity Owner = Primary Company Owner (cascaded from company).</p>
+                        <p><strong>Rule 4:</strong> Company link MUST exist. No orphan opportunities.</p>
+                        <p><strong>Rule 5:</strong> Stage progression: Discovery → Proposal → Negotiation → Closed Won/Lost. No skipping.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Schema Adjustments Required</h4>
+                    <div class="card-content">
+                        <p>Opportunity Owner: Exists as select. OK.</p>
+                        <p>Company: Exists as relation. OK.</p>
+                        <p>Stage: Exists as status type. OK.</p>
+                        <p>No schema changes. Will activate after meeting enforcement.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Validation Gates (What Blocks Record Creation)</h4>
+                    <div class="card-content">
+                        <p><strong>Gate 1 (Pre-create):</strong> Company link MUST exist. BLOCK orphan opportunities.</p>
+                        <p><strong>Gate 2 (Pre-create):</strong> Primary Company Owner NOT NULL. BLOCK if missing.</p>
+                        <p><strong>Gate 3 (Pre-create):</strong> Check if company already has active opportunity (Stage ≠ Closed). If yes, close it before creating new one.</p>
+                        <p><strong>Gate 4 (Create):</strong> Opportunity Owner = Primary Company Owner. Mandatory field.</p>
+                        <p><strong>Gate 5 (Stage lock):</strong> Once created, Stage can only advance or regress within the state machine. No skipping stages.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: CODE MODIFICATIONS -->
+        <section class="section" id="modifications">
+            <h3>⚙️ تعديلات الكود | Code Modifications Required</h3>
+            <p class="section-subtitle">Specific changes to each script to enforce the rules above.</p>
+
+            <div class="collapsible">
+                <div class="collapsible-header">
+                    <span>daily_sync.py — Fix 1: Recompute ALL company ownership (not just sync batch)</span>
+                    <span class="collapsible-toggle">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <p><strong>Current Gap (Lines 929-1160):</strong> compute_company_ownership() (Line 929) and compute_company_stage() (Line 1084) receive only the synced contacts. Never covers the other ~14,750 companies. Additionally, compute_company_stage() at Line 1146 has a known code comment: <em>"NOTE: We write stage regardless here. In production, you'd first read the current stage and skip if it's a higher-priority stage."</em> — meaning it can OVERWRITE higher-priority stages like Meeting or Opportunity.</p>
+                    <p><strong>Required Change:</strong></p>
+                    <div class="code-block">
+                        <span class="code-label">BEFORE (Line 1136)</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>def sync_companies_from_apollo(self, ...):
+    # ...sync logic...
+    synced_company_ids = {c["id"] for c in companies}
+    
+    # Only recomputes these companies
+    self.compute_company_ownership(synced_company_ids)</code>
+                    </div>
+                    <div class="code-block">
+                        <span class="code-label">AFTER (Line 1136)</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>def sync_companies_from_apollo(self, ...):
+    # ...sync logic...
+    synced_company_ids = {c["id"] for c in companies}
+    
+    # (A) Sync companies from Apollo
+    self.sync_companies_from_apollo_internal(companies)
+    
+    # (B) AFTER sync, recompute ownership for ALL companies in Notion
+    # Not just the synced ones
+    all_company_ids = self.notion.get_all_company_ids()  # NEW method
+    self.compute_company_ownership(all_company_ids)
+    
+    # (C) Archive companies with zero contacts
+    self.archive_orphan_companies(all_company_ids)</code>
+                    </div>
+                    <p><strong>New Method to Add:</strong></p>
+                    <div class="code-block">
+                        <span class="code-label">New: notion_helpers.py</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>def get_all_company_ids(self):
+    """Fetch ALL company IDs from Notion (paginated)."""
+    all_ids = []
+    query = {
+        "database_id": self.database_id_companies,
+        "page_size": 100
+    }
+    
+    while True:
+        response = self.client.databases.query(**query)
+        for page in response.get("results", []):
+            all_ids.append(page["id"])
+        
+        if response.get("has_more"):
+            query["start_cursor"] = response.get("next_cursor")
+        else:
+            break
+    
+    return all_ids</code>
+                    </div>
+                    <p><strong>Impact:</strong> ~14,750 companies will get Primary Company Owner computed. Companies with zero contacts will be archived automatically.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header">
+                    <span>daily_sync.py — Fix 2: Change Contact Owner from rich_text to select write</span>
+                    <span class="collapsible-toggle">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <p><strong>Current Gap (Line 1117):</strong> Contact Owner written as rich_text string. Cannot cascade to Task Owner.</p>
+                    <p><strong>Required Change:</strong></p>
+                    <div class="code-block">
+                        <span class="code-label">BEFORE (Line 1117)</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>contact_owner = APOLLO_OWNER_MAP.get(owner_id, "")
+update_data = {
+    "Contact Owner": contact_owner  # Written as rich_text
+}</code>
+                    </div>
+                    <div class="code-block">
+                        <span class="code-label">AFTER (Line 1117)</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>contact_owner_name = APOLLO_OWNER_MAP.get(owner_id, "")
+if contact_owner_name:
+    update_data["Contact Owner"] = {
+        "select": {"name": contact_owner_name}  # Written as select
+    }
+else:
+    # If no owner, do NOT sync contact (enforces Rule 1)
+    logger.warning(f"Skipping contact {contact['id']}: no owner")
+    continue</code>
+                    </div>
+                    <p><strong>Impact:</strong> Contact Owner becomes a select field. Can be aggregated and cascaded to Task Owner.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header">
+                    <span>auto_tasks.py — Fix 1: BLOCK task creation if Task Owner is None</span>
+                    <span class="collapsible-toggle">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <p><strong>Current Gap (Line 338):</strong> Allows task_owner = None. Creates task anyway.</p>
+                    <p><strong>Required Change:</strong></p>
+                    <div class="code-block">
+                        <span class="code-label">BEFORE (Line 338)</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>task_owner = company_owner or best_contact.get("contact_owner") or None
+# Task created even if task_owner is None
+
+task_data = {
+    "Task Title": task_title,
+    "Task Owner": task_owner,  # Could be None
+    # ...other fields...
+}</code>
+                    </div>
+                    <div class="code-block">
+                        <span class="code-label">AFTER (Line 338)</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>task_owner = company_owner or best_contact.get("contact_owner")
+
+# ENFORCE RULE 1: No owner = No record
+if not task_owner:
+    logger.error(
+        f"BLOCKING task for company {company_id}: "
+        f"Primary Company Owner missing. Cannot create ownerless task."
+    )
+    stats["blocked_no_owner"] += 1
+    continue  # Skip this company entirely
+
+task_data = {
+    "Task Title": task_title,
+    "Task Owner": {"select": {"name": task_owner}},  # MANDATORY
+    "Status": {"status": {"name": "Not Started"}},   # NOT auto-completed
+    # ...other fields...
+}</code>
+                    </div>
+                    <p><strong>Impact:</strong> Zero ownerless tasks created. Task theater eliminated. Tasks only created if owner exists.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header">
+                    <span>auto_tasks.py — Fix 2: Check for company without real owner and log clearly</span>
+                    <span class="collapsible-toggle">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <p><strong>Current Gap (Line 366):</strong> Creates task even for "NO_COMPANY" placeholder.</p>
+                    <p><strong>Required Change:</strong></p>
+                    <div class="code-block">
+                        <span class="code-label">BEFORE (Line 366)</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>if company_id and company_id != "NO_COMPANY":
+    # Still creates task if company is NO_COMPANY or empty string</code>
+                    </div>
+                    <div class="code-block">
+                        <span class="code-label">AFTER (Line 366)</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>if not company_id or company_id == "NO_COMPANY":
+    logger.error(
+        f"BLOCKING task for contact {best_contact_id}: "
+        f"No valid company link. Orphan contact detected."
+    )
+    stats["blocked_orphan"] += 1
+    continue  # Skip this contact
+
+# Now we know company_id is valid
+task_data = {
+    "Company": {"relation": [{"id": company_id}]},  # MANDATORY
+    # ...other fields...
+}</code>
+                    </div>
+                    <p><strong>Impact:</strong> No orphan tasks. All tasks linked to valid companies.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header">
+                    <span>meeting_tracker.py — Fix: REQUIRE Company link and Meeting Owner</span>
+                    <span class="collapsible-toggle">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <p><strong>Current Gap:</strong> fetch_company_primary_owner() returns empty string. No blocking validation.</p>
+                    <p><strong>Required Change:</strong></p>
+                    <div class="code-block">
+                        <span class="code-label">BEFORE</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>primary_owner = self.fetch_company_primary_owner(company_id)
+# primary_owner could be empty string
+
+meeting_data = {
+    "Meeting Owner": primary_owner,  # Could be empty
+    # ...other fields...
+}</code>
+                    </div>
+                    <div class="code-block">
+                        <span class="code-label">AFTER</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>if not company_id:
+    logger.error(
+        f"BLOCKING meeting {meeting_id}: "
+        f"No company link. Meeting orphaned."
+    )
+    continue
+
+primary_owner = self.fetch_company_primary_owner(company_id)
+
+# ENFORCE RULE 1 + 3: No owner = No record
+if not primary_owner:
+    logger.error(
+        f"BLOCKING meeting {meeting_id} for company {company_id}: "
+        f"Primary Company Owner missing. Cannot create ownerless meeting."
+    )
+    continue
+
+meeting_data = {
+    "Company": {"relation": [{"id": company_id}]},     # MANDATORY
+    "Meeting Owner": {"select": {"name": primary_owner}},  # MANDATORY
+    # ...other fields...
+}</code>
+                    </div>
+                    <p><strong>Impact:</strong> All meetings linked to companies with valid owners. Zero disconnected meetings.</p>
+                </div>
+            </div>
+
+            <div class="collapsible">
+                <div class="collapsible-header">
+                    <span>opportunity_manager.py — Fix: REQUIRE Company link and Opportunity Owner</span>
+                    <span class="collapsible-toggle">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <p><strong>Current Gap:</strong> No enforcement on owner or company link. Can create orphan opportunities.</p>
+                    <p><strong>Required Change:</strong></p>
+                    <div class="code-block">
+                        <span class="code-label">BEFORE</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>def create_opportunity(self, meeting_id, company_id, ...):
+    company_info = self.fetch_company_info(company_id)
+    primary_owner = company_info.get("primary_owner", "")
+    
+    opportunity_data = {
+        "Opportunity Owner": primary_owner,  # Could be empty
+        # ...other fields...
+    }</code>
+                    </div>
+                    <div class="code-block">
+                        <span class="code-label">AFTER</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>def create_opportunity(self, meeting_id, company_id, ...):
+    # ENFORCE RULE 1: No owner = No record
+    if not company_id:
+        logger.error(f"BLOCKING opportunity from meeting {meeting_id}: No company link")
+        return None
+    
+    company_info = self.fetch_company_info(company_id)
+    primary_owner = company_info.get("primary_owner", "")
+    
+    if not primary_owner:
+        logger.error(
+            f"BLOCKING opportunity from meeting {meeting_id}: "
+            f"Primary Company Owner missing for company {company_id}"
+        )
+        return None
+    
+    # ENFORCE RULE 2: One active opportunity per company max
+    existing = self.check_active_opportunity(company_id)
+    if existing:
+        logger.info(f"Closing existing opportunity {existing['id']} before creating new one")
+        self.close_opportunity(existing["id"], "Closed Lost")
+    
+    opportunity_data = {
+        "Company": {"relation": [{"id": company_id}]},            # MANDATORY
+        "Opportunity Owner": {"select": {"name": primary_owner}},  # MANDATORY
+        # ...other fields...
+    }</code>
+                    </div>
+                    <p><strong>Impact:</strong> All opportunities linked to companies with valid owners. One active opportunity per company enforced.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: CLEANUP PLAN -->
+        <section class="section" id="cleanup">
+            <h3>🧹 خطة التنظيف | Cleanup Plan (4 Phases)</h3>
+            <p class="section-subtitle">One-time cleanup operations to fix the existing data before new enforcement begins.</p>
+
+            <div class="timeline">
+                <div class="timeline-item completed">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-phase">Phase 1: Recompute All Company Ownership (One-Time)</div>
+                    <div class="timeline-desc">
+                        <p><strong>Operation:</strong> Load all contacts from Notion. Group by company. Recompute Primary Company Owner for ALL ~15,400 companies (not just recent syncs).</p>
+                        <p><strong>Script:</strong> New script `recompute_company_ownership_full.py`</p>
+                        <p><strong>Estimated Impact:</strong> ~14,750 companies will get Primary Company Owner populated. ~650 companies already had contacts.</p>
+                        <p><strong>Command:</strong> <code>python recompute_company_ownership_full.py --dry-run</code> (preview first)</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-phase">Phase 2: Archive Companies with Zero Contacts</div>
+                    <div class="timeline-desc">
+                        <p><strong>Operation:</strong> After Phase 1, archive all companies with zero active contacts. These are unqualified prospects.</p>
+                        <p><strong>Script:</strong> Use existing `archive_unqualified.py` or extend it for company-level archiving.</p>
+                        <p><strong>Estimated Impact:</strong> ~14,100 companies archived (no contacts = no potential).</p>
+                        <p><strong>Command:</strong> <code>python archive_unqualified.py --company-zero-contacts --dry-run</code></p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-phase">Phase 3: Delete/Archive Ownerless Tasks (Theater Cleanup)</div>
+                    <div class="timeline-desc">
+                        <p><strong>Operation:</strong> Identify all tasks with empty Task Owner. Delete them (they are noise, not actions).</p>
+                        <p><strong>Script:</strong> New script `cleanup_ownerless_tasks.py`</p>
+                        <p><strong>Estimated Impact:</strong> ~100+ ownerless tasks deleted. Start fresh with enforced ownership.</p>
+                        <p><strong>Caution:</strong> Permanent deletion. Review in --dry-run first.</p>
+                        <p><strong>Command:</strong> <code>python cleanup_ownerless_tasks.py --dry-run</code></p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-phase">Phase 4: Backfill Contact Owner (rich_text → select)</div>
+                    <div class="timeline-desc">
+                        <p><strong>Operation:</strong> For contacts that already have Contact Owner as rich_text, migrate to select field. Map string to select value.</p>
+                        <p><strong>Script:</strong> New script `migrate_contact_owner_field.py`</p>
+                        <p><strong>Estimated Impact:</strong> ~600 contacts with existing owner (as text) migrated to select field.</p>
+                        <p><strong>Command:</strong> <code>python migrate_contact_owner_field.py --dry-run</code></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Companies Recomputed</div>
+                    <div class="stat-number">~14,750</div>
+                    <div class="stat-label">Primary Owner populated (Phase 1)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Companies Archived</div>
+                    <div class="stat-number">~14,100</div>
+                    <div class="stat-label">Zero contacts (Phase 2)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Tasks Deleted</div>
+                    <div class="stat-number">~100+</div>
+                    <div class="stat-label">Theater tasks removed (Phase 3)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Contacts Migrated</div>
+                    <div class="stat-number">~600</div>
+                    <div class="stat-label">Owner field upgraded (Phase 4)</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4>Cleanup Timeline & Commands</h4>
+                <div class="card-content">
+                    <p><strong>Week 1 (Dry Runs):</strong></p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Monday: <code>python recompute_company_ownership_full.py --dry-run</code></li>
+                        <li>Tuesday: <code>python archive_unqualified.py --company-zero-contacts --dry-run</code></li>
+                        <li>Wednesday: <code>python cleanup_ownerless_tasks.py --dry-run</code></li>
+                        <li>Thursday: <code>python migrate_contact_owner_field.py --dry-run</code></li>
+                        <li>Friday: Review all 4 dry-run reports. Confirm counts match expectations.</li>
+                    </ul>
+                    <p><strong>Week 2 (Live Execution):</strong></p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Monday: <code>python recompute_company_ownership_full.py</code> (LIVE)</li>
+                        <li>Tuesday: <code>python archive_unqualified.py --company-zero-contacts</code> (LIVE)</li>
+                        <li>Wednesday: <code>python cleanup_ownerless_tasks.py</code> (LIVE)</li>
+                        <li>Thursday: <code>python migrate_contact_owner_field.py</code> (LIVE)</li>
+                        <li>Friday: Validate. Check Notion for correct populations.</li>
+                    </ul>
+                    <p><strong>Week 3: Deploy Code Changes</strong></p>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Merge daily_sync.py v5.1 (recompute ALL companies, select field write)</li>
+                        <li>Merge auto_tasks.py v2.1 (blocking validation, no ownerless tasks)</li>
+                        <li>Merge meeting_tracker.py v2.1 (require company link and meeting owner)</li>
+                        <li>Merge opportunity_manager.py v2.1 (require company link, opportunity owner, one per company)</li>
+                        <li>Push to GitHub. Activate in Actions.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: EXECUTION LAYER -->
+        <section class="section" id="execution">
+            <h3>⚡ طبقة التنفيذ | Company-Centric 7-Step Execution Layer</h3>
+            <p class="section-subtitle">The enforced workflow that every record must follow from entry to revenue.</p>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-phase">Step 1: Company Enters System (with owner)</div>
+                    <div class="timeline-desc">
+                        <p><strong>Trigger:</strong> Apollo.io company sync. First contact from company is added to Notion.</p>
+                        <p><strong>Action:</strong> daily_sync.py creates Companies record. Derives Primary Company Owner from contact owner (who has most contacts).</p>
+                        <p><strong>Validation Gate:</strong> Company must have at least one contact with an owner_id. No orphan companies.</p>
+                        <p><strong>Result:</strong> Company record exists with Primary Company Owner = [Ibrahim | Ragheed | Soha]</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-phase">Step 2: Contacts Linked (inherit company ownership)</div>
+                    <div class="timeline-desc">
+                        <p><strong>Trigger:</strong> Apollo.io contact sync (daily or backfill).</p>
+                        <p><strong>Action:</strong> daily_sync.py syncs contact. Links to company via relation. Writes Contact Owner as select field.</p>
+                        <p><strong>Validation Gates:</strong></p>
+                        <ul style="margin-left: 1.5rem;">
+                            <li>Contact must have owner_id from Apollo</li>
+                            <li>Contact must have at least one non-failed email campaign (already outreached)</li>
+                            <li>Company must exist in Notion (no orphans)</li>
+                        </ul>
+                        <p><strong>Result:</strong> Contact record exists with Company relation + Contact Owner select field populated.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-phase">Step 3: Lead Scored → Action Ready</div>
+                    <div class="timeline-desc">
+                        <p><strong>Trigger:</strong> Contact added or updated (daily pipeline).</p>
+                        <p><strong>Action:</strong> lead_score.py calculates Score (0-100). action_ready_updater.py evaluates 5 conditions (Score >= 50, no DNC, valid outreach, valid stage, has contact method). Writes Lead Tier (HOT/WARM/COLD) and Action Ready checkbox.</p>
+                        <p><strong>Validation Gate:</strong> Action Ready = true ONLY if all 5 conditions pass. No exceptions.</p>
+                        <p><strong>Result:</strong> Contact has Lead Score, Lead Tier, Action Ready = true/false</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-phase">Step 4: Task Created (Task Owner = Primary Company Owner, MANDATORY)</div>
+                    <div class="timeline-desc">
+                        <p><strong>Trigger:</strong> Contact reaches Action Ready = true.</p>
+                        <p><strong>Action:</strong> auto_tasks.py groups contacts by company. Creates ONE task per company per tier. Task Owner = Primary Company Owner (cascaded from company). Status = "Not Started".</p>
+                        <p><strong>Validation Gates:</strong></p>
+                        <ul style="margin-left: 1.5rem;">
+                            <li>BLOCK if Primary Company Owner is NULL</li>
+                            <li>BLOCK if company already has open task of same type (no duplicate tasks)</li>
+                            <li>REQUIRE Company link (relation)</li>
+                            <li>REQUIRE Task Owner select field (not null)</li>
+                        </ul>
+                        <p><strong>Result:</strong> Task exists with Task Owner, Status = "Not Started", linked to Company.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-phase">Step 5: Meeting Logged (Meeting Owner = Primary Company Owner, MANDATORY)</div>
+                    <div class="timeline-desc">
+                        <p><strong>Trigger:</strong> Sales rep logs meeting in Notion Meetings DB (manually or from Google Calendar sync).</p>
+                        <p><strong>Action:</strong> meeting_tracker.py links meeting to company (via relation or auto-resolve from primary contact). meeting_analyzer.py analyzes meeting notes (Claude AI). Writes Meeting Owner from Primary Company Owner. Updates Company Stage = "Meeting" if outcome is positive.</p>
+                        <p><strong>Validation Gates:</strong></p>
+                        <ul style="margin-left: 1.5rem;">
+                            <li>REQUIRE Company link (explicit or resolved from contact)</li>
+                            <li>BLOCK if Primary Company Owner is NULL</li>
+                            <li>REQUIRE Meeting Owner select field (not null)</li>
+                        </ul>
+                        <p><strong>Result:</strong> Meeting record exists with Meeting Owner, Company link, Meeting Notes analyzed.</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-phase">Step 6: Opportunity Created (from positive meeting, Company-level)</div>
+                    <div class="timeline-desc">
+                        <p><strong>Trigger:</strong> Meeting logged with Outcome = "Stage Advance" (positive signal).</p>
+                        <p><strong>Action:</strong> opportunity_manager.py creates opportunity. Linked to company. Opportunity Owner = Primary Company Owner. Stage = "Discovery" (initial).</p>
+                        <p><strong>Validation Gates:</strong></p>
+                        <ul style="margin-left: 1.5rem;">
+                            <li>REQUIRE Company link</li>
+                            <li>BLOCK if Primary Company Owner is NULL</li>
+                            <li>REQUIRE Opportunity Owner select field (not null)</li>
+                            <li>ENFORCE one active opportunity per company max. If company already has active opp, close previous before creating new.</li>
+                        </ul>
+                        <p><strong>Result:</strong> Opportunity record exists with Opportunity Owner, Company link, Deal Value, Stage = "Discovery".</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-phase">Step 7: Revenue Tracked (close the loop)</div>
+                    <div class="timeline-desc">
+                        <p><strong>Trigger:</strong> Opportunity progresses through stages (Discovery → Proposal → Negotiation → Closed Won/Lost).</p>
+                        <p><strong>Action:</strong> opportunity_manager.py tracks stage changes. Calculates deal value, probability, expected close. Generates revenue pipeline report grouped by Opportunity Owner (primary company owner).</p>
+                        <p><strong>Result:</strong> Revenue dashboard shows pipeline by owner. Closed Won deals attributed to owner. Feedback loop closes: Action → Meeting → Opportunity → Revenue.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4>Enforcement Decision Tree</h4>
+                <div class="card-content">
+                    <p>Every record creation follows this decision tree:</p>
+                    <div class="code-block">
+                        <span class="code-label">Decision Logic</span>
+                        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                        <code>┌─ Company exists?
+│  └─ NO → BLOCK. Cannot proceed without company.
+│  
+├─ Primary Company Owner exists?
+│  └─ NO → BLOCK. Cannot proceed without master owner.
+│  
+├─ Company Stage is valid?
+│  └─ NO → BLOCK. Company must be in system (not Archived).
+│  
+├─ Cascading Owner correct?
+│  └─ Task Owner = Primary Company Owner? YES → Proceed
+│  └─ Meeting Owner = Primary Company Owner? YES → Proceed
+│  └─ Opportunity Owner = Primary Company Owner? YES → Proceed
+│  
+├─ Company Link enforced?
+│  └─ Task.Company linked? YES → Proceed
+│  └─ Meeting.Company linked? YES → Proceed
+│  └─ Opportunity.Company linked? YES → Proceed
+│  
+└─ Duplicate check passed?
+   └─ No existing open task of same type for same company? YES → Create
+   └─ No existing active opportunity for company (if creating new)? YES → Create
+   
+If ALL checks pass → Record created with MANDATORY owner field
+If ANY check fails → Record BLOCKED, error logged, stats incremented</code>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: DASHBOARD TRANSFORMATION -->
+        <section class="section">
+            <h3>📊 لوحة القيادة الجديدة | Dashboard Transformation</h3>
+            <p class="section-subtitle">What the new company-centric dashboard should track (after enforcement).</p>
+
+            <div class="tabs">
+                <button class="active" onclick="switchTab('dash-companies')">Companies View</button>
+                <button onclick="switchTab('dash-pipeline')">Revenue Pipeline</button>
+                <button onclick="switchTab('dash-tasks')">Task Execution</button>
+                <button onclick="switchTab('dash-owner')">Owner Workload</button>
+            </div>
+
+            <div id="dash-companies" class="tabpanel active">
+                <div class="card">
+                    <h4>Companies by Stage (with owner accountability)</h4>
+                    <div class="card-content">
+                        <p><strong>Metric:</strong> Count of companies in each stage, grouped by Primary Company Owner.</p>
+                        <p><strong>Stages:</strong> Prospect (no contact yet) → Outreach (email sent) → Engaged (opened/replied) → Meeting (scheduled/completed) → Opportunity (deal) → Customer (closed won) → Churned (lost) → Archived (zero contacts).</p>
+                        <p><strong>View:</strong> Table with columns: Owner | Prospect | Outreach | Engaged | Meeting | Opportunity | Customer | Churned | Archived | Total</p>
+                        <p><strong>Why it matters:</strong> Each owner owns the companies in their pipeline. Can see stage distribution and bottlenecks per owner.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dash-pipeline" class="tabpanel">
+                <div class="card">
+                    <h4>Revenue Pipeline (per owner, per stage)</h4>
+                    <div class="card-content">
+                        <p><strong>Metric:</strong> Total deal value in each opportunity stage, grouped by Opportunity Owner.</p>
+                        <p><strong>Visibility:</strong> Deal count, total ARR, average deal size, close probability.</p>
+                        <p><strong>View:</strong> Waterfall chart: Discovery → Proposal → Negotiation → Closed Won/Lost. Each stage shows owner breakdown.</p>
+                        <p><strong>Why it matters:</strong> Revenue accountability. Each owner sees their pipeline health and which deals are at risk.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dash-tasks" class="tabpanel">
+                <div class="card">
+                    <h4>Task Execution Rate (per owner, per priority)</h4>
+                    <div class="card-content">
+                        <p><strong>Metric:</strong> Tasks completed / tasks assigned, grouped by Task Owner and Priority (Critical HOT / High WARM).</p>
+                        <p><strong>Visibility:</strong> Completion rate, SLA compliance (24h for HOT, 48h for WARM), overdue count.</p>
+                        <p><strong>View:</strong> Dashboard showing: Task Owner | Critical Assigned | Critical Completed | Critical % | High Assigned | High Completed | High %</p>
+                        <p><strong>Why it matters:</strong> Activity accountability. Shows who is executing on outreach and meeting commitments.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dash-owner" class="tabpanel">
+                <div class="card">
+                    <h4>Owner Workload Balance</h4>
+                    <div class="card-content">
+                        <p><strong>Metric:</strong> Companies assigned per owner, meetings held per owner, opportunities in progress per owner.</p>
+                        <p><strong>View:</strong> Bar chart comparing: Ibrahim (X companies, Y meetings, Z opportunities) vs. Ragheed vs. Soha.</p>
+                        <p><strong>Why it matters:</strong> Sales team bandwidth. Identifies over-loaded or under-utilized owners. Guides customer assignment.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 7: FINAL VERDICT -->
+        <section class="section">
+            <h3>📌 الحكم النهائي | Final Verdict & Implementation Roadmap</h3>
+            <p class="section-subtitle">Summary of rules, before/after state, and 4-week rollout plan.</p>
+
+            <div class="card">
+                <h4>The 4 Non-Negotiable System Rules</h4>
+                <table class="rules-matrix">
+                    <thead>
+                        <tr>
+                            <th>Rule</th>
+                            <th>Before (Current)</th>
+                            <th>After (Enforced)</th>
+                            <th>Blocking Logic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Rule 1: No Owner = No Record</strong></td>
+                            <td>~4,900 records with NULL owner</td>
+                            <td>0 records without owner</td>
+                            <td>BLOCK record creation if owner is NULL. Fail loudly in logs.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rule 2: Company = Primary Entity</strong></td>
+                            <td>Tasks/Meetings/Opps disconnected from company</td>
+                            <td>100% of tasks/meetings/opps linked to company</td>
+                            <td>REQUIRE company relation on every record. BLOCK if missing.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rule 3: Company Owner = Master Owner</strong></td>
+                            <td>~14,750 companies with no owner</td>
+                            <td>All companies have Primary Company Owner</td>
+                            <td>Cascade owner: Task Owner = Primary Company Owner. BLOCK if NULL.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rule 4: One Flow Only</strong></td>
+                            <td>Company → Contact → Task [DEAD END]. Meetings/Opps orphaned.</td>
+                            <td>Company → Contact → Task → Meeting → Opportunity → Revenue</td>
+                            <td>Each step REQUIRES input from previous. BLOCK if chain broken.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h4>Before/After Comparison</h4>
+                <table class="rules-matrix">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Before (Current State)</th>
+                            <th>After (Enforced)</th>
+                            <th>Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Task Theater</td>
+                            <td>100+ tasks auto-created, 100% auto-completed, 0% with owner</td>
+                            <td>Tasks created only with valid owner. Status = "Not Started". Manual completion.</td>
+                            <td>Real task system. Actual execution tracking.</td>
+                        </tr>
+                        <tr>
+                            <td>Company Ownership</td>
+                            <td>~14,750 companies (95%) with no Primary Owner</td>
+                            <td>All companies have Primary Company Owner (derived from contacts)</td>
+                            <td>Accountability. Clear owner for each company.</td>
+                        </tr>
+                        <tr>
+                            <td>Meeting Flow</td>
+                            <td>Meetings logged. 0% linked to company or owner.</td>
+                            <td>All meetings linked to company. Meeting Owner = Primary Company Owner.</td>
+                            <td>Meetings feed into pipeline. Stage progression enabled.</td>
+                        </tr>
+                        <tr>
+                            <td>Revenue Pipeline</td>
+                            <td>Opportunities DB = empty. No revenue tracking.</td>
+                            <td>Meetings → Opportunities → Revenue. Opportunities grouped by owner.</td>
+                            <td>Closed-loop revenue system. Deal tracking, forecasting.</td>
+                        </tr>
+                        <tr>
+                            <td>Data Quality</td>
+                            <td>Rich_text owners. Orphan companies (no contacts). Theater tasks.</td>
+                            <td>Select owners (cascadable). Company ownership computed. All tasks have owners.</td>
+                            <td>Clean schema. Queryable data. Aggregatable by owner.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h4>4-Week Implementation Roadmap</h4>
+                <div class="card-content">
+                    <p><strong>WEEK 1 (March 31 - April 6): Dry Run & Validation</strong></p>
+                    <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                        <li>Mon: Run all cleanup scripts in --dry-run mode. Document predicted counts.</li>
+                        <li>Tue-Thu: Review dry-run reports. Validate against expected violations.</li>
+                        <li>Fri: Team sign-off. All counts match expectations. No surprises.</li>
+                    </ul>
+
+                    <p><strong>WEEK 2 (April 7 - 13): Data Cleanup (Live)</strong></p>
+                    <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                        <li>Mon: Phase 1 — Recompute all company ownership (14,750 companies). Monitor runtime.</li>
+                        <li>Tue: Phase 2 — Archive zero-contact companies (14,100 companies). Verify in Notion.</li>
+                        <li>Wed: Phase 3 — Delete ownerless tasks (100+ records). Clean up theater noise.</li>
+                        <li>Thu: Phase 4 — Migrate Contact Owner from rich_text to select (600 contacts). Test cascading.</li>
+                        <li>Fri: Validation run. Check Notion DB for correct state. Run doc_sync_checker.py.</li>
+                    </ul>
+
+                    <p><strong>WEEK 3 (April 14 - 20): Code Deployment & Activation</strong></p>
+                    <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                        <li>Mon: Merge daily_sync.py v5.1 (all-company recompute, select field write).</li>
+                        <li>Tue: Merge auto_tasks.py v2.1 (blocking validation, no ownerless tasks).</li>
+                        <li>Wed: Merge meeting_tracker.py v2.1 (require company, meeting owner).</li>
+                        <li>Thu: Merge opportunity_manager.py v2.1 (require company, opp owner, one per company).</li>
+                        <li>Fri: Push to GitHub. Activate in GitHub Actions. Run first incremental sync with new code.</li>
+                    </ul>
+
+                    <p><strong>WEEK 4 (April 21 - 27): Monitoring & Calibration</strong></p>
+                    <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                        <li>Daily: Monitor pipeline logs. Check for any blocked records (expected: very few after cleanup).</li>
+                        <li>Measure: Task creation rate (should drop to realistic numbers, no theater). Task owner population (100%).</li>
+                        <li>Test: Create sample meeting → verify opportunity creation → verify revenue tracking.</li>
+                        <li>Calibrate: If any issues, adjust blocking thresholds (but never disable blocking).</li>
+                        <li>Final: Declare "Company-Centric Enforcement" LIVE. System is now accountability-driven.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Enforcement Timeline</div>
+                    <div class="stat-number">4 weeks</div>
+                    <div class="stat-label">From audit to production deployment</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Records Fixed</div>
+                    <div class="stat-number">~29,450</div>
+                    <div class="stat-label">Companies + tasks + contacts updated</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Code Changes</div>
+                    <div class="stat-number">4 scripts</div>
+                    <div class="stat-label">daily_sync, auto_tasks, meeting_tracker, opportunity_manager</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">New Validation Gates</div>
+                    <div class="stat-number">12+</div>
+                    <div class="stat-label">Blocking logic added across all scripts</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4>System Architecture Diagram (Post-Enforcement)</h4>
+                <div class="code-block">
+                    <span class="code-label">Company-Centric Data Flow</span>
+                    <button class="code-copy" onclick="copyCode(this)">Copy</button>
+                    <code>┌─────────────────────────────────────────────────────────────┐
+│ APOLLO.IO (Data Source)                                   │
+│ Contacts (owner_id) → Companies (account data)            │
+└────────────────┬────────────────────────────────────────┘
+                 │
+                 ▼ (daily_sync.py v5.1)
+┌─────────────────────────────────────────────────────────────┐
+│ NOTION CRM HUB                                              │
+│                                                             │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ COMPANIES DB (15,400 total, ~650 active)            │   │
+│  │ ├─ Primary Company Owner (Ibrahim/Ragheed/Soha)     │   │
+│  │ ├─ Company Stage (Prospect→...→Customer)           │   │
+│  │ └─ Active Contacts (derived)                         │   │
+│  └──────────────┬─────────────────────────────────────┘   │
+│                 │ (MASTER OWNER CASCADE)                   │
+│  ┌──────────────▼─────────────────────────────────────┐   │
+│  │ CONTACTS DB (~3,800 synced, ~650 with company)    │   │
+│  │ ├─ Contact Owner (select: cascaded from Apollo)   │   │
+│  │ ├─ Lead Score (0-100, HOT/WARM/COLD)              │   │
+│  │ └─ Action Ready (5-condition gate)                 │   │
+│  └──────────────┬─────────────────────────────────────┘   │
+│                 │ (Action Ready = true)                    │
+│  ┌──────────────▼─────────────────────────────────────┐   │
+│  │ TASKS DB (~5-10 per week after enforcement)       │   │
+│  │ ├─ Task Owner = Primary Company Owner (MANDATORY) │   │
+│  │ ├─ Company link (REQUIRED)                        │   │
+│  │ └─ Status = Not Started (not auto-completed)     │   │
+│  └──────────────┬─────────────────────────────────────┘   │
+│                 │ (Task → Meeting)                         │
+│  ┌──────────────▼─────────────────────────────────────┐   │
+│  │ MEETINGS DB (sales meetings only)                 │   │
+│  │ ├─ Meeting Owner = Primary Company Owner (MAND)  │   │
+│  │ ├─ Company link (REQUIRED)                        │   │
+│  │ └─ Outcome (Stage Advance/No Change/Regress)      │   │
+│  └──────────────┬─────────────────────────────────────┘   │
+│                 │ (Positive outcome)                       │
+│  ┌──────────────▼─────────────────────────────────────┐   │
+│  │ OPPORTUNITIES DB (one per company max)            │   │
+│  │ ├─ Opportunity Owner = Primary Company Owner     │   │
+│  │ ├─ Company link (REQUIRED)                        │   │
+│  │ ├─ Deal Value, Stage, Close Date                  │   │
+│  │ └─ One active per company (enforcement)           │   │
+│  └──────────────┬─────────────────────────────────────┘   │
+│                 │                                          │
+└─────────────────┼──────────────────────────────────────────┘
+                  │
+                  ▼ (dashboard_generator.py, analytics_tracker.py)
+┌─────────────────────────────────────────────────────────────┐
+│ DASHBOARDS & REPORTING                                      │
+│ ├─ Sales_Dashboard_Accounts.html (account-centric)        │
+│ ├─ Revenue Pipeline (by Owner)                            │
+│ ├─ Task Execution Rate (by Owner)                         │
+│ ├─ Company Stage Distribution (by Owner)                  │
+│ └─ Owner Workload Balance                                 │
+└─────────────────────────────────────────────────────────────┘</code>
+                    </div>
+            </div>
+
+            <div class="card">
+                <h4>Success Criteria (Post-Implementation)</h4>
+                <div class="card-content">
+                    <p><strong>✓ Rule 1 Enforced:</strong> Zero records with NULL primary owner. All tasks, meetings, opportunities have Task Owner / Meeting Owner / Opportunity Owner populated.</p>
+                    <p><strong>✓ Rule 2 Enforced:</strong> 100% of tasks/meetings/opportunities linked to company (relation). No orphans.</p>
+                    <p><strong>✓ Rule 3 Enforced:</strong> All companies have Primary Company Owner. Cascades to all downstream records.</p>
+                    <p><strong>✓ Rule 4 Enforced:</strong> Company → Contact → Task → Meeting → Opportunity → Revenue. No dead ends. Closed loop.</p>
+                    <p><strong>✓ Task Theater Eliminated:</strong> Tasks created with Status = "Not Started", not auto-completed. Require manual completion tracking.</p>
+                    <p><strong>✓ Revenue Visibility:</strong> Opportunities tracked end-to-end. Closed Won deals attributed to owner. Revenue pipeline forecasted.</p>
+                    <p><strong>✓ Team Accountability:</strong> Each owner owns their assigned companies, tasks, meetings, opportunities, and revenue target.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>AI Sales OS | Company-Centric Enforcement Plan | v1.0 | April 2026</p>
+            <p>Generated for production deployment | Non-negotiable rules | Zero exceptions</p>
+        </footer>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(tabName) {
+            const panels = document.querySelectorAll('.tabpanel');
+            panels.forEach(p => p.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+
+            const buttons = document.querySelectorAll('.tabs button');
+            buttons.forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // Collapsible sections
+        document.querySelectorAll('.collapsible').forEach(el => {
+            el.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+
+        // Copy code blocks
+        function copyCode(button) {
+            const codeBlock = button.parentElement.querySelector('code');
+            const text = codeBlock.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Animate meter bars on page load
+        window.addEventListener('load', () => {
+            document.querySelectorAll('.meter-fill').forEach(bar => {
+                bar.style.animation = 'none';
+                setTimeout(() => {
+                    bar.style.animation = 'fillBar 1s ease-out';
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>

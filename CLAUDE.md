@@ -14,10 +14,10 @@ This is a production-grade Sales Operating System, not a hobby project.
 ## System Architecture
 
 ```
-Apollo.io (Data)  ──►  Python Scripts (20 scripts)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily + Weekly)
+Apollo.io (Data)  ──►  Python Scripts (25 scripts)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily + Weekly)
   45,086 contacts         Sync + Filter + Enrich +           7 Databases            7:00 AM KSA
   15,407 companies        Score + Action + Sequence +        HOT/WARM/COLD          2-job pipeline + weekly calibration
-                          Meet + Dashboard                   Live Sales Dashboard   Sales_Dashboard_Accounts.html
+                          Meet + Dashboard + Govern          Live Sales Dashboard   Sales_Dashboard_Accounts.html
                           Company-Centric (v5.0)             Primary/Supporting Owners
                                                              Company Stage Machine
 ```
@@ -60,12 +60,26 @@ AI Sales OS/
 │   ├── dashboard_generator.py   → Pulls live Notion data → regenerates Sales_Dashboard_Accounts.html [v4.2]
 │   ├── doc_sync_checker.py      → Documentation drift validator [v4.1]
 │   ├── archive_unqualified.py   → Archive contacts without owner/email [v4.4]
+│   ├── data_governor.py         → Data governance enforcer — audit + archive unqualified records [v6.0]
+│   ├── ingestion_gate.py        → Ingestion gate — validates companies/contacts before entry [v6.0]
+│   ├── cleanup_overdue_tasks.py → Bulk-complete legacy pre-v5.0 contact-level tasks
+│   ├── audit_ownership.py       → Audit ownership gaps across all Notion DBs
+│   ├── muhide_strategic_analysis.py → AI engine — scores all companies vs MUHIDE ICP (Fit Score + Priority)
 │   ├── webhook_server.py        → Apollo webhook receiver
 │   ├── verify_links.py          → Contact-company link verifier
 │   ├── .env                     → API credentials (NEVER commit)
 │   ├── .env.example             → Credential template
 │   ├── requirements.txt         → Python dependencies
 │   └── *.log                    → Runtime logs (auto-generated, gitignored)
+│
+├── 💻 CODE/file_sync/           → Tri-directional sync engine (Local ↔ Drive ↔ GitHub)
+│   ├── sync_engine.py           → Master orchestrator
+│   ├── scan_local.py / scan_drive.py / scan_github.py → Source scanners
+│   ├── sync_to_drive.py / sync_to_github.py / sync_to_local.py → Target writers
+│   ├── build_manifest.py        → Unified manifest builder
+│   ├── detect_conflicts.py / resolve_conflicts.py → Conflict handling
+│   ├── backup_manager.py        → Pre-sync backups
+│   └── 00_START_HERE.md         → Setup & usage guide
 │
 ├── 🎯 PRESENTATIONS/            → All presentation files
 │   ├── English/
@@ -125,6 +139,11 @@ AI Sales OS/
 | `dashboard_generator.py` | Pulls live Notion Contacts + Companies data → aggregates by account → injects into Sales_Dashboard_Accounts.html via regex template injection | **ACTIVE (v4.2)** |
 | `doc_sync_checker.py` | Validates documentation vs codebase state — catches drift after development | **ACTIVE (v4.1)** |
 | `archive_unqualified.py` | Archives contacts without owner or email sent → Stage = Archived | **ACTIVE (v4.4)** |
+| `data_governor.py` | Data Governor v6.0 — audits existing Notion records against ingestion gates, archives unqualified, enforces company-contact links and owner assignment, generates data quality report | **ACTIVE (v6.0)** |
+| `ingestion_gate.py` | Ingestion Gate v6.0 — validates companies (≥2 of 5 ICP criteria) and contacts (all 4 gates) before entry into Notion; prevents junk data at source | **ACTIVE (v6.0)** |
+| `cleanup_overdue_tasks.py` | Bulk-completes legacy pre-v5.0 contact-level auto-tasks that were never actioned and are now superseded by company-level tasks | **ACTIVE** |
+| `audit_ownership.py` | Audits ownership gaps across all 5 Notion DBs (Contacts, Companies, Tasks, Meetings, Opportunities) and reports unowned records | **ACTIVE** |
+| `muhide_strategic_analysis.py` | AI strategic analysis engine — processes all Notion Companies, scores each vs MUHIDE ICP (Fit Score 1-100, Priority P1/P2/P3, Best Buyer, Outreach Angle), writes 5 fields per company | **ACTIVE** |
 | `webhook_server.py` | Apollo webhook receiver | **ACTIVE** |
 | `verify_links.py` | Contact-company link verifier | **ACTIVE** |
 
@@ -592,6 +611,144 @@ python archive_unqualified.py --limit 50   # limit to first N contacts
 ```
 
 **IMPORTANT:** Run `--dry-run` first to verify the count before archiving. This operation is reversible (you can un-archive by changing Stage back) but affects many records.
+
+---
+
+## data_governor.py — Data Governor (v6.0)
+
+Enforces data governance rules on ALL existing Notion records. Companion to `ingestion_gate.py` — while the gate blocks bad data at entry, the governor cleans up what already exists.
+
+### What It Does
+
+1. Audits companies and contacts against ingestion gate criteria
+2. Archives records that fail (sets Stage = "Archived")
+3. Enforces Company-Contact linking (no orphan contacts)
+4. Enforces Owner assignment (no unowned companies)
+5. Generates a full data quality report
+6. Soft-delete only — never hard-deletes active records
+
+### Commands
+
+```bash
+python data_governor.py --dry-run          # audit only, no changes
+python data_governor.py --enforce          # apply archival + enforcement
+python data_governor.py --report           # generate detailed quality report
+python data_governor.py --enforce --limit 100  # limit to first N records
+```
+
+---
+
+## ingestion_gate.py — Ingestion Gate (v6.0)
+
+Validates companies and contacts before they enter the system. Prevents junk data at source.
+
+### Company Gate (must pass ≥ 2 of 5 criteria)
+
+1. ICP Match (industry + country + size)
+2. Has Senior Contact (C-Suite/VP/Director)
+3. Has Intent Signal (email open/reply/meeting)
+4. Has Trigger Event (funding/headcount growth/hiring)
+5. Has been contacted (email sent / meeting / call)
+
+### Contact Gate (must pass ALL 4)
+
+1. Linked to a company in the system
+2. Has valid email
+3. Has clear role (Decision Maker / Influencer / End User)
+4. Has an owner assigned
+
+### Commands
+
+```bash
+python ingestion_gate.py --dry-run         # evaluate without writing
+python ingestion_gate.py --enforce         # apply gate decisions
+python ingestion_gate.py --report          # gate pass/fail summary
+```
+
+---
+
+## muhide_strategic_analysis.py — MUHIDE Strategic Analysis Engine
+
+AI-powered analysis of all companies in Notion against MUHIDE's B2B trade governance and financing value proposition. Uses Claude API to generate a strategic fit assessment for each company.
+
+### Output Fields (written to Companies DB)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| MUHIDE Strategic Analysis | rich_text | Full AI-generated analysis |
+| MUHIDE Fit Score | number (1-100) | Strategic fit score |
+| MUHIDE Priority | select (P1/P2/P3) | Outreach priority tier |
+| MUHIDE Best Buyer | select | Ideal buyer persona at this company |
+| MUHIDE Outreach Angle | rich_text | Recommended first approach/hook |
+
+### Commands
+
+```bash
+python muhide_strategic_analysis.py            # process all companies
+python muhide_strategic_analysis.py --dry-run  # preview without writing
+python muhide_strategic_analysis.py --limit 50 # process first N only
+python muhide_strategic_analysis.py --resume   # resume from checkpoint
+```
+
+Uses `muhide_analysis_checkpoint.json` to resume after interruptions. Requires `ANTHROPIC_API_KEY`.
+
+---
+
+## cleanup_overdue_tasks.py — Legacy Task Cleanup
+
+Bulk-completes overdue auto-created tasks from pre-v5.0 contact-level Action Engine. These tasks were never actioned and are superseded by the company-level task model (v5.0). Run once after migrating to v5.0.
+
+### Commands
+
+```bash
+python cleanup_overdue_tasks.py --dry-run  # preview only
+python cleanup_overdue_tasks.py            # execute cleanup
+python cleanup_overdue_tasks.py --limit 100  # limit batch size
+```
+
+---
+
+## audit_ownership.py — Ownership Audit
+
+Audits ownership gaps across all 5 Notion databases (Contacts, Companies, Tasks, Meetings, Opportunities). Reports unowned or mis-assigned records. Useful for validating the v5.0 Company-Centric ownership model.
+
+### Commands
+
+```bash
+python audit_ownership.py          # full audit across all DBs
+python audit_ownership.py --fix    # auto-assign owners where possible
+```
+
+---
+
+## file_sync/ — Tri-Directional Sync Engine
+
+A production-grade file synchronization module that keeps three systems in perfect sync: Local Filesystem ↔ Google Drive ↔ GitHub Repository.
+
+### Architecture
+
+```
+Local ◄──────────────────────────────────► Google Drive
+  │                                               │
+  └───────────────────► GitHub ◄──────────────────┘
+                           │
+                    Unified Manifest
+                   (source of truth)
+```
+
+### Key Modules
+
+| Module | Purpose |
+|--------|---------|
+| `build_manifest.py` | Creates unified manifest of all files across all 3 sources |
+| `detect_conflicts.py` | Identifies files that differ between sources |
+| `sync_to_drive.py` | Pushes local changes to Google Drive |
+| `sync_to_github.py` | Commits and pushes changes to GitHub |
+| `sync_to_local.py` | Pulls remote changes to local |
+| `backup_manager.py` | Creates pre-sync backups |
+| `scan_local/drive/github.py` | Source-specific scanners |
+
+See `💻 CODE/file_sync/00_START_HERE.md` for full setup and usage guide.
 
 ---
 

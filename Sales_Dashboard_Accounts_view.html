@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUHIDE — Sales Dashboard | Account-Based View</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--orange:#F57C1E;--ol:#CD6A1D;--dark:#151214;--d2:#242424;--d3:#2E2E2E;--card:#2A2A2A;--border:#3A3A3A;--text:#FAFAFA;--t2:#ABABAB;--green:#4CAF50;--blue:#4A9EDB;--yellow:#F5C842;--red:#E05050;--purple:#9B72CF;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Viga','Geeza Pro','Segoe UI',Tahoma,Arial,sans-serif;background:var(--dark);color:var(--text);direction:rtl;}
+.header{background:linear-gradient(135deg,#151214 0%,#2A2020 100%);border-bottom:2px solid var(--orange);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-size:26px;font-weight:900;color:var(--orange);}
+.header-brand{display:flex;align-items:center;gap:14px;}
+.header-meta{display:flex;align-items:center;gap:20px;}
+.live-badge{background:var(--orange);color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.live-dot{width:7px;height:7px;background:white;border-radius:50%;animation:pulse 1.4s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hdate{font-size:13px;color:var(--t2);}
+.main{padding:24px 32px;max-width:1700px;margin:0 auto;}
+/* FILTER BAR */
+.fb{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:24px;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;}
+.fb label{font-size:11px;color:var(--t2);margin-bottom:4px;display:block;}
+.fg{display:flex;flex-direction:column;}
+.fb select,.fb input[type=text],.fb input[type=date]{background:var(--d3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px;min-width:125px;outline:none;cursor:pointer;transition:border-color .2s;}
+.fb select:hover,.fb input:hover{border-color:var(--orange);}
+.fb input[type=text]{min-width:170px;}
+.fb input[type=date]{min-width:125px;color-scheme:dark;}
+.dri{display:flex;gap:5px;align-items:center;}
+.dsep{font-size:11px;color:var(--t2);}
+.fstats{margin-right:auto;font-size:12px;color:var(--t2);align-self:flex-end;padding-bottom:2px;}
+.fstats span{color:var(--orange);font-weight:700;}
+.breset{background:transparent;border:1px solid var(--border);color:var(--t2);padding:6px 13px;border-radius:8px;cursor:pointer;font-size:12px;transition:all .2s;align-self:flex-end;}
+.breset:hover{border-color:var(--orange);color:var(--orange);}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;transition:border-color .2s;}
+.kpi:hover{border-color:var(--orange);}
+.kpi::before{content:'';position:absolute;top:0;right:0;width:4px;height:100%;}
+.kpi.orange::before{background:var(--orange)}.kpi.green::before{background:var(--green)}.kpi.blue::before{background:var(--blue)}.kpi.yellow::before{background:var(--yellow)}.kpi.purple::before{background:var(--purple);}
+.kv{font-size:32px;font-weight:900;line-height:1;}
+.kl{font-size:12px;color:var(--t2);margin-top:6px;}
+.ki{position:absolute;top:16px;left:16px;font-size:22px;opacity:.25;}
+/* SECTION */
+.sec{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.sec::after{content:'';flex:1;height:1px;background:var(--border);}
+/* CHARTS */
+.g3{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:16px;margin-bottom:24px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.g22{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:24px;}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.ct{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--orange);flex-shrink:0;}
+.cw{position:relative;height:200px;}
+.cwt{position:relative;height:300px;}
+.cwm{position:relative;height:240px;}
+/* FUNNEL */
+.fw{padding:4px 0;}
+.fr{display:flex;align-items:center;gap:12px;margin-bottom:9px;}
+.fl{width:105px;font-size:12px;color:var(--t2);text-align:right;}
+.fbw{flex:1;background:var(--d3);border-radius:6px;height:22px;}
+.fb2{height:100%;border-radius:6px;transition:width .5s;}
+.fn{width:38px;font-size:13px;font-weight:700;text-align:left;}
+.fp{width:38px;font-size:11px;color:var(--t2);text-align:left;}
+/* TABLE */
+.tc{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;}
+.th2{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.tt{font-size:15px;font-weight:700;}
+.tcnt{font-size:13px;color:var(--t2);}
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:#222;padding:9px 11px;text-align:right;color:var(--t2);font-weight:600;font-size:11px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+thead th:hover{color:var(--orange);}
+thead th.sa::after{content:' ↑';color:var(--orange);}
+thead th.sd::after{content:' ↓';color:var(--orange);}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+tbody tr:hover{background:rgba(245,124,30,.06);}
+tbody tr:last-child{border-bottom:none;}
+td{padding:9px 11px;vertical-align:middle;white-space:nowrap;}
+td.cn{font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
+.nd{color:var(--t2);opacity:.5;}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.bm{background:rgba(76,175,80,.15);color:#6fcf73;}
+.br2{background:rgba(74,158,219,.15);color:#7ac4f5;}
+.bo{background:rgba(245,200,66,.15);color:#f5c842;}
+.bs{background:rgba(245,124,30,.15);color:var(--orange);}
+.bb{background:rgba(224,80,80,.15);color:#e07070;}
+.bu{background:rgba(100,100,100,.15);color:#888;}
+.hot{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(224,80,80,.2);color:#ff7070;}
+.warm{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(245,200,66,.15);color:#f5c842;}
+.cold{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(74,158,219,.15);color:#7ac4f5;}
+.or{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(245,124,30,.2);color:var(--orange);}
+.oi{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(74,158,219,.2);color:var(--blue);}
+.dc{font-size:11px;color:var(--t2);}
+.dc.rc{color:#6fcf73;}.dc.oc{color:#e07070;}
+.empty{text-align:center;padding:40px;color:var(--t2);}
+/* INSIGHT BOX */
+.insight{background:rgba(245,124,30,.07);border:1px solid rgba(245,124,30,.25);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:var(--t2);line-height:1.7;}
+.insight strong{color:var(--orange);}
+@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.g3,.g2,.g22{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){.main{padding:16px}.kpi-grid{grid-template-columns:1fr 1fr}.g3,.g2,.g22{grid-template-columns:1fr}.header{padding:14px 16px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="logo">MUHIDE</div>
+    <div>
+      <div style="font-size:15px;font-weight:700;">Sales Dashboard — Account-Based View</div>
+      <div style="font-size:12px;color:var(--t2)">الشركات التي تم التواصل معها | بيانات حقيقية من Notion</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="hdate" id="liveDate"></div>
+    <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- FILTERS -->
+<div class="fb">
+  <div class="fg"><label>🔍 بحث الشركة</label><input type="text" id="searchInput" placeholder="اسم الشركة..." oninput="af()"></div>
+  <div class="fg"><label>👤 مسؤول الحساب</label>
+    <select id="ownerF" onchange="af()">
+      <option value="">الكل</option><option value="رغيد">رغيد</option>
+      <option value="إبراهيم">إبراهيم</option><option value="__u">غير محدد</option>
+    </select>
+  </div>
+  <div class="fg"><label>📧 حالة التواصل</label>
+    <select id="statusF" onchange="af()">
+      <option value="">الكل</option>
+      <option value="Meeting Booked">📅 اجتماع</option>
+      <option value="Replied">💬 ردّ</option>
+      <option value="Opened">👁 فتح</option>
+      <option value="Sent">✉️ أُرسل</option>
+      <option value="Bounced">⚠️ بانس</option>
+      <option value="Unknown">—</option>
+    </select>
+  </div>
+  <div class="fg"><label>🏭 القطاع</label><select id="industryF" onchange="af()"><option value="">الكل</option></select></div>
+  <div class="fg"><label>🌍 الدولة</label><select id="countryF" onchange="af()"><option value="">الكل</option></select></div>
+  <div class="fg"><label>🏙️ المدينة</label><select id="cityF" onchange="af()"><option value="">الكل</option></select></div>
+  <div class="fg"><label>🎯 المسمى الوظيفي</label>
+    <select id="seniorityF" onchange="af()">
+      <option value="">الكل</option><option value="C-Suite">C-Suite</option>
+      <option value="Director">Director</option><option value="Manager">Manager</option>
+      <option value="Owner">Owner</option><option value="Founder">Founder</option>
+    </select>
+  </div>
+  <div class="fg"><label>⭐ السكور</label>
+    <select id="scoreF" onchange="af()">
+      <option value="0">الكل</option><option value="80">HOT (80+)</option>
+      <option value="60">60+</option><option value="50">50+</option>
+    </select>
+  </div>
+  <div class="fg"><label>📅 Last Contacted</label>
+    <div class="dri">
+      <input type="date" id="dateFrom" onchange="af()">
+      <span class="dsep">—</span>
+      <input type="date" id="dateTo" onchange="af()">
+    </div>
+  </div>
+  <div class="fstats">يعرض <span id="vc">0</span> من <span id="tc">0</span> شركة</div>
+  <button class="breset" onclick="rf()">↺ إعادة تعيين</button>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid">
+  <div class="kpi orange"><div class="ki">🏢</div><div class="kv" id="k-co">0</div><div class="kl">شركة تم التواصل معها</div></div>
+  <div class="kpi green"><div class="ki">📅</div><div class="kv" id="k-mt">0</div><div class="kl">اجتماع محجوز</div></div>
+  <div class="kpi blue"><div class="ki">💬</div><div class="kv" id="k-rp">0</div><div class="kl">شركة ردّت</div></div>
+  <div class="kpi yellow"><div class="ki">👁</div><div class="kv" id="k-op">0</div><div class="kl">فتحت الإيميل</div></div>
+  <div class="kpi purple"><div class="ki">👥</div><div class="kv" id="k-ct">0</div><div class="kl">جهات اتصال</div></div>
+</div>
+
+<!-- ROW 1: Funnel + Status + City -->
+<div class="sec">📊 القمع والتوزيع</div>
+<div class="g3">
+  <div class="cc"><div class="ct"><div class="dot"></div>قمع المبيعات — مستوى الشركات</div><div class="fw" id="funnelWrap"></div></div>
+  <div class="cc"><div class="ct"><div class="dot" style="background:var(--green)"></div>توزيع حالة التواصل</div><div class="cw"><canvas id="statusChart"></canvas></div></div>
+  <div class="cc"><div class="ct"><div class="dot" style="background:var(--blue)"></div>توزيع المدن</div><div class="cw"><canvas id="cityChart"></canvas></div></div>
+</div>
+
+<!-- ROW 2: Leaderboard + Industry -->
+<div class="sec">🏆 أعلى الشركات — القطاعات</div>
+<div class="g22">
+  <div class="cc">
+    <div class="ct"><div class="dot" style="background:var(--green)"></div>Top 15 شركة — الاجتماعات المحجوزة</div>
+    <div class="cwt"><canvas id="leaderChart"></canvas></div>
+  </div>
+  <div class="cc">
+    <div class="ct"><div class="dot" style="background:var(--orange)"></div>توزيع القطاعات (القطاع)</div>
+    <div class="cwt"><canvas id="industryChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ROW 3: Score by Status + Score Distribution + Seniority -->
+<div class="sec">📈 تحليل السكور والمسمى الوظيفي</div>
+<div class="insight">
+  💡 <strong>رؤية في السكور:</strong> الشركات التي حجزت اجتماعات متوسط سكورها <strong>58.9</strong> (WARM) — بينما الشركات التي وصلها الإيميل فقط سكورها <strong>81.5</strong> (HOT). يعني الصيغة الحالية تُعطي وزناً عالياً للحجم والمسمى لكن ليس للتفاعل الفعلي.
+</div>
+<div class="g3">
+  <div class="cc">
+    <div class="ct"><div class="dot" style="background:var(--yellow)"></div>متوسط السكور حسب حالة التواصل</div>
+    <div class="cwm"><canvas id="scoreStatusChart"></canvas></div>
+  </div>
+  <div class="cc">
+    <div class="ct"><div class="dot" style="background:var(--purple)"></div>توزيع السكور (نطاقات)</div>
+    <div class="cwm"><canvas id="scoreDistChart"></canvas></div>
+  </div>
+  <div class="cc">
+    <div class="ct"><div class="dot" style="background:var(--blue)"></div>توزيع المسمى الوظيفي</div>
+    <div class="cwm"><canvas id="seniorityChart"></canvas></div>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="sec">📋 جدول الشركات</div>
+<div class="tc">
+  <div class="th2">
+    <div class="tt">📋 الشركات المُتواصَل معها — <span id="tcount" style="color:var(--orange)">0</span> شركة</div>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr>
+        <th onclick="st('company')"># الشركة</th>
+        <th onclick="st('owner')">مسؤول الحساب</th>
+        <th onclick="st('industry')">القطاع</th>
+        <th onclick="st('employees')">الموظفين</th>
+        <th onclick="st('city')">المدينة</th>
+        <th onclick="st('country')">الدولة</th>
+        <th onclick="st('cnt')">جهات الاتصال</th>
+        <th onclick="st('mtg')" style="color:var(--green)">اجتماعات</th>
+        <th onclick="st('rpl')">ردود</th>
+        <th onclick="st('status')">أفضل حالة</th>
+        <th onclick="st('score')">متوسط السكور</th>
+        <th onclick="st('lc')">آخر تواصل</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">🔍 لا توجد نتائج</div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+const GEN = "2026-03-30 06:50 UTC";
+const SR = {"Meeting Booked":0,"Replied":1,"Opened":2,"In Sequence":3,"Sent":4,"Bounced":5,"Unknown":6};
+const THM = {company:0,owner:1,industry:2,employees:3,city:4,country:5,cnt:6,mtg:7,rpl:8,status:9,score:10,lc:11};
+const COMPANIES = [
+  {company:"Dr. Sulaiman Al Habib Medical Group",cnt:51,mtg:8,rpl:1,opn:9,snt:51,bnc:3,status:"Meeting Booked",score:74.3,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"رغيد",industry:"الرعاية الصحية",employees:13000},
+  {company:"Saudi German Health",cnt:18,mtg:1,rpl:0,opn:1,snt:18,bnc:13,status:"Meeting Booked",score:67.4,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-06",city:"Jeddah",owner:"",industry:"hospital & health care",employees:1500},
+  {company:"Leejam Sports Company",cnt:12,mtg:2,rpl:0,opn:2,snt:12,bnc:2,status:"Meeting Booked",score:67.1,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:2900},
+  {company:"Fakeeh Care Group",cnt:9,mtg:1,rpl:0,opn:1,snt:9,bnc:1,status:"Meeting Booked",score:56.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Jeddah",owner:"",industry:"الرعاية الصحية",employees:0},
+  {company:"Council Of Health Insurance",cnt:8,mtg:6,rpl:0,opn:6,snt:8,bnc:0,status:"Meeting Booked",score:68.0,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"hospital & health care",employees:1600},
+  {company:"Gulf Medical Co Ltd",cnt:8,mtg:1,rpl:0,opn:1,snt:8,bnc:0,status:"Meeting Booked",score:58.0,seniority:"Director",country:"Saudi Arabia",lc:"2026-02-04",city:"Jeddah",owner:"رغيد",industry:"medical devices",employees:720},
+  {company:"Imdad",cnt:7,mtg:3,rpl:0,opn:3,snt:7,bnc:0,status:"Meeting Booked",score:54.4,seniority:"Manager",country:"Saudi Arabia",lc:"2025-12-30",city:"Al Khobar",owner:"",industry:"medical devices",employees:660},
+  {company:"MPS Bashirco",cnt:6,mtg:1,rpl:1,opn:1,snt:6,bnc:0,status:"Meeting Booked",score:53.0,seniority:"Director",country:"Saudi Arabia",lc:"2026-02-08",city:"Jeddah",owner:"",industry:"medical devices",employees:170},
+  {company:"Dr.Soliman Fakeeh Hospital Jeddah",cnt:6,mtg:1,rpl:0,opn:1,snt:6,bnc:0,status:"Meeting Booked",score:62.3,seniority:"Director",country:"Saudi Arabia",lc:"2026-02-09",city:"Jeddah",owner:"رغيد",industry:"الرعاية الصحية",employees:0},
+  {company:"Arabian Castles for General Contracting (ACGC)",cnt:6,mtg:1,rpl:0,opn:0,snt:6,bnc:0,status:"Meeting Booked",score:57.8,seniority:"Manager",country:"Saudi Arabia",lc:"2026-03-09",city:"Al Khobar",owner:"إبراهيم",industry:"construction",employees:850},
+  {company:"Al Borg Diagnostics",cnt:4,mtg:1,rpl:0,opn:1,snt:4,bnc:1,status:"Meeting Booked",score:61.1,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Jeddah",owner:"",industry:"hospital & health care",employees:820},
+  {company:"aljeel Medical",cnt:4,mtg:2,rpl:0,opn:2,snt:4,bnc:0,status:"Meeting Booked",score:65.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-10",city:"Riyadh",owner:"رغيد",industry:"medical devices",employees:600},
+  {company:"kleen كلين",cnt:4,mtg:1,rpl:1,opn:4,snt:4,bnc:0,status:"Meeting Booked",score:58.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-03",city:"Al Khobar",owner:"",industry:"consumer services",employees:84},
+  {company:"Tamer Healthcare",cnt:4,mtg:1,rpl:0,opn:3,snt:4,bnc:0,status:"Meeting Booked",score:58.1,seniority:"Director",country:"Saudi Arabia",lc:"2026-02-03",city:"Jeddah",owner:"إبراهيم",industry:"hospital & health care",employees:650},
+  {company:"Fakeeh Complementary",cnt:4,mtg:1,rpl:0,opn:1,snt:4,bnc:0,status:"Meeting Booked",score:50.4,seniority:"Director",country:"Saudi Arabia",lc:"2026-02-03",city:"Jeddah",owner:"رغيد",industry:"hospital & health care",employees:68},
+  {company:"Basha Medical Group",cnt:4,mtg:3,rpl:1,opn:4,snt:4,bnc:0,status:"Meeting Booked",score:51.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"Riyadh",owner:"",industry:"medical devices",employees:37},
+  {company:"Dallah Hospital",cnt:4,mtg:1,rpl:0,opn:1,snt:4,bnc:0,status:"Meeting Booked",score:65.3,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Riyadh",owner:"",industry:"hospital & health care",employees:2100},
+  {company:"Al-Hokail Group",cnt:3,mtg:2,rpl:0,opn:2,snt:3,bnc:0,status:"Meeting Booked",score:54.3,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Dammam",owner:"",industry:"medical practice",employees:130},
+  {company:"Dr. Soliman Fakeeh Hospital Riyadh",cnt:3,mtg:1,rpl:0,opn:1,snt:3,bnc:1,status:"Meeting Booked",score:39.0,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Riyadh",owner:"",industry:"الرعاية الصحية",employees:0},
+  {company:"Anfas Medical Care",cnt:3,mtg:1,rpl:0,opn:1,snt:3,bnc:2,status:"Meeting Booked",score:59.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Riyadh",owner:"",industry:"hospital & health care",employees:360},
+  {company:"WTDcare | وتد الطبية",cnt:3,mtg:1,rpl:0,opn:2,snt:3,bnc:0,status:"Meeting Booked",score:52.9,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:17},
+  {company:"Amplifai Health",cnt:3,mtg:1,rpl:0,opn:1,snt:3,bnc:0,status:"Meeting Booked",score:49.9,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-02",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:15},
+  {company:"Dr. Abdul Rahman Al Mishari Hospital",cnt:2,mtg:1,rpl:0,opn:1,snt:2,bnc:1,status:"Meeting Booked",score:57.0,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"رغيد",industry:"hospital & health care",employees:350},
+  {company:"AME Company for Medical Supplies",cnt:2,mtg:2,rpl:1,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:63.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"medical devices",employees:62},
+  {company:"َQassim University Medical City (QUMC) - المدينة الطبية بجامعة القصيم",cnt:2,mtg:1,rpl:0,opn:1,snt:2,bnc:0,status:"Meeting Booked",score:62.4,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"Buraydah",owner:"",industry:"hospital & health care",employees:500},
+  {company:"TABsense",cnt:2,mtg:1,rpl:1,opn:1,snt:2,bnc:0,status:"Meeting Booked",score:61.4,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"information technology & services",employees:77},
+  {company:"Jedaani Hospitals",cnt:2,mtg:1,rpl:0,opn:1,snt:2,bnc:0,status:"Meeting Booked",score:51.1,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-29",city:"Jeddah",owner:"",industry:"hospital & health care",employees:190},
+  {company:"Thimar Al Jazirah",cnt:2,mtg:2,rpl:0,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:60.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"hospital & health care",employees:240},
+  {company:"PIONEER DERMA KSA",cnt:2,mtg:1,rpl:0,opn:1,snt:2,bnc:1,status:"Meeting Booked",score:51.4,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"Jeddah",owner:"رغيد",industry:"hospital & health care",employees:10},
+  {company:"Sanar",cnt:2,mtg:1,rpl:0,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:59.9,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"hospital & health care",employees:170},
+  {company:"Canadian General Medical Center Company",cnt:2,mtg:1,rpl:0,opn:1,snt:2,bnc:0,status:"Meeting Booked",score:51.1,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-01",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:130},
+  {company:"Abha Private Hospital",cnt:2,mtg:1,rpl:0,opn:1,snt:2,bnc:1,status:"Meeting Booked",score:57.7,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Abha",owner:"",industry:"hospital & health care",employees:310},
+  {company:"Abeer Medical Group",cnt:2,mtg:1,rpl:0,opn:1,snt:2,bnc:0,status:"Meeting Booked",score:61.1,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-01",city:"Jeddah",owner:"",industry:"hospital & health care",employees:810},
+  {company:"Mythod",cnt:2,mtg:1,rpl:0,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:54.6,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Jeddah",owner:"",industry:"information technology & services",employees:25},
+  {company:"King Abdullah Medical City | مدينة الملك عبد الله الطبية",cnt:2,mtg:1,rpl:0,opn:1,snt:2,bnc:0,status:"Meeting Booked",score:66.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Mecca",owner:"",industry:"hospital & health care",employees:1300},
+  {company:"Blue Ocean Medical Co.",cnt:2,mtg:1,rpl:0,opn:1,snt:2,bnc:0,status:"Meeting Booked",score:42.5,seniority:"Director",country:"Saudi Arabia",lc:"2026-02-03",city:"Jeddah",owner:"",industry:"medical devices",employees:13},
+  {company:"King Faisal Specialist Hospital & Research Centre",cnt:2,mtg:1,rpl:0,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:75.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Riyadh",owner:"",industry:"hospital & health care",employees:16000},
+  {company:"Tech Flow Co.",cnt:2,mtg:1,rpl:1,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:49.9,seniority:"Manager",country:"Saudi Arabia",lc:"2026-01-20",city:"Riyadh",owner:"",industry:"medical devices",employees:19},
+  {company:"BrightWare L.L.C.",cnt:2,mtg:1,rpl:1,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:55.4,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"information technology & services",employees:27},
+  {company:"Merkai | ميركاي",cnt:2,mtg:1,rpl:1,opn:1,snt:2,bnc:0,status:"Meeting Booked",score:54.6,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-02",city:"Riyadh",owner:"",industry:"marketing & advertising",employees:44},
+  {company:"Medical Fakeeh",cnt:2,mtg:1,rpl:0,opn:1,snt:2,bnc:0,status:"Meeting Booked",score:57.9,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Jeddah",owner:"",industry:"hospital & health care",employees:320},
+  {company:"LifeLab Integrated Wellness©",cnt:2,mtg:1,rpl:0,opn:1,snt:2,bnc:0,status:"Meeting Booked",score:45.1,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:12},
+  {company:"ALHOKAMA Eye Center",cnt:2,mtg:1,rpl:0,opn:2,snt:2,bnc:0,status:"Meeting Booked",score:55.5,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:62},
+  {company:"FLOW Medical Solutions",cnt:2,mtg:1,rpl:0,opn:1,snt:2,bnc:0,status:"Meeting Booked",score:51.1,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"hospital & health care",employees:180},
+  {company:"Adel Care Medical Group",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:62.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"hospital & health care",employees:110},
+  {company:"صيدليات انوفا - Innova Pharmacy",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:66.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:700},
+  {company:"SAJA Pharmaceuticals",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"Jeddah",owner:"",industry:"pharmaceuticals",employees:15},
+  {company:"Dr. Soliman Fakeeh Hospital- Madinah",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:69.2,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-26",city:"Jeddah",owner:"",industry:"hospital & health care",employees:1200},
+  {company:"WellPal",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-29",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:26},
+  {company:"نودايت | Nodiet",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Jeddah",owner:"",industry:"health, wellness & fitness",employees:12},
+  {company:"Volt Box",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:51.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Jeddah",owner:"",industry:"health, wellness & fitness",employees:4},
+  {company:"Tajreed_",cnt:1,mtg:1,rpl:0,opn:0,snt:1,bnc:1,status:"Meeting Booked",score:56.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-11",city:"Riyadh",owner:"",industry:"marketing & advertising",employees:13},
+  {company:"Anova Health",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:62.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-25",city:"Jeddah",owner:"",industry:"hospital & health care",employees:180},
+  {company:"Haraakah | حركة",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:20},
+  {company:"Change Your Body",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:51.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-26",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:2},
+  {company:"Cargoz.com",cnt:1,mtg:1,rpl:1,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:65.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-25",city:"Riyadh",owner:"",industry:"warehousing",employees:94},
+  {company:"Tabib Group",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:46.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"hospital & health care",employees:43},
+  {company:"evercare",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-29",city:"Riyadh",owner:"",industry:"hospital & health care",employees:38},
+  {company:"Miran",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-29",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:13},
+  {company:"Anwa BioSciences",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:51.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"biotechnology",employees:8},
+  {company:"Muttazen | مُتزن",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:51.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-30",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:5},
+  {company:"Allure Clinics",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:53.5,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Riyadh",owner:"",industry:"medical practice",employees:68},
+  {company:"Extreme Nutrition",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:46.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-29",city:"Jeddah",owner:"",industry:"health, wellness & fitness",employees:14},
+  {company:"LIQA International",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:42.2,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"consumer services",employees:9},
+  {company:"Keuro Life",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.0,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-28",city:"Riyadh",owner:"",industry:"pharmaceuticals",employees:55},
+  {company:"مصنع بانافع",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:46.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Jeddah",owner:"",industry:"health, wellness & fitness",employees:24},
+  {company:"Jeddah National Hospital",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:64.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-26",city:"Jeddah",owner:"",industry:"hospital & health care",employees:690},
+  {company:"Binary System Medical Co.",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:46.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-28",city:"Riyadh",owner:"",industry:"medical devices",employees:38},
+  {company:"VisionMedicalSA",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:63.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-29",city:"Jeddah",owner:"",industry:"medical devices",employees:53},
+  {company:"Deryaq Care Medical Complex",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-29",city:"Jeddah",owner:"",industry:"hospital & health care",employees:44},
+  {company:"REFCON Arabia LLC",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:46.8,seniority:"Director",country:"Saudi Arabia",lc:"2025-12-31",city:"Al Jubail",owner:"",industry:"consumer services",employees:39},
+  {company:"Avnzor",cnt:1,mtg:1,rpl:1,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:45.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-04",city:"Riyadh",owner:"",industry:"health, wellness & fitness",employees:8},
+  {company:"Qawam",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:51.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Jeddah",owner:"",industry:"health, wellness & fitness",employees:5},
+  {company:"Spa Ceylon KSA",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:52.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"Jeddah",owner:"",industry:"health, wellness & fitness",employees:2},
+  {company:"Khyal Studio",cnt:1,mtg:1,rpl:1,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:58.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-29",city:"Riyadh",owner:"",industry:"marketing & advertising",employees:14},
+  {company:"Saudi Response Plus Medical",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:62.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-25",city:"Riyadh",owner:"",industry:"hospital & health care",employees:110},
+  {company:"Goldera Pharm",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:43.0,seniority:"Manager",country:"Saudi Arabia",lc:"2025-12-31",city:"Jeddah",owner:"",industry:"pharmaceuticals",employees:11},
+  {company:"Glamera",cnt:1,mtg:1,rpl:1,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:65.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-02",city:"Riyadh",owner:"",industry:"information technology & services",employees:82},
+  {company:"Trans-Mediterranean (TMT)",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"medical devices",employees:24},
+  {company:"DAFCO - دافكو",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:55.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Riyadh",owner:"",industry:"medical devices",employees:48},
+  {company:"SCIENTIFIC AND MEDICAL EQUIPMENT HOUSE CO.",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:87.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-28",city:"Riyadh",owner:"",industry:"hospital & health care",employees:10000},
+  {company:"UDAWI يداوي",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:57.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2025-12-31",city:"Jeddah",owner:"",industry:"health, wellness & fitness",employees:20},
+  {company:"Saudi Rare Group",cnt:1,mtg:1,rpl:0,opn:1,snt:1,bnc:0,status:"Meeting Booked",score:42.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Jeddah",owner:"",industry:"consumer services",employees:7},
+  {company:"Saudi Arabian Trading & Construction Co. - SATCO",cnt:6,mtg:0,rpl:1,opn:1,snt:6,bnc:0,status:"Replied",score:66.7,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-15",city:"Riyadh",owner:"إبراهيم",industry:"construction",employees:3500},
+  {company:"Rubix Consulting",cnt:5,mtg:0,rpl:1,opn:2,snt:5,bnc:0,status:"Replied",score:59.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"management consulting",employees:120},
+  {company:"AlSharif Group Holding (ASG) | مجموعة الشريف القابضة",cnt:5,mtg:0,rpl:1,opn:2,snt:5,bnc:0,status:"Replied",score:64.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-11",city:"Jeddah",owner:"إبراهيم",industry:"construction",employees:690},
+  {company:"Watad",cnt:4,mtg:0,rpl:1,opn:3,snt:4,bnc:0,status:"Replied",score:52.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-09",city:"Riyadh",owner:"",industry:"construction",employees:23},
+  {company:"iStoria",cnt:3,mtg:0,rpl:1,opn:3,snt:3,bnc:0,status:"Replied",score:60.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"e-learning",employees:75},
+  {company:"Geoharbour Middle East",cnt:3,mtg:0,rpl:1,opn:2,snt:3,bnc:0,status:"Replied",score:57.4,seniority:"Director",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"إبراهيم",industry:"construction",employees:210},
+  {company:"CLEAR Engineering Consultants",cnt:3,mtg:0,rpl:1,opn:2,snt:3,bnc:0,status:"Replied",score:56.9,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-16",city:"Riyadh",owner:"إبراهيم",industry:"architecture & planning",employees:160},
+  {company:"HUED | هيود",cnt:2,mtg:0,rpl:1,opn:2,snt:2,bnc:0,status:"Replied",score:61.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"design",employees:68},
+  {company:"Digico Solutions",cnt:2,mtg:0,rpl:1,opn:2,snt:2,bnc:0,status:"Replied",score:54.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"",industry:"information technology & services",employees:20},
+  {company:"Catchers Agency",cnt:2,mtg:0,rpl:1,opn:2,snt:2,bnc:0,status:"Replied",score:54.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-10",city:"Riyadh",owner:"",industry:"marketing & advertising",employees:20},
+  {company:"Aumet inc",cnt:2,mtg:0,rpl:1,opn:2,snt:2,bnc:0,status:"Replied",score:61.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"hospital & health care",employees:120},
+  {company:"Lendo | ليندو",cnt:2,mtg:0,rpl:1,opn:1,snt:2,bnc:0,status:"Replied",score:60.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-09",city:"Riyadh",owner:"",industry:"financial services",employees:160},
+  {company:"Aura Centers",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-11",city:"Jeddah",owner:"",industry:"health, wellness & fitness",employees:19},
+  {company:"Estate Management Solutions LLC KSA",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-04",city:"Riyadh",owner:"",industry:"management consulting",employees:1},
+  {company:"Maison Pyramide",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:63.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-11",city:"Riyadh",owner:"",industry:"marketing & advertising",employees:120},
+  {company:"Furqan Group",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:62.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-13",city:"Jeddah",owner:"",industry:"education management",employees:60},
+  {company:"CPTIT",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:62.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-11",city:"Riyadh",owner:"",industry:"information technology & services",employees:58},
+  {company:"VoM",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:63.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"",industry:"accounting",employees:64},
+  {company:"Arbete Careers",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:55.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-25",city:"",owner:"",industry:"human resources",employees:14},
+  {company:"Respect Services",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:63.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-19",city:"Riyadh",owner:"",industry:"law practice",employees:72},
+  {company:"SQUAD",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-24",city:"",owner:"",industry:"management consulting",employees:25},
+  {company:"Samsung Electronics",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:88.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-19",city:"Riyadh",owner:"",industry:"electrical/electronic manufacturing",employees:127000},
+  {company:"Moteelz | موتيلز",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-25",city:"Riyadh",owner:"",industry:"hospitality",employees:10},
+  {company:"Herfy Food Service Co. Limited",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:55.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-13",city:"Riyadh",owner:"",industry:"consumer services",employees:21},
+  {company:"Pure Life Filters Company",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-19",city:"Jeddah",owner:"",industry:"chemicals",employees:49},
+  {company:"Future Institute",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:62.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-05",city:"New Delhi",owner:"",industry:"research",employees:59},
+  {company:"شركة تجربة للاستشارات الإدارية",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-18",city:"Riyadh",owner:"",industry:"management consulting",employees:2},
+  {company:"Upt House",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-12",city:"Jeddah",owner:"",industry:"media production",employees:30},
+  {company:"Injaz Company",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-13",city:"Riyadh",owner:"",industry:"management consulting",employees:12},
+  {company:"SPM Consultants",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:55.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-15",city:"Riyadh",owner:"",industry:"management consulting",employees:19},
+  {company:"Permasteelisa Gartner Middle East",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:70.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-16",city:"Dubai",owner:"",industry:"construction",employees:460},
+  {company:"Dunes Aero | دونز ايرو",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-15",city:"Jeddah",owner:"",industry:"aviation & aerospace",employees:13},
+  {company:"DaleelStore",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-20",city:"Riyadh",owner:"",industry:"information technology & services",employees:33},
+  {company:"Core Insight",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-02",city:"",owner:"",industry:"management consulting",employees:1},
+  {company:"MacQueen",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-12",city:"Riyadh",owner:"",industry:"leisure, travel & tourism",employees:48},
+  {company:"Mathnasium KSA",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"government administration",employees:17},
+  {company:"Builtop",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-12",city:"Riyadh",owner:"",industry:"construction",employees:8},
+  {company:"Project 300 Company",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-01",city:"Riyadh",owner:"",industry:"real estate",employees:1},
+  {company:"Jadarah Business Consulting",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"management consulting",employees:21},
+  {company:"Milk Network",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-07",city:"Jeddah",owner:"",industry:"design",employees:26},
+  {company:"RedexGO",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"information technology & services",employees:19},
+  {company:"Muroj Al Jazira Industrial",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:42.7,seniority:"Manager",country:"Saudi Arabia",lc:"2026-01-26",city:"Dammam",owner:"",industry:"mechanical or industrial engineering",employees:18},
+  {company:"StandardTouch",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:56.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-14",city:"Riyadh",owner:"",industry:"information technology & services",employees:40},
+  {company:"Avenix Partners",cnt:1,mtg:0,rpl:1,opn:1,snt:1,bnc:0,status:"Replied",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-01",city:"Riyadh",owner:"",industry:"management consulting",employees:5},
+  {company:"IKK Group – Isam Khairi Kabbani Group",cnt:105,mtg:0,rpl:0,opn:3,snt:105,bnc:0,status:"Opened",score:61.1,seniority:"Entry",country:"Saudi Arabia",lc:"2026-03-03",city:"Riyadh",owner:"رغيد",industry:"construction",employees:11000},
+  {company:"Osool Integrated Real Estate Co.",cnt:68,mtg:0,rpl:0,opn:17,snt:68,bnc:0,status:"Opened",score:53.7,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-17",city:"Riyadh",owner:"إبراهيم",industry:"real estate",employees:320},
+  {company:"Saudi Binladin Group",cnt:67,mtg:0,rpl:0,opn:9,snt:67,bnc:3,status:"Opened",score:71.7,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-12",city:"Jeddah",owner:"إبراهيم",industry:"construction",employees:11000},
+  {company:"El Seif Engineering Contracting",cnt:37,mtg:0,rpl:0,opn:3,snt:37,bnc:1,status:"Opened",score:64.3,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-17",city:"Riyadh",owner:"إبراهيم",industry:"construction",employees:4100},
+  {company:"ABYAT",cnt:29,mtg:0,rpl:0,opn:1,snt:29,bnc:0,status:"Opened",score:65.4,seniority:"Director",country:"Kuwait",lc:"2026-02-09",city:"Riyadh",owner:"",industry:"retail",employees:1600},
+  {company:"Shibh Al Jazira Contracting Company (SAJCO)",cnt:27,mtg:0,rpl:0,opn:2,snt:27,bnc:2,status:"Opened",score:61.6,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-02",city:"Riyadh",owner:"إبراهيم",industry:"construction",employees:2400},
+  {company:"Ministry of National Guard Health Affairs (MNGHA)",cnt:25,mtg:0,rpl:0,opn:1,snt:25,bnc:2,status:"Opened",score:73.3,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-05",city:"Riyadh",owner:"إبراهيم",industry:"الرعاية الصحية",employees:15000},
+  {company:"Tatweer Buildings Company",cnt:25,mtg:0,rpl:0,opn:5,snt:25,bnc:0,status:"Opened",score:54.6,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-16",city:"Riyadh",owner:"إبراهيم",industry:"real estate",employees:440},
+  {company:"Saudi Readymix Concrete Co",cnt:22,mtg:0,rpl:0,opn:3,snt:22,bnc:4,status:"Opened",score:58.8,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-15",city:"Al Khobar",owner:"إبراهيم",industry:"construction",employees:2800},
+  {company:"Zamil Steel Holding Company Limited",cnt:19,mtg:0,rpl:0,opn:1,snt:19,bnc:4,status:"Opened",score:57.9,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-03",city:"Dammam",owner:"رغيد",industry:"construction",employees:3500},
+  {company:"USG Middle East",cnt:19,mtg:0,rpl:0,opn:1,snt:19,bnc:0,status:"Opened",score:37.2,seniority:"Entry",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"رغيد",industry:"building materials",employees:120},
+  {company:"SAMMAN GROUP",cnt:18,mtg:0,rpl:0,opn:1,snt:18,bnc:0,status:"Opened",score:53.8,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-08",city:"Riyadh",owner:"رغيد",industry:"construction",employees:590},
+  {company:"Almanea Co.",cnt:18,mtg:0,rpl:0,opn:1,snt:18,bnc:1,status:"Opened",score:49.6,seniority:"Individual Contributor",country:"Saudi Arabia",lc:"2026-03-04",city:"Riyadh",owner:"",industry:"retail",employees:390},
+  {company:"Soudah Development",cnt:18,mtg:0,rpl:0,opn:5,snt:18,bnc:6,status:"Opened",score:59.0,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-17",city:"Riyadh",owner:"إبراهيم",industry:"real estate",employees:710},
+  {company:"Masheed",cnt:17,mtg:0,rpl:0,opn:1,snt:17,bnc:0,status:"Opened",score:35.1,seniority:"Entry",country:"Saudi Arabia",lc:"2026-02-16",city:"Al Khobar",owner:"رغيد",industry:"building materials",employees:170},
+  {company:"Binex",cnt:15,mtg:0,rpl:0,opn:3,snt:15,bnc:0,status:"Opened",score:35.3,seniority:"Entry",country:"Saudi Arabia",lc:"2026-03-11",city:"Jeddah",owner:"رغيد",industry:"building materials",employees:55},
+  {company:"Rezayat Group",cnt:14,mtg:0,rpl:0,opn:2,snt:14,bnc:0,status:"Opened",score:68.2,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-15",city:"Al Khobar",owner:"إبراهيم",industry:"construction",employees:20000},
+  {company:"Badael Company",cnt:12,mtg:0,rpl:0,opn:2,snt:12,bnc:0,status:"Opened",score:57.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-04",city:"Riyadh",owner:"رغيد",industry:"mechanical or industrial engineering",employees:240},
+  {company:"BEC Arabia",cnt:12,mtg:0,rpl:0,opn:1,snt:12,bnc:0,status:"Opened",score:63.0,seniority:"Director",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"إبراهيم",industry:"construction",employees:1400},
+  {company:"DAR ENGINEERING",cnt:12,mtg:0,rpl:0,opn:2,snt:12,bnc:0,status:"Opened",score:63.6,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-03",city:"Riyadh",owner:"إبراهيم",industry:"architecture & planning",employees:1800},
+  {company:"WakeCap",cnt:10,mtg:0,rpl:0,opn:3,snt:10,bnc:0,status:"Opened",score:50.0,seniority:"Director",country:"Saudi Arabia",lc:"2026-02-17",city:"Riyadh",owner:"إبراهيم",industry:"construction",employees:130},
+  {company:"Takamol Business Solutions",cnt:10,mtg:0,rpl:0,opn:1,snt:10,bnc:0,status:"Opened",score:66.1,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-16",city:"Riyadh",owner:"",industry:"management consulting",employees:1600},
+  {company:"IATCO",cnt:9,mtg:0,rpl:0,opn:1,snt:9,bnc:0,status:"Opened",score:33.4,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-08",city:"Jeddah",owner:"إبراهيم",industry:"اللوجستيات",employees:0},
+  {company:"SEDER GROUP",cnt:9,mtg:0,rpl:0,opn:2,snt:9,bnc:0,status:"Opened",score:61.8,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-08",city:"Riyadh",owner:"",industry:"facilities services",employees:3500},
+  {company:"saudi binladin group",cnt:9,mtg:0,rpl:0,opn:1,snt:9,bnc:1,status:"Opened",score:61.9,seniority:"Manager",country:"Saudi Arabia",lc:"2026-03-16",city:"Jeddah",owner:"إبراهيم",industry:"construction",employees:3900},
+  {company:"Alkholi Group (AKG)",cnt:8,mtg:0,rpl:0,opn:5,snt:8,bnc:0,status:"Opened",score:65.3,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-16",city:"Riyadh",owner:"إبراهيم",industry:"construction",employees:4100},
+  {company:"Construction & Planning Co. Ltd. (C&P®)",cnt:8,mtg:0,rpl:0,opn:1,snt:8,bnc:0,status:"Opened",score:56.8,seniority:"Director",country:"Saudi Arabia",lc:"2026-02-16",city:"Riyadh",owner:"إبراهيم",industry:"construction",employees:290},
+  {company:"Bahrawi Trading Company",cnt:8,mtg:0,rpl:0,opn:1,snt:8,bnc:0,status:"Opened",score:38.5,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-08",city:"Jeddah",owner:"إبراهيم",industry:"food & beverages",employees:16},
+  {company:"Jaroudi Group",cnt:7,mtg:0,rpl:0,opn:2,snt:7,bnc:0,status:"Opened",score:44.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-01",city:"Riyadh",owner:"رغيد",industry:"construction",employees:180},
+  {company:"Teef Najd Group | مجموعة طيف نجد",cnt:7,mtg:0,rpl:0,opn:1,snt:7,bnc:0,status:"Opened",score:59.6,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-15",city:"Riyadh",owner:"إبراهيم",industry:"construction",employees:240},
+  {company:"FMCO",cnt:6,mtg:0,rpl:0,opn:1,snt:6,bnc:0,status:"Opened",score:61.4,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-09",city:"Dammam",owner:"",industry:"facilities services",employees:1300},
+  {company:"Lifera",cnt:6,mtg:0,rpl:0,opn:1,snt:6,bnc:0,status:"Opened",score:43.5,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-29",city:"Riyadh",owner:"",industry:"pharmaceuticals",employees:42},
+  {company:"Johnson Controls Arabia",cnt:6,mtg:0,rpl:0,opn:3,snt:6,bnc:0,status:"Opened",score:64.0,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-08",city:"Jeddah",owner:"",industry:"mechanical or industrial engineering",employees:2100},
+  {company:"Atlantic Supplies Company",cnt:6,mtg:0,rpl:0,opn:1,snt:6,bnc:0,status:"Opened",score:27.2,seniority:"Entry",country:"Saudi Arabia",lc:"2026-02-04",city:"Riyadh",owner:"رغيد",industry:"building materials",employees:31},
+  {company:"SABIL | سابل",cnt:5,mtg:0,rpl:0,opn:1,snt:5,bnc:0,status:"Opened",score:63.7,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-01",city:"Jeddah",owner:"",industry:"logistics & supply chain",employees:220},
+  {company:"Jawdah Industrial Co.Ltd. | شركة جودة الصناعة المحدودة",cnt:5,mtg:0,rpl:0,opn:5,snt:5,bnc:0,status:"Opened",score:48.3,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-08",city:"Riyadh",owner:"",industry:"mechanical or industrial engineering",employees:190},
+  {company:"Sukuk Capital | صكوك المالية",cnt:5,mtg:0,rpl:0,opn:5,snt:5,bnc:0,status:"Opened",score:57.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"financial services",employees:150},
+  {company:"Attieh Medico",cnt:5,mtg:0,rpl:0,opn:1,snt:5,bnc:0,status:"Opened",score:51.7,seniority:"Manager",country:"Saudi Arabia",lc:"2026-03-01",city:"Jeddah",owner:"رغيد",industry:"medical devices",employees:320},
+  {company:"Tamimi Group",cnt:5,mtg:0,rpl:0,opn:4,snt:5,bnc:0,status:"Opened",score:61.7,seniority:"Manager",country:"Saudi Arabia",lc:"2026-03-16",city:"Jeddah",owner:"إبراهيم",industry:"construction",employees:1600},
+  {company:"Almoosa Doors",cnt:5,mtg:0,rpl:0,opn:1,snt:5,bnc:0,status:"Opened",score:62.4,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-03",city:"Riyadh",owner:"إبراهيم",industry:"building materials",employees:590},
+  {company:"Khoshaim & Associates (K&A)",cnt:4,mtg:0,rpl:0,opn:2,snt:4,bnc:0,status:"Opened",score:58.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"",industry:"law practice",employees:73},
+  {company:"TAM Development",cnt:4,mtg:0,rpl:0,opn:1,snt:4,bnc:1,status:"Opened",score:58.6,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-10",city:"Riyadh",owner:"",industry:"management consulting",employees:390},
+  {company:"Bahra Electric",cnt:4,mtg:0,rpl:0,opn:2,snt:4,bnc:0,status:"Opened",score:69.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"Jeddah",owner:"",industry:"electrical/electronic manufacturing",employees:910},
+  {company:"Trading and Development Partnership",cnt:4,mtg:0,rpl:0,opn:1,snt:4,bnc:0,status:"Opened",score:50.0,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-08",city:"Riyadh",owner:"",industry:"construction",employees:720},
+  {company:"Artificial Intelligence Global Company",cnt:4,mtg:0,rpl:0,opn:2,snt:4,bnc:0,status:"Opened",score:55.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"",industry:"machinery",employees:170},
+  {company:"BuildMate™",cnt:4,mtg:0,rpl:0,opn:1,snt:4,bnc:0,status:"Opened",score:39.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Jeddah",owner:"رغيد",industry:"construction",employees:23},
+  {company:"Qassim Cement company",cnt:4,mtg:0,rpl:0,opn:1,snt:4,bnc:0,status:"Opened",score:61.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-11",city:"Holderbank",owner:"",industry:"building materials",employees:520},
+  {company:"RedBox SA",cnt:4,mtg:0,rpl:0,opn:2,snt:4,bnc:0,status:"Opened",score:47.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-01",city:"Riyadh",owner:"",industry:"logistics & supply chain",employees:130},
+  {company:"Almaskn Alwafi | المسكن الوافي",cnt:4,mtg:0,rpl:0,opn:1,snt:4,bnc:0,status:"Opened",score:40.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-16",city:"Jeddah",owner:"إبراهيم",industry:"real estate",employees:24},
+  {company:"Forward Robotics",cnt:4,mtg:0,rpl:0,opn:1,snt:4,bnc:0,status:"Opened",score:46.8,seniority:"Director",country:"Canada",lc:"2026-02-08",city:"Riyadh",owner:"",industry:"mechanical or industrial engineering",employees:10},
+  {company:"MOHAMMED ALAQEEL & Co (MA&Co)",cnt:4,mtg:0,rpl:0,opn:2,snt:4,bnc:0,status:"Opened",score:51.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Riyadh",owner:"",industry:"law practice",employees:26},
+  {company:"Quant",cnt:4,mtg:0,rpl:0,opn:2,snt:4,bnc:0,status:"Opened",score:57.9,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"information technology & services",employees:160},
+  {company:"CALEX GROUP",cnt:4,mtg:0,rpl:0,opn:2,snt:4,bnc:0,status:"Opened",score:50.1,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"Al Jubail",owner:"",industry:"mechanical or industrial engineering",employees:61},
+  {company:"Ejari | ايجاري",cnt:4,mtg:0,rpl:0,opn:4,snt:4,bnc:0,status:"Opened",score:56.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-11",city:"Riyadh",owner:"إبراهيم",industry:"real estate",employees:66},
+  {company:"ASCO",cnt:4,mtg:0,rpl:0,opn:1,snt:4,bnc:0,status:"Opened",score:37.1,seniority:"Individual Contributor",country:"Saudi Arabia",lc:"2026-03-04",city:"Dammam",owner:"",industry:"machinery",employees:75},
+  {company:"Land Sterling KSA",cnt:4,mtg:0,rpl:0,opn:1,snt:4,bnc:0,status:"Opened",score:43.2,seniority:"Director",country:"Saudi Arabia",lc:"2026-02-16",city:"Riyadh",owner:"إبراهيم",industry:"real estate",employees:48},
+  {company:"Qanoniah قانونية",cnt:3,mtg:0,rpl:0,opn:3,snt:3,bnc:0,status:"Opened",score:58.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-02",city:"Mecca",owner:"",industry:"information technology & services",employees:77},
+  {company:"JeelPay | جيل باي",cnt:3,mtg:0,rpl:0,opn:2,snt:3,bnc:0,status:"Opened",score:58.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"financial services",employees:80},
+  {company:"DEMA Energy | ديما للطاقة",cnt:3,mtg:0,rpl:0,opn:2,snt:3,bnc:0,status:"Opened",score:51.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"Riyadh",owner:"",industry:"oil & energy",employees:20},
+  {company:"ARRC | Arrab United",cnt:3,mtg:0,rpl:0,opn:2,snt:3,bnc:0,status:"Opened",score:57.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-01",city:"Riyadh",owner:"",industry:"management consulting",employees:160},
+  {company:"J Event",cnt:3,mtg:0,rpl:0,opn:2,snt:3,bnc:0,status:"Opened",score:51.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"Riyadh",owner:"",industry:"events services",employees:18},
+  {company:"NextEra",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:58.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Riyadh",owner:"",industry:"information technology & services",employees:56},
+  {company:"تمرة المالية | Tamra Capital",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:51.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Jeddah",owner:"",industry:"financial services",employees:39},
+  {company:"Tepco",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:1,status:"Opened",score:36.2,seniority:"Manager",country:"Japan",lc:"2026-02-05",city:"Yokohama",owner:"",industry:"mechanical or industrial engineering",employees:47},
+  {company:"Scalers | سكيلرز",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:50.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Riyadh",owner:"",industry:"information technology & services",employees:45},
+  {company:"qlub",cnt:3,mtg:0,rpl:0,opn:3,snt:3,bnc:0,status:"Opened",score:59.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"financial services",employees:150},
+  {company:"FitLife | فت لايف",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:51.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Jeddah",owner:"",industry:"health, wellness & fitness",employees:16},
+  {company:"DRIVE7",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:1,status:"Opened",score:54.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Riyadh",owner:"إبراهيم",industry:"automotive",employees:98},
+  {company:"King Khalid University Hospital",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:70.5,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Riyadh",owner:"",industry:"medical practice",employees:2400},
+  {company:"SPACEMAKER KSA",cnt:3,mtg:0,rpl:0,opn:2,snt:3,bnc:0,status:"Opened",score:50.5,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-05",city:"Sydney",owner:"إبراهيم",industry:"mechanical or industrial engineering",employees:210},
+  {company:"Alshehili Company for Metal Industries",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:1,status:"Opened",score:57.4,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"",industry:"machinery",employees:83},
+  {company:"Batic Law Firm",cnt:3,mtg:0,rpl:0,opn:3,snt:3,bnc:0,status:"Opened",score:52.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Riyadh",owner:"",industry:"legal services",employees:28},
+  {company:"International Tube and Conduit Company Ltd.",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:44.0,seniority:"Manager",country:"United Arab Emirates",lc:"2026-02-05",city:"Jeddah",owner:"",industry:"mechanical or industrial engineering",employees:51},
+  {company:"Techrar",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:51.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Jeddah",owner:"",industry:"information technology & services",employees:30},
+  {company:"RAED Ventures",cnt:3,mtg:0,rpl:0,opn:3,snt:3,bnc:0,status:"Opened",score:52.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"venture capital & private equity",employees:30},
+  {company:"BAFCO International Shipping And Logistics Company Limited",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:52.0,seniority:"Manager",country:"India",lc:"2026-03-01",city:"Bengaluru",owner:"",industry:"logistics & supply chain",employees:230},
+  {company:"Arabian Business Innovation Services Co. Ltd (Innovation-SA)",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:52.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-01",city:"Riyadh",owner:"",industry:"logistics & supply chain",employees:99},
+  {company:"ALKAWTHER INDUSTRIES CO. LTD",cnt:3,mtg:0,rpl:0,opn:2,snt:3,bnc:0,status:"Opened",score:61.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"Jeddah",owner:"إبراهيم",industry:"machinery",employees:240},
+  {company:"STV",cnt:3,mtg:0,rpl:0,opn:2,snt:3,bnc:0,status:"Opened",score:51.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-29",city:"Riyadh",owner:"",industry:"venture capital & private equity",employees:46},
+  {company:"Shade Corporation Ltd.",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:58.4,seniority:"Manager",country:"Saudi Arabia",lc:"2026-03-02",city:"Dammam",owner:"إبراهيم",industry:"construction",employees:600},
+  {company:"Sustainable Innovations | شركة الابتكارات المستدامة",cnt:3,mtg:0,rpl:0,opn:2,snt:3,bnc:0,status:"Opened",score:51.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Al Khobar",owner:"",industry:"research",employees:26},
+  {company:"Mohammed S. Al Jarbou Law Firm",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:50.1,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"رغيد",industry:"law practice",employees:17},
+  {company:"Dajam Steel",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:47.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Jeddah",owner:"إبراهيم",industry:"consumer goods",employees:35},
+  {company:"Juffali Automotive Company",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:1,status:"Opened",score:51.9,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Jeddah",owner:"إبراهيم",industry:"automotive",employees:320},
+  {company:"Khoshaim & Associates",cnt:3,mtg:0,rpl:0,opn:2,snt:3,bnc:0,status:"Opened",score:58.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-04",city:"Riyadh",owner:"",industry:"law practice",employees:73},
+  {company:"Flavours || فليفرز",cnt:3,mtg:0,rpl:0,opn:3,snt:3,bnc:0,status:"Opened",score:51.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"",industry:"information technology & services",employees:19},
+  {company:"Artificial Engineering",cnt:3,mtg:0,rpl:0,opn:2,snt:3,bnc:0,status:"Opened",score:41.1,seniority:"Manager",country:"Saudi Arabia",lc:"2026-03-11",city:"Riyadh",owner:"رغيد",industry:"construction",employees:14},
+  {company:"BuildHop",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:41.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"إبراهيم",industry:"building materials",employees:9},
+  {company:"Rize | رايز",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:54.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"إبراهيم",industry:"real estate",employees:83},
+  {company:"King Khaled Eye Specialist Hospital (KKESH)",cnt:3,mtg:0,rpl:0,opn:2,snt:3,bnc:1,status:"Opened",score:64.9,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Riyadh",owner:"رغيد",industry:"hospital & health care",employees:1200},
+  {company:"Babili Group",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:46.1,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-11",city:"Jeddah",owner:"",industry:"construction",employees:25},
+  {company:"King Saud University- Medical City",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:75.9,seniority:"Director",country:"Saudi Arabia",lc:"2026-01-02",city:"Riyadh",owner:"",industry:"higher education",employees:14000},
+  {company:"Bastana International Company Ltd",cnt:3,mtg:0,rpl:0,opn:1,snt:3,bnc:0,status:"Opened",score:45.3,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-08",city:"Jeddah",owner:"",industry:"facilities services",employees:77},
+  {company:"BuildingTec Elevators",cnt:3,mtg:0,rpl:0,opn:3,snt:3,bnc:0,status:"Opened",score:39.7,seniority:"Director",country:"Saudi Arabia",lc:"2026-02-04",city:"Riyadh",owner:"إبراهيم",industry:"construction",employees:19},
+  {company:"Bonat",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:52.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-29",city:"Riyadh",owner:"",industry:"information technology & services",employees:49},
+  {company:"سمارت كود Smart Code",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:58.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"marketing & advertising",employees:82},
+  {company:"Watar Partners",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:58.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-04",city:"Riyadh",owner:"",industry:"capital markets",employees:92},
+  {company:"Saferoad Information Technology LTD.",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:52.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Al Khobar",owner:"",industry:"logistics & supply chain",employees:45},
+  {company:"Yarn Cloud",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:50.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Riyadh",owner:"",industry:"information technology & services",employees:18},
+  {company:"Alnowaisser And Alsuwaylimi Attorneys & Counselors At Law",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:51.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"",owner:"",industry:"law practice",employees:13},
+  {company:"the Chapter",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:1,status:"Opened",score:42.9,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Riyadh",owner:"رغيد",industry:"medical practice",employees:23},
+  {company:"Amwal Tech",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:51.9,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"information technology & services",employees:26},
+  {company:"Saudi Emaar Trading Co.",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:32.1,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-08",city:"Dammam",owner:"رغيد",industry:"construction",employees:8},
+  {company:"HudHud Maps",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:58.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"information technology & services",employees:84},
+  {company:"Bonyan Construction Company",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:50.4,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Al Khobar",owner:"رغيد",industry:"construction",employees:110},
+  {company:"أعناب",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:58.6,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Jeddah",owner:"",industry:"e-learning",employees:50},
+  {company:"STUCK?",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:51.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-02",city:"Sabya",owner:"",industry:"information technology & services",employees:25},
+  {company:"HAC Construction .Co",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:42.4,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-11",city:"Riyadh",owner:"إبراهيم",industry:"construction",employees:10},
+  {company:"Out of the Box SA",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:50.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Riyadh",owner:"",industry:"entertainment",employees:39},
+  {company:"Soum",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:59.0,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"internet",employees:130},
+  {company:"SHIFTAT | شفتات",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:51.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Riyadh",owner:"",industry:"human resources",employees:21},
+  {company:"Inspection Quality(IQ).",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:37.5,seniority:"Manager",country:"Saudi Arabia",lc:"2026-02-09",city:"Al Jubail",owner:"",industry:"facilities services",employees:23},
+  {company:"Lynx Construction & Contracting Company",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:52.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-16",city:"Riyadh",owner:"إبراهيم",industry:"construction",employees:57},
+  {company:"BOUNYAN Advanced Construction and Contracting Co.",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:50.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-03",city:"Jeddah",owner:"",industry:"construction",employees:16},
+  {company:"RASSEEN LAW FIRM",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:50.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-03",city:"Riyadh",owner:"",industry:"law practice",employees:11},
+  {company:"BIG Holding",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:51.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"Riyadh",owner:"",industry:"entertainment",employees:19},
+  {company:"Talal Abu-Ghazaleh Organization in Saudi Arabia",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:57.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"accounting",employees:63},
+  {company:"AFAQ – Health Education Company",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:52.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Riyadh",owner:"",industry:"e-learning",employees:31},
+  {company:"Alshareef & Partners",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:51.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-04",city:"Riyadh",owner:"",industry:"legal services",employees:19},
+  {company:"Beyond Group",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:58.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-02",city:"Riyadh",owner:"",industry:"management consulting",employees:61},
+  {company:"Harasani and Alkhamees Law Firm",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:51.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"law practice",employees:31},
+  {company:"Fadal Bin Shaman Law Firm",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:50.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-02",city:"Riyadh",owner:"",industry:"legal services",employees:29},
+  {company:"Sirdab",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:51.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-02",city:"Riyadh",owner:"",industry:"logistics & supply chain",employees:44},
+  {company:"Nuzul نزل",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:51.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-04",city:"Riyadh",owner:"",industry:"real estate",employees:19},
+  {company:"عَمار | Aamar",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:52.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-02",city:"Riyadh",owner:"",industry:"real estate",employees:48},
+  {company:"HALA Capital",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:52.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-05",city:"Al Khobar",owner:"",industry:"venture capital & private equity",employees:18},
+  {company:"Aiduk Co",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:54.6,seniority:"Director",country:"Saudi Arabia",lc:"2026-03-01",city:"Riyadh",owner:"",industry:"logistics & supply chain",employees:60},
+  {company:"BMG Financial Group",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:57.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-09",city:"Riyadh",owner:"",industry:"financial services",employees:53},
+  {company:"Nahil Cloud",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:51.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-04",city:"Riyadh",owner:"",industry:"professional training & coaching",employees:16},
+  {company:"Tamer Logistics",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:59.8,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-01",city:"Jeddah",owner:"إبراهيم",industry:"logistics & supply chain",employees:460},
+  {company:"AlKamal International",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:43.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-08",city:"Jeddah",owner:"رغيد",industry:"construction",employees:160},
+  {company:"Cyberx World",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:58.2,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-02-01",city:"Riyadh",owner:"",industry:"information technology & services",employees:62},
+  {company:"alalali",cnt:2,mtg:0,rpl:0,opn:1,snt:2,bnc:0,status:"Opened",score:44.2,seniority:"Manager",country:"Oman",lc:"2026-02-04",city:"Muscat",owner:"",industry:"mechanical or industrial engineering",employees:95},
+  {company:"Bassam Trading Company",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:45.0,seniority:"Manager",country:"Saudi Arabia",lc:"2026-03-01",city:"Riyadh",owner:"",industry:"hospital & health care",employees:110},
+  {company:"Eurisko",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:57.5,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-01-28",city:"Riyadh",owner:"",industry:"information technology & services",employees:180},
+  {company:"PREFAB®",cnt:2,mtg:0,rpl:0,opn:2,snt:2,bnc:0,status:"Opened",score:52.3,seniority:"C-Suite",country:"Saudi Arabia",lc:"2026-03-11",city:"Riyadh",owner:"",industry:"architecture & planning",employees:14},
+  {company:"Grintafy Technologies",cnt:2

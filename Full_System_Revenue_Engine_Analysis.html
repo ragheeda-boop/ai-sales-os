@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full System Revenue Engine Analysis | AI Sales OS</title>
+<style>
+  :root {
+    --orange: #F57C1E;
+    --black: #151214;
+    --light: #FAFAFA;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #8b5cf6;
+    --gray: #6b7280;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0f0f14; color: #e5e7eb; line-height: 1.7; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #F57C1E33; border-radius: 16px; padding: 40px; margin-bottom: 30px; text-align: center; }
+  .header h1 { font-size: 2.4em; color: var(--orange); margin-bottom: 10px; }
+  .header .subtitle { color: #9ca3af; font-size: 1.15em; }
+  .header .date { color: #6b7280; font-size: 0.9em; margin-top: 8px; }
+
+  /* Executive Summary */
+  .exec-summary { background: linear-gradient(135deg, #1e1e30, #1a1a2e); border: 1px solid #F57C1E44; border-radius: 12px; padding: 30px; margin-bottom: 30px; }
+  .exec-summary h2 { color: var(--orange); margin-bottom: 15px; font-size: 1.4em; }
+  .exec-summary p { color: #d1d5db; margin-bottom: 10px; }
+
+  /* Stats Row */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px; }
+  .stat-card { background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 12px; padding: 18px; text-align: center; }
+  .stat-card .number { font-size: 2.2em; font-weight: 700; color: var(--orange); }
+  .stat-card .label { color: #9ca3af; font-size: 0.8em; margin-top: 5px; }
+
+  /* Section */
+  .section { background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 12px; padding: 30px; margin-bottom: 25px; }
+  .section h2 { color: var(--orange); font-size: 1.6em; margin-bottom: 20px; border-bottom: 2px solid #F57C1E33; padding-bottom: 12px; }
+  .section h3 { color: #e5e7eb; font-size: 1.2em; margin: 25px 0 12px; font-weight: 600; }
+  .section h4 { color: #c2d5eb; font-size: 1em; margin: 15px 0 8px; font-weight: 500; }
+  .section p { color: #d1d5db; margin-bottom: 12px; line-height: 1.8; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.85em; }
+  th { background: #252540; color: var(--orange); padding: 12px 10px; text-align: right; border-bottom: 2px solid #F57C1E44; font-weight: 600; }
+  td { padding: 10px; border-bottom: 1px solid #2d2d44; color: #d1d5db; vertical-align: middle; }
+  tr:hover { background: #252540; }
+  td strong { color: #e5e7eb; }
+
+  /* Status Badges */
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75em; font-weight: 600; white-space: nowrap; }
+  .badge-keep { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e44; }
+  .badge-improve { background: #eab30822; color: #eab308; border: 1px solid #eab30844; }
+  .badge-delete { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
+  .badge-add { background: #3b82f622; color: #3b82f6; border: 1px solid #3b82f644; }
+  .badge-dead { background: #6b728022; color: #6b7280; border: 1px solid #6b728044; }
+  .badge-critical { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
+  .badge-broken { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
+  .badge-working { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e44; }
+  .badge-partial { background: #eab30822; color: #eab308; border: 1px solid #eab30844; }
+  .badge-empty { background: #6b728022; color: #6b7280; border: 1px solid #6b728044; }
+
+  /* Fill Rate Bar */
+  .fill-bar { background: #2d2d44; border-radius: 4px; height: 8px; width: 80px; display: inline-block; vertical-align: middle; margin-left: 8px; }
+  .fill-bar-inner { height: 100%; border-radius: 4px; }
+  .fill-high { background: var(--green); }
+  .fill-medium { background: var(--yellow); }
+  .fill-low { background: var(--red); }
+  .fill-zero { background: var(--gray); }
+
+  /* Alert */
+  .alert { border-radius: 8px; padding: 16px; margin: 15px 0; border-left: 4px solid; }
+  .alert-critical { background: #ef444418; border-color: var(--red); }
+  .alert-warning { background: #eab30818; border-color: var(--yellow); }
+  .alert-info { background: #3b82f618; border-color: var(--blue); }
+  .alert-success { background: #22c55e18; border-color: var(--green); }
+  .alert-title { font-weight: 700; margin-bottom: 5px; }
+  .alert-critical .alert-title { color: var(--red); }
+  .alert-warning .alert-title { color: var(--yellow); }
+  .alert-info .alert-title { color: var(--blue); }
+  .alert-success .alert-title { color: var(--green); }
+
+  /* Data Flow */
+  .flow-container { background: #12121e; border-radius: 8px; padding: 20px; margin: 15px 0; border: 1px solid #2d2d44; overflow-x: auto; }
+  .flow-line { display: flex; align-items: center; gap: 12px; margin: 12px 0; font-size: 0.85em; flex-wrap: wrap; }
+  .flow-box { background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 6px; padding: 8px 12px; white-space: nowrap; }
+  .flow-arrow { color: var(--orange); font-weight: 700; }
+  .flow-status { font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+  .flow-working { background: #22c55e22; color: #22c55e; }
+  .flow-broken { background: #ef444422; color: #ef4444; }
+  .flow-partial { background: #eab30822; color: #eab308; }
+
+  /* Score Card */
+  .score-card { display: inline-block; background: #12121e; border-radius: 8px; padding: 10px 18px; margin: 6px; border: 1px solid #2d2d44; text-align: center; }
+  .score-card .score { font-size: 1.8em; font-weight: 700; color: var(--orange); }
+  .score-card .desc { font-size: 0.75em; color: #9ca3af; margin-top: 4px; }
+
+  /* System Score Large */
+  .system-score { background: linear-gradient(135deg, #1e1e30, #1a1a2e); border: 2px solid var(--orange); border-radius: 12px; padding: 25px; margin: 20px 0; text-align: center; }
+  .system-score h3 { color: var(--orange); font-size: 1.3em; margin-bottom: 15px; }
+  .system-score .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; }
+  .system-score .item { background: #0f0f14; border-radius: 8px; padding: 12px; }
+  .system-score .number { font-size: 2.2em; font-weight: 700; color: var(--orange); }
+  .system-score .label { color: #9ca3af; font-size: 0.8em; margin-top: 4px; }
+
+  /* Database Card */
+  .db-card { background: #12121e; border: 1px solid #2d2d44; border-radius: 8px; padding: 15px; margin: 12px 0; }
+  .db-card .name { color: var(--orange); font-weight: 700; font-size: 1.1em; }
+  .db-card .stats { color: #d1d5db; font-size: 0.9em; margin-top: 6px; }
+
+  /* Verdict Box */
+  .verdict { background: #12121e; border-left: 4px solid var(--orange); border-radius: 6px; padding: 12px; margin: 10px 0; }
+  .verdict strong { color: var(--orange); }
+
+  /* Top Problems/Opportunities */
+  .highlight-list { list-style: none; }
+  .highlight-list li { padding: 10px 0; border-bottom: 1px solid #2d2d44; display: flex; gap: 12px; }
+  .highlight-list li:last-child { border-bottom: none; }
+  .highlight-list .icon { color: var(--orange); font-size: 1.4em; font-weight: 700; flex-shrink: 0; }
+  .highlight-list .content { flex: 1; }
+  .highlight-list .title { color: #e5e7eb; font-weight: 600; }
+  .highlight-list .desc { color: #9ca3af; font-size: 0.9em; margin-top: 3px; }
+
+  /* Nav */
+  .nav { background: #12121e; border: 1px solid #2d2d44; border-radius: 12px; padding: 18px; margin-bottom: 25px; position: sticky; top: 10px; z-index: 100; overflow-x: auto; }
+  .nav a { color: var(--orange); text-decoration: none; margin: 0 8px; font-size: 0.85em; white-space: nowrap; display: inline-block; }
+  .nav a:hover { text-decoration: underline; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .container { padding: 10px; }
+    .header h1 { font-size: 1.8em; }
+    table { font-size: 0.75em; }
+    .nav a { margin: 0 4px; font-size: 0.75em; }
+    .score-grid { grid-template-columns: 1fr !important; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ============================================ -->
+<!-- HEADER -->
+<!-- ============================================ -->
+<div class="header">
+  <h1>تحليل محرك الإيرادات — النظام الكامل</h1>
+  <div class="subtitle">Full System Revenue Engine Diagnostic | AI Sales OS v5.0</div>
+  <div class="date">April 3, 2026 | تحليل مبني على بيانات حقيقية من 5 قواعد بيانات Notion</div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <a href="#system-overview">نظرة عامة</a> |
+  <a href="#section-1">Contacts DB</a> |
+  <a href="#section-2">Tasks DB</a> |
+  <a href="#section-3">Meetings DB</a> |
+  <a href="#section-4">Opportunities DB</a> |
+  <a href="#section-5">Relations</a> |
+  <a href="#section-6">Apollo</a> |
+  <a href="#section-7">Data Flow</a> |
+  <a href="#section-8">Usage</a> |
+  <a href="#section-9">Verdict</a> |
+  <a href="#section-10">Fix</a>
+</div>
+
+<!-- ============================================ -->
+<!-- SYSTEM OVERVIEW -->
+<!-- ============================================ -->
+<div class="section" id="system-overview">
+  <h2>نظرة عامة على النظام</h2>
+  
+  <div class="alert alert-info">
+    <div class="alert-title">بنية النظام الكاملة</div>
+    <p>5 قواعد بيانات + ~223 عمود + ~45,000 اتصال + 20 سكريبت + GitHub Actions pipeline</p>
+  </div>
+
+  <h3>ملخص قواعد البيانات</h3>
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="number">5</div>
+      <div class="label">قواعد البيانات</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">~223</div>
+      <div class="label">إجمالي الأعمدة</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">~15.4K</div>
+      <div class="label">الشركات</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">~45K</div>
+      <div class="label">الاتصالات</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">~100+</div>
+      <div class="label">المهام</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">2</div>
+      <div class="label">الاجتماعات</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">0</div>
+      <div class="label">الفرص (فارغ)</div>
+    </div>
+  </div>
+
+  <h3>ملخص الأعمدة لكل قاعدة</h3>
+  <table>
+    <tr><th>قاعدة البيانات</th><th>الأعمدة</th><th>السجلات</th><th>نسبة الملء</th><th>الحالة</th></tr>
+    <tr>
+      <td><strong>Companies</strong></td>
+      <td>68</td>
+      <td>~15,407</td>
+      <td>متوسط 45%</td>
+      <td><span class="badge badge-improve">يحتاج تطوير</span></td>
+    </tr>
+    <tr>
+      <td><strong>Contacts</strong></td>
+      <td>74</td>
+      <td>~45,086</td>
+      <td>متوسط 40%</td>
+      <td><span class="badge badge-critical">حرج</span></td>
+    </tr>
+    <tr>
+      <td><strong>Tasks</strong></td>
+      <td>24</td>
+      <td>~100+</td>
+      <td>متوسط 60%</td>
+      <td><span class="badge badge-broken">مكسور</span></td>
+    </tr>
+    <tr>
+      <td><strong>Meetings</strong></td>
+      <td>27</td>
+      <td>2</td>
+      <td>متوسط 10%</td>
+      <td><span class="badge badge-empty">فارغ</span></td>
+    </tr>
+    <tr>
+      <td><strong>Opportunities</strong></td>
+      <td>30</td>
+      <td>0</td>
+      <td>N/A</td>
+      <td><span class="badge badge-empty">فارغ تماماً</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 1: CONTACTS DB -->
+<!-- ============================================ -->
+<div class="section" id="section-1">
+  <h2>1. تحليل Contacts DB (74 عمود)</h2>
+
+  <div class="alert alert-critical">
+    <div class="alert-title">مشاكل حرجة في قاعدة الاتصالات</div>
+    <p><strong>54% من الاتصالات بدون Owner:</strong> لا يوجد من يمثل الاتصال</p>
+    <p><strong>Seniority يحتوي على قيم مكررة:</strong> "C-Suite" (54%) و "C suite" (46%) موجودة معاً</p>
+    <p><strong>53% من الاتصالات في Lead Tier = HOT:</strong> هذا غير طبيعي — يجب أن تكون نسبة HOT 0.5–2% فقط</p>
+  </div>
+
+  <h3>النتائج الرئيسية</h3>
+  <table>
+    <tr><th>المقياس</th><th>القيمة</th><th>التقييم</th></tr>
+    <tr>
+      <td>إجمالي الأعمدة</td>
+      <td>74</td>
+      <td><span class="badge badge-critical">ثقيل جداً</span></td>
+    </tr>
+    <tr>
+      <td>Contact Owner ممتلئ</td>
+      <td>46%</td>
+      <td><span class="badge badge-critical">نقص في المسؤولية</span></td>
+    </tr>
+    <tr>
+      <td>Stage ممتلئ</td>
+      <td>46%</td>
+      <td><span class="badge badge-critical">نصف الاتصالات بلا مرحلة</span></td>
+    </tr>
+    <tr>
+      <td>Outreach Status ممتلئ</td>
+      <td>54%</td>
+      <td><span class="badge badge-improve">معقول لكن يحتاج تحسين</span></td>
+    </tr>
+    <tr>
+      <td>Lead Tier ممتلئ</td>
+      <td>53% HOT</td>
+      <td><span class="badge badge-critical">خطأ في الحساب</span></td>
+    </tr>
+    <tr>
+      <td>Lead Score ممتلئ</td>
+      <td>100%</td>
+      <td><span class="badge badge-keep">ممتاز</span></td>
+    </tr>
+    <tr>
+      <td>Action Ready ممتلئ</td>
+      <td>1% (في عرض HOT)</td>
+      <td><span class="badge badge-critical">أقل من المتوقع</span></td>
+    </tr>
+    <tr>
+      <td>Email Sent</td>
+      <td>53%</td>
+      <td><span class="badge badge-improve">معقول</span></td>
+    </tr>
+    <tr>
+      <td>Email Opened</td>
+      <td>7%</td>
+      <td><span class="badge badge-critical">ضعيف جداً</span></td>
+    </tr>
+    <tr>
+      <td>Replied</td>
+      <td>2%</td>
+      <td><span class="badge badge-critical">نسبة رد سيئة</span></td>
+    </tr>
+    <tr>
+      <td>Intent Strength</td>
+      <td>0%</td>
+      <td><span class="badge badge-dead">ميت</span></td>
+    </tr>
+    <tr>
+      <td>AI Decision ممتلئ</td>
+      <td>2%</td>
+      <td><span class="badge badge-dead">ميت تقريباً</span></td>
+    </tr>
+  </table>
+
+  <h3>الأعمدة الميتة (0% ملء)</h3>
+  <p style="color: #ef4444; margin-bottom: 12px;">21 عمود في حالة 0%:</p>
+  <p style="color: #d1d5db; font-family: monospace; font-size: 0.9em;">
+    Contact Responded, Demoed, Do Not Call, Email Bounced, Home Phone, Intent Strength, Job Change Event, Opportunity Created, Primary Intent Topic, Secondary Intent Topic, Sub Departments, Company 1, Lists, Secondary Email, Secondary Email Source, Secondary Email Status, Secondary Email Verification Source, Primary Email Catch-all Status, Primary Email Source, Primary Email Verification Source, Number of Retail Locations
+  </p>
+
+  <h3>الأعمدة المكررة/المتعارضة</h3>
+  <ul class="highlight-list">
+    <li>
+      <div class="icon">⚠️</div>
+      <div class="content">
+        <div class="title">Seniority يحتوي على قيم مكررة</div>
+        <div class="desc">"C-Suite" (54%) و "C suite" (46%) موجودة معاً في نفس الحقل — bug في التطبيع</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">⚠️</div>
+      <div class="content">
+        <div class="title">Company 1 (text) vs Company (relation)</div>
+        <div class="desc">نسخة نصية قديمة من العلاقة — Company 1 ميت تماماً، استخدم Company فقط</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">⚠️</div>
+      <div class="content">
+        <div class="title">Status vs Stage vs Outreach Status</div>
+        <div class="desc">3 أعمدة تتابع دورة حياة الاتصال — يجب دمجها في عمود واحد أو توضيح الفرق</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">⚠️</div>
+      <div class="content">
+        <div class="title">Priority vs Lead Tier</div>
+        <div class="desc">كلاهما يصنف أهمية الاتصال — Lead Tier موثوقة أكثر (من الصيغة)</div>
+      </div>
+    </li>
+  </ul>
+
+  <h3>الحكم: Contacts DB نسخة "لا تعمل بكفاءة"</h3>
+  <div class="verdict">
+    <strong>الحالة:</strong> قاعدة بيانات ثقيلة (74 عمود) مع ~40% نسبة ملء متوسطة. 54% من الاتصالات بدون مالك، 46% بدون مرحلة. معظم الأعمدة الميتة هي نسخ قديمة من Apollo API. Lead Scoring يعمل لكن Lead Tier نسبه غير طبيعية (53% HOT بدلاً من 0.5–2%).
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 2: TASKS DB -->
+<!-- ============================================ -->
+<div class="section" id="section-2">
+  <h2>2. تحليل Tasks DB (24 عمود)</h2>
+
+  <div class="alert alert-critical">
+    <div class="alert-title">Tasks DB مسرح وليس أداة عمل</div>
+    <p><strong>Task Owner = 0%:</strong> جميع المهام مُنشأة لكن لا أحد مكلف بها</p>
+    <p><strong>جميع المهام = Completed:</strong> جميع المهام auto-complete — لا يوجد عمل يدوي</p>
+    <p><strong>Call Outcome = 0%:</strong> لا توجد ردود فعل من تنفيذ المهام</p>
+  </div>
+
+  <h3>النتائج الرئيسية</h3>
+  <table>
+    <tr><th>المقياس</th><th>القيمة</th><th>التقييم</th></tr>
+    <tr>
+      <td>Auto Created</td>
+      <td>100%</td>
+      <td><span class="badge badge-keep">صحيح</span></td>
+    </tr>
+    <tr>
+      <td>Status = Completed</td>
+      <td>100%</td>
+      <td><span class="badge badge-critical">لا يوجد عمل حقيقي</span></td>
+    </tr>
+    <tr>
+      <td>Priority = Critical</td>
+      <td>90%</td>
+      <td><span class="badge badge-improve">توزيع غير واقعي</span></td>
+    </tr>
+    <tr>
+      <td>Task Owner ممتلئ</td>
+      <td>0%</td>
+      <td><span class="badge badge-critical">حرج</span></td>
+    </tr>
+    <tr>
+      <td>Company ممتلئة</td>
+      <td>100%</td>
+      <td><span class="badge badge-keep">ممتاز</span></td>
+    </tr>
+    <tr>
+      <td>Contact ممتلئة</td>
+      <td>100%</td>
+      <td><span class="badge badge-keep">ممتاز</span></td>
+    </tr>
+    <tr>
+      <td>Opportunity ممتلئة</td>
+      <td>0%</td>
+      <td><span class="badge badge-dead">لا توجد فرص</span></td>
+    </tr>
+    <tr>
+      <td>Call Outcome ممتلئ</td>
+      <td>0%</td>
+      <td><span class="badge badge-critical">بلا feedback</span></td>
+    </tr>
+    <tr>
+      <td>Company Stage at Creation ممتلئ</td>
+      <td>0%</td>
+      <td><span class="badge badge-critical">audit trail مكسور</span></td>
+    </tr>
+  </table>
+
+  <h3>المشاكل الحرجة</h3>
+  <ul class="highlight-list">
+    <li>
+      <div class="icon">1️⃣</div>
+      <div class="content">
+        <div class="title">لا يوجد Task Owner</div>
+        <div class="desc">المهام مُنشأة لكن لا أحد يعرف من المسؤول — auto_tasks.py لا يكتبها</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">2️⃣</div>
+      <div class="content">
+        <div class="title">جميع المهام auto-complete</div>
+        <div class="desc">لا يوجد دورة عمل حقيقية — النظام ينشئ مهام ويكملها تلقائياً</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">3️⃣</div>
+      <div class="content">
+        <div class="title">لا feedback من المهام</div>
+        <div class="desc">Call Outcome = 0% — لا نعرف هل المندوب اتصل فعلاً أو إذا رد عليه العميل</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">4️⃣</div>
+      <div class="content">
+        <div class="title">Company Stage at Creation = 0%</div>
+        <div class="desc">لا نعرف في أي مرحلة كانت الشركة عندما أُنشئت المهمة — audit trail مكسور</div>
+      </div>
+    </li>
+  </ul>
+
+  <h3>الحكم: Tasks DB سجل وليس أداة workflow</h3>
+  <div class="verdict">
+    <strong>الحالة:</strong> Tasks مُنشأة بواسطة auto_tasks.py (automation يعمل بشكل صحيح) لكنها تُكمل تلقائياً بدون تدخل بشري. لا يوجد owner واضح، لا يوجد feedback من التنفيذ. النظام يعامل المهام كـ "log" وليس كـ "workflow tool" يستخدمه المندوبون يومياً.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 3: MEETINGS DB -->
+<!-- ============================================ -->
+<div class="section" id="section-3">
+  <h2>3. تحليل Meetings DB (27 عمود)</h2>
+
+  <div class="alert alert-critical">
+    <div class="alert-title">Meetings DB فارغ تماماً — صفر اجتماعات بيع</div>
+    <p><strong>سجلان فقط:</strong> كلاهما اجتماعات داخلية للفريق (Midweek Recap, Weekly Alignment)</p>
+    <p><strong>لا اتصال مع Contacts/Companies:</strong> الاجتماعات غير مرتبطة بالعملاء</p>
+    <p><strong>meeting_tracker.py و meeting_analyzer.py بلا شيء للعمل عليه</strong></p>
+  </div>
+
+  <h3>النتائج الرئيسية</h3>
+  <table>
+    <tr><th>المقياس</th><th>القيمة</th><th>التقييم</th></tr>
+    <tr>
+      <td>إجمالي الاجتماعات</td>
+      <td>2</td>
+      <td><span class="badge badge-dead">فارغ</span></td>
+    </tr>
+    <tr>
+      <td>اجتماعات بيع (مع عملاء)</td>
+      <td>0</td>
+      <td><span class="badge badge-dead">صفر</span></td>
+    </tr>
+    <tr>
+      <td>Meeting Notes ممتلئة</td>
+      <td>0%</td>
+      <td><span class="badge badge-dead">فارغ</span></td>
+    </tr>
+    <tr>
+      <td>Key Takeaways ممتلئة</td>
+      <td>0%</td>
+      <td><span class="badge badge-dead">فارغ</span></td>
+    </tr>
+    <tr>
+      <td>Next Steps ممتلئة</td>
+      <td>0%</td>
+      <td><span class="badge badge-dead">فارغ</span></td>
+    </tr>
+    <tr>
+      <td>Decision Made ممتلئة</td>
+      <td>0%</td>
+      <td><span class="badge badge-dead">فارغ</span></td>
+    </tr>
+    <tr>
+      <td>Primary Contact مرتبطة</td>
+      <td>0%</td>
+      <td><span class="badge badge-dead">لا علاقات</span></td>
+    </tr>
+    <tr>
+      <td>Company مرتبطة</td>
+      <td>0%</td>
+      <td><span class="badge badge-dead">لا علاقات</span></td>
+    </tr>
+    <tr>
+      <td>Opportunity مرتبطة</td>
+      <td>0%</td>
+      <td><span class="badge badge-dead">لا علاقات</span></td>
+    </tr>
+  </table>
+
+  <h3>الحكم: Meetings DB قشرة فارغة</h3>
+  <div class="verdict">
+    <strong>الحالة:</strong> قاعدة مصممة بشكل احترافي (27 عمود، 11 views) لكنها فارغ تماماً من بيانات المبيعات. لا توجد اجتماعات مع عملاء أو آفاق جديدة. جميع تطبيقات meeting_tracker, meeting_analyzer, opportunity_manager بدون أي بيانات لتحليلها. السلسلة Engagement → Meeting مكسورة لأنه لا توجد meetings.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 4: OPPORTUNITIES DB -->
+<!-- ============================================ -->
+<div class="section" id="section-4">
+  <h2>4. تحليل Opportunities DB (30 عمود)</h2>
+
+  <div class="alert alert-critical">
+    <div class="alert-title">Opportunities DB فارغ 100% — لا توجد فرص واحدة</div>
+    <p><strong>0 سجل:</strong> قاعدة كاملة بدون أي بيانات</p>
+    <p><strong>لكن المخطط ممتاز:</strong> 30 عمود محترف، 11 views جاهزة</p>
+    <p><strong>هذي هي ألب النظام وهي فارغة تماماً</strong></p>
+  </div>
+
+  <h3>النتائج الرئيسية</h3>
+  <table>
+    <tr><th>المقياس</th><th>القيمة</th><th>التقييم</th></tr>
+    <tr>
+      <td>إجمالي السجلات</td>
+      <td>0</td>
+      <td><span class="badge badge-empty">فارغ تماماً</span></td>
+    </tr>
+    <tr>
+      <td>Schema</td>
+      <td>كامل (30 عمود)</td>
+      <td><span class="badge badge-keep">محترف جداً</span></td>
+    </tr>
+    <tr>
+      <td>Views المُعدة</td>
+      <td>11 views</td>
+      <td><span class="badge badge-keep">شامل</span></td>
+    </tr>
+    <tr>
+      <td>Revenue Fields</td>
+      <td>Deal Value, ARR, Currency</td>
+      <td><span class="badge badge-keep">موجود</span></td>
+    </tr>
+    <tr>
+      <td>Pipeline Views</td>
+      <td>Pipeline Board, Red Flags, Closing Soon</td>
+      <td><span class="badge badge-keep">موجود</span></td>
+    </tr>
+  </table>
+
+  <h3>Views المُعدة (11 view جاهز)</h3>
+  <ul class="highlight-list">
+    <li>
+      <div class="icon">📊</div>
+      <div class="content">
+        <div class="title">Pipeline Board</div>
+        <div class="desc">Kanban grouped by Stage — Discovery → Closed Won/Lost</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">⚠️</div>
+      <div class="content">
+        <div class="title">Red Flag Deals</div>
+        <div class="desc">Filter: Deal Health = Red أو Risk Level عالية</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">⏰</div>
+      <div class="content">
+        <div class="title">Closing Soon</div>
+        <div class="desc">Expected Close Date في الـ 7 أيام القادمة</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">👥</div>
+      <div class="content">
+        <div class="title">By Owner</div>
+        <div class="desc">Grouped by Opportunity Owner — مسؤولية واضحة</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">🎯</div>
+      <div class="content">
+        <div class="title">By Lead Tier</div>
+        <div class="desc">Grouped by Revenue Priority — HOT first</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">✅</div>
+      <div class="content">
+        <div class="title">Closed Won</div>
+        <div class="desc">Filter: Stage = Closed Won — تحقق من النجاحات</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">❌</div>
+      <div class="content">
+        <div class="title">Closed Lost</div>
+        <div class="desc">Filter: Stage = Closed Lost — درس من الفشل</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">🔄</div>
+      <div class="content">
+        <div class="title">Stale Deals</div>
+        <div class="desc">Last Updated > 14 أيام — deals قديمة بلا تحديث</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">💰</div>
+      <div class="content">
+        <div class="title">High Value</div>
+        <div class="desc">Deal Value > $50K — فرص عالية</div>
+      </div>
+    </li>
+  </table>
+
+  <h3>Fields المهمة (جميعها فارغة)</h3>
+  <table>
+    <tr><th>الحقل</th><th>الوصف</th><th>الحالة</th></tr>
+    <tr>
+      <td>Deal Value ($)</td>
+      <td>قيمة العقد</td>
+      <td><span class="badge badge-empty">0%</span></td>
+    </tr>
+    <tr>
+      <td>ARR</td>
+      <td>الإيرادات المتكررة السنوية</td>
+      <td><span class="badge badge-empty">0%</span></td>
+    </tr>
+    <tr>
+      <td>Stage (status)</td>
+      <td>Discovery → Closed</td>
+      <td><span class="badge badge-empty">0%</span></td>
+    </tr>
+    <tr>
+      <td>Probability</td>
+      <td>احتمال الإغلاق</td>
+      <td><span class="badge badge-empty">0%</span></td>
+    </tr>
+    <tr>
+      <td>Expected Close Date</td>
+      <td>تاريخ الإغلاق المتوقع</td>
+      <td><span class="badge badge-empty">0%</span></td>
+    </tr>
+    <tr>
+      <td>Buying Committee Size</td>
+      <td>حجم لجنة الشراء</td>
+      <td><span class="badge badge-empty">0%</span></td>
+    </tr>
+    <tr>
+      <td>Decision Maker Identified</td>
+      <td>هل حددنا صانع القرار</td>
+      <td><span class="badge badge-empty">0%</span></td>
+    </tr>
+  </table>
+
+  <h3>الحكم: أفضل مخطط بدون استخدام</h3>
+  <div class="verdict">
+    <strong>الحالة:</strong> Opportunities DB هو المحرك الذي يجب أن يدفع الإيرادات، لكنه فارغ تماماً. Schema احترافي، views شامل (11 view)، كل الأعمدة جاهزة — لكن 0 فرصة في النظام. السلسلة Meeting → Opportunity مكسورة لأنه لا توجد meetings. النتيجة: لا يمكن حساب revenue pipeline، لا يمكن عمل forecast، لا يمكن تتبع المبيعات.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 5: RELATIONS AUDIT -->
+<!-- ============================================ -->
+<div class="section" id="section-5">
+  <h2>5. تدقيق العلاقات بين قواعد البيانات</h2>
+
+  <div class="alert alert-warning">
+    <div class="alert-title">فقط 3 من 9 علاقات تعمل بكفاءة</div>
+    <p>معظم العلاقات بين القواعس مقطوعة — الـ Meeting و Opportunity databases معزولة</p>
+  </div>
+
+  <h3>خريطة العلاقات</h3>
+  <table>
+    <tr><th>العلاقة</th><th>الاتجاه</th><th>نسبة الربط</th><th>الحالة</th><th>الحكم</th></tr>
+    <tr>
+      <td><strong>Companies ↔ Contacts</strong></td>
+      <td>ثنائي الاتجاه</td>
+      <td>97%</td>
+      <td><span class="badge badge-working">يعمل بقوة</span></td>
+      <td>ممتاز — كل اتصال مرتبط بشركة تقريباً</td>
+    </tr>
+    <tr>
+      <td><strong>Companies ← Tasks</strong></td>
+      <td>من المهام للشركات</td>
+      <td>100%</td>
+      <td><span class="badge badge-working">يعمل بقوة</span></td>
+      <td>auto_tasks.py يربط كل مهمة بالشركة</td>
+    </tr>
+    <tr>
+      <td><strong>Contacts ← Tasks</strong></td>
+      <td>من المهام للاتصالات</td>
+      <td>100%</td>
+      <td><span class="badge badge-working">يعمل بقوة</span></td>
+      <td>auto_tasks.py يربط كل مهمة بالاتصال أيضاً</td>
+    </tr>
+    <tr>
+      <td><strong>Companies ← Meetings</strong></td>
+      <td>من الاجتماعات للشركات</td>
+      <td>0%</td>
+      <td><span class="badge badge-broken">مقطوع</span></td>
+      <td>الـ 2 اجتماع الموجودان غير مرتبطان بأي شركة</td>
+    </tr>
+    <tr>
+      <td><strong>Contacts ← Meetings</strong></td>
+      <td>من الاجتماعات للاتصالات</td>
+      <td>0%</td>
+      <td><span class="badge badge-broken">مقطوع</span></td>
+      <td>لا توجد علاقة بين الاجتماعات والاتصالات</td>
+    </tr>
+    <tr>
+      <td><strong>Companies ← Opportunities</strong></td>
+      <td>من الفرص للشركات</td>
+      <td>N/A (0 فرصة)</td>
+      <td><span class="badge badge-empty">فارغ</span></td>
+      <td>لا توجد فرص لتربطها</td>
+    </tr>
+    <tr>
+      <td><strong>Contacts ← Opportunities</strong></td>
+      <td>من الفرص للاتصالات</td>
+      <td>N/A (0 فرصة)</td>
+      <td><span class="badge badge-empty">فارغ</span></td>
+      <td>لا توجد فرص لتربطها</td>
+    </tr>
+    <tr>
+      <td><strong>Meetings → Opportunities</strong></td>
+      <td>من الاجتماعات للفرص</td>
+      <td>N/A (0 اجتماع، 0 فرصة)</td>
+      <td><span class="badge badge-broken">مقطوع</span></td>
+      <td>السلسلة Meeting → Opportunity غير موجودة</td>
+    </tr>
+    <tr>
+      <td><strong>Tasks → Opportunities</strong></td>
+      <td>من المهام للفرص</td>
+      <td>N/A (0 فرصة)</td>
+      <td><span class="badge badge-broken">مقطوع</span></td>
+      <td>لا توجد فرص لتربطها بالمهام</td>
+    </tr>
+  </table>
+
+  <h3>الحكم: البنية الأساسية قوية، لكن الأعلى مقطوع</h3>
+  <div class="verdict">
+    <strong>الحالة:</strong> العلاقة الأساسية Companies ↔ Contacts تعمل بقوة (97%). المهام مرتبطة بشكل صحيح بكلا الجهتين (100%). لكن Meetings معزولة تماماً (0% ربط)، والـ Opportunities فارغة لذا لا توجد أي علاقات. النتيجة: الـ data pipeline قطع عند المهام — لا يوجد مسار يربط المهام بالاجتماعات أو الفرص.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 6: APOLLO INTEGRATION -->
+<!-- ============================================ -->
+<div class="section" id="section-6">
+  <h2>6. تقييم تكامل Apollo</h2>
+
+  <div class="alert alert-info">
+    <div class="alert-title">Apollo يُستخدم كمستودع بيانات، وليس كمصدر ذكاء</div>
+    <p>ننسخ البيانات الأساسية (اسم، بريد، عنوان) لكن لا نستفيد من الـ signals والتحليلات</p>
+  </div>
+
+  <h3>ما يُسحب من Apollo بنجاح</h3>
+  <table>
+    <tr><th>البيانات</th><th>نسبة الملء</th><th>الاستخدام</th><th>الحالة</th></tr>
+    <tr>
+      <td>Contacts Basic (Name, Email, Title)</td>
+      <td>95%</td>
+      <td>Primary record keeper</td>
+      <td><span class="badge badge-working">يعمل</span></td>
+    </tr>
+    <tr>
+      <td>Companies Basic (Name, Domain, Size)</td>
+      <td>90%</td>
+      <td>Company database source</td>
+      <td><span class="badge badge-working">يعمل</span></td>
+    </tr>
+    <tr>
+      <td>Lead Score (محسوب في Notion)</td>
+      <td>100%</td>
+      <td>تصنيف HOT/WARM/COLD</td>
+      <td><span class="badge badge-working">يعمل</span></td>
+    </tr>
+    <tr>
+      <td>MUHIDE AI Analysis</td>
+      <td>91%</td>
+      <td>Fit Score, Priority, Best Buyer, Strategic Analysis</td>
+      <td><span class="badge badge-working">يعمل ممتاز</span></td>
+    </tr>
+    <tr>
+      <td>AI Qualification Status/Detail</td>
+      <td>89-98%</td>
+      <td>ICP alignment</td>
+      <td><span class="badge badge-working">يعمل ممتاز</span></td>
+    </tr>
+  </table>
+
+  <h3>ما لا يُستخدم من Apollo</h3>
+  <table>
+    <tr><th>Signal</th><th>نسبة الملء</th><th>التوقع</th><th>الحالة</th></tr>
+    <tr>
+      <td>Intent Signals (Companies + Contacts)</td>
+      <td>0%</td>
+      <td>يجب أن تكون متوفرة</td>
+      <td><span class="badge badge-broken">غير مفعل</span></td>
+    </tr>
+    <tr>
+      <td>Job Change Events</td>
+      <td>0%</td>
+      <td>يجب أن تكون متوفرة</td>
+      <td><span class="badge badge-broken">غير مفعل</span></td>
+    </tr>
+    <tr>
+      <td>Engagement Data من Apollo Analytics</td>
+      <td>7% Email Opened</td>
+      <td>يجب أن تكون أعلى</td>
+      <td><span class="badge badge-partial">ضعيف</span></td>
+    </tr>
+    <tr>
+      <td>Sequences (استخدام Outreach Status)</td>
+      <td>44% Sent</td>
+      <td>يجب أن تكون أعلى</td>
+      <td><span class="badge badge-partial">ضعيف</span></td>
+    </tr>
+  </table>
+
+  <h3>الحكم: Apollo كمستودع فقط</h3>
+  <div class="verdict">
+    <strong>الحالة:</strong> daily_sync.py تنسخ Contacts و Companies من Apollo بشكل صحيح. MUHIDE AI fields (Fit Score 91% ملء) هي أذكى البيانات في النظام — هذا ميزة تنافسية. لكن Signals (Intent، Job Change) غير مفعلة (0% ملء). Engagement feedback loop ضعيفة (7% Email Opened، 2% Replied). النتيجة: Apollo تُستخدم كمستودع نقل بيانات بدون الاستفادة من الـ signals والتحليلات في الوقت الفعلي.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 7: DATA FLOW DIAGRAM -->
+<!-- ============================================ -->
+<div class="section" id="section-7">
+  <h2>7. خريطة تدفق البيانات — أين تنقطع السلسلة</h2>
+
+  <div class="alert alert-critical">
+    <div class="alert-title">السلسلة تنقطع في 3 نقاط حرجة</div>
+  </div>
+
+  <h3>Chain 1: Apollo → Notion → Score → Task</h3>
+  <div class="flow-container">
+    <div class="flow-line">
+      <div class="flow-box">Apollo.io</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Contacts/Companies</div>
+      <div class="flow-status flow-working">✅ يعمل</div>
+    </div>
+    <div class="flow-line">
+      <div class="flow-box">Contacts</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Lead Score</div>
+      <div class="flow-status flow-working">✅ يعمل</div>
+    </div>
+    <div class="flow-line">
+      <div class="flow-box">Lead Score</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Lead Tier (HOT/WARM)</div>
+      <div class="flow-status flow-working">✅ يعمل</div>
+    </div>
+    <div class="flow-line">
+      <div class="flow-box">Lead Tier</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Action Ready Gate</div>
+      <div class="flow-status flow-working">✅ يعمل</div>
+    </div>
+    <div class="flow-line">
+      <div class="flow-box">Action Ready</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Tasks Created</div>
+      <div class="flow-status flow-working">✅ يعمل</div>
+    </div>
+  </div>
+
+  <h3>Chain 2: Tasks → Human Feedback → Engagement (BROKEN)</h3>
+  <div class="flow-container">
+    <div class="flow-line">
+      <div class="flow-box">Task Created</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">No Task Owner</div>
+      <div class="flow-status flow-broken">❌ مقطوع</div>
+    </div>
+    <div class="flow-line">
+      <div class="flow-box">Task Auto-Complete</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">No Call Outcome</div>
+      <div class="flow-status flow-broken">❌ مقطوع</div>
+    </div>
+    <div class="flow-line">
+      <div class="flow-box">لا feedback</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">لا تحديث للعميل</div>
+      <div class="flow-status flow-broken">❌ مقطوع</div>
+    </div>
+  </div>
+
+  <h3>Chain 3: Action Ready → Apollo Sequences → Analytics (WEAK)</h3>
+  <div class="flow-container">
+    <div class="flow-line">
+      <div class="flow-box">Action Ready</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">auto_sequence.py</div>
+      <div class="flow-status flow-partial">⚠️ جزئي</div>
+    </div>
+    <div class="flow-line">
+      <div class="flow-box">Enrolled in Sequence</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Email Sent (44%)</div>
+      <div class="flow-status flow-partial">⚠️ ضعيف</div>
+    </div>
+    <div class="flow-line">
+      <div class="flow-box">Email Sent</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Email Opened (7%)</div>
+      <div class="flow-status flow-broken">❌ نسبة فتح منخفضة جداً</div>
+    </div>
+  </div>
+
+  <h3>Chain 4: Engagement → Meeting → Opportunity (BROKEN)</h3>
+  <div class="flow-container">
+    <div class="flow-line">
+      <div class="flow-box">Engagement Signals</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Meeting Booked (2%)</div>
+      <div class="flow-status flow-broken">❌ نسبة مجتمعات منخفضة</div>
+    </div>
+    <div class="flow-line">
+      <div class="flow-box">Meeting</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Meetings DB (0 sales meetings)</div>
+      <div class="flow-status flow-broken">❌ لا meetings مسجلة</div>
+    </div>
+    <div class="flow-line">
+      <div class="flow-box">Meeting</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Opportunity Created (0)</div>
+      <div class="flow-status flow-broken">❌ صفر فرص</div>
+    </div>
+  </div>
+
+  <h3>Chain 5: Opportunity → Revenue (DOESN'T EXIST)</h3>
+  <div class="flow-container">
+    <div class="flow-line">
+      <div class="flow-box">Opportunity</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Pipeline (0 deals)</div>
+      <div class="flow-status flow-broken">❌ فارغ</div>
+    </div>
+    <div class="flow-line">
+      <div class="flow-box">Deal Value</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Revenue Forecast</div>
+      <div class="flow-status flow-broken">❌ غير ممكن</div>
+    </div>
+  </div>
+
+  <h3>الحكم: System Score = 2/10 للـ Integration</h3>
+  <div class="verdict">
+    <strong>الحالة:</strong> Chain 1 يعمل بشكل ممتاز (Apollo → Notion → Score → Tasks). Chains 2–5 مكسورة أو ضعيفة جداً. لا يوجد feedback loop من المهام، لا توجد meetings في النظام، لا توجد opportunities، لا revenue visibility. النظام يعمل كـ "scoring engine in a vacuum" وليس كـ "revenue engine".
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 8: USAGE REALITY -->
+<!-- ============================================ -->
+<div class="section" id="section-8">
+  <h2>8. الاستخدام الفعلي — هل الناس يستخدمونه؟</h2>
+
+  <div class="alert alert-critical">
+    <div class="alert-title">النظام يُستخدم في التخزين والتصنيف فقط، وليس في العمل اليومي</div>
+  </div>
+
+  <h3>يُستخدم النظام لـ:</h3>
+  <ul class="highlight-list">
+    <li>
+      <div class="icon">✅</div>
+      <div class="content">
+        <div class="title">تخزين البيانات (Data Storage)</div>
+        <div class="desc">Apollo → Notion — نسخ Contacts و Companies بنجاح</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">✅</div>
+      <div class="content">
+        <div class="title">تصنيف الـ Leads (Lead Scoring)</div>
+        <div class="desc">Lead Score + Lead Tier يعملان بشكل تلقائي</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">✅</div>
+      <div class="content">
+        <div class="title">إنشاء المهام (Task Generation)</div>
+        <div class="desc">auto_tasks.py ينشئ المهام تلقائياً</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">✅</div>
+      <div class="content">
+        <div class="title">تحليل MUHIDE AI</div>
+        <div class="desc">Fit Score، Priority، Best Buyer — 91% ملء (ممتاز)</div>
+      </div>
+    </li>
+  </ul>
+
+  <h3>لا يُستخدم النظام لـ:</h3>
+  <ul class="highlight-list">
+    <li>
+      <div class="icon">❌</div>
+      <div class="content">
+        <div class="title">العمل اليومي (Daily Sales Workflow)</div>
+        <div class="desc">Task Owner = 0% — لا أحد يعرف من المسؤول عن المهمة</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">❌</div>
+      <div class="content">
+        <div class="title">تتبع الاجتماعات (Meeting Tracking)</div>
+        <div class="desc">0 اجتماعات مع العملاء — فقط 2 اجتماع داخلي</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">❌</div>
+      <div class="content">
+        <div class="title">إدارة خط أنابيب المبيعات (Pipeline Management)</div>
+        <div class="desc">0 فرص في النظام — لا يمكن عمل forecast</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">❌</div>
+      <div class="content">
+        <div class="title">حساب الإيرادات (Revenue Forecasting)</div>
+        <div class="desc">غير ممكن — لا توجد opportunities أو deal values</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">❌</div>
+      <div class="content">
+        <div class="title">المسؤولية (Team Accountability)</div>
+        <div class="desc">54% من الاتصالات بدون owner — Task Owner = 0%</div>
+      </div>
+    </li>
+  </ul>
+
+  <h3>الحكم: System for Storage, Not for Action</h3>
+  <div class="verdict">
+    <strong>الحالة:</strong> النظام ينجح في استقبال البيانات من Apollo وحفظها وتصنيفها وإنشاء مهام تلقائية. لكن لا مندوب مبيعات يفتح Notion يومياً ويقول "هذا هو ما أفعله اليوم". المهام موجودة لكن بدون owner واضح. المجتمعات غير مسجلة. الفرص غير موجودة. النظام مثل ثلاجة معلومات جميلة لكن لا أحد يأكل منها.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 9: DEAD SYSTEM DETECTION & VERDICT -->
+<!-- ============================================ -->
+<div class="section" id="section-9">
+  <h2>9. تشخيص النظام الميت — البنية الأساسية جيدة، لكن العمل غير موجود</h2>
+
+  <div class="alert alert-critical">
+    <div class="alert-title">قاعدات بيانات ميتة + أتمتة بدون feedback = نظام يعمل في فراغ</div>
+  </div>
+
+  <h3>قواعس البيانات الميتة</h3>
+  <table>
+    <tr><th>قاعدة</th><th>السجلات</th><th>البيانات ذات الصلة</th><th>الحكم</th></tr>
+    <tr>
+      <td><strong>Meetings</strong></td>
+      <td>2 (اجتماعات داخلية)</td>
+      <td>0 اجتماعات بيع</td>
+      <td><span class="badge badge-dead">ميت</span></td>
+    </tr>
+    <tr>
+      <td><strong>Opportunities</strong></td>
+      <td>0</td>
+      <td>0% من البيانات</td>
+      <td><span class="badge badge-dead">ميت تماماً</span></td>
+    </tr>
+    <tr>
+      <td><strong>Contacts (54% بدون owner)</strong></td>
+      <td>~45K</td>
+      <td>نصف البيانات معطلة</td>
+      <td><span class="badge badge-critical">نصف ميت</span></td>
+    </tr>
+    <tr>
+      <td><strong>Tasks (100% auto-complete)</strong></td>
+      <td>~100+</td>
+      <td>0% عمل يدوي</td>
+      <td><span class="badge badge-broken">مسرح</span></td>
+    </tr>
+  </table>
+
+  <h3>الأتمتة الميتة (الكود موجود، لكن الـ Output فارغ)</h3>
+  <table>
+    <tr><th>السكريبت</th><th>الوظيفة</th><th>الـ Input</th><th>الـ Output</th><th>الحالة</th></tr>
+    <tr>
+      <td><strong>meeting_tracker.py</strong></td>
+      <td>تتبع الاجتماعات</td>
+      <td>0 اجتماع بيع</td>
+      <td>لا شيء للتتبع</td>
+      <td><span class="badge badge-dead">ميت</span></td>
+    </tr>
+    <tr>
+      <td><strong>meeting_analyzer.py</strong></td>
+      <td>تحليل الاجتماعات بالـ AI</td>
+      <td>0 ملاحظات اجتماعات</td>
+      <td>لا شيء للتحليل</td>
+      <td><span class="badge badge-dead">ميت</span></td>
+    </tr>
+    <tr>
+      <td><strong>opportunity_manager.py</strong></td>
+      <td>إدارة الفرص</td>
+      <td>0 فرص</td>
+      <td>0 فرص</td>
+      <td><span class="badge badge-dead">ميت</span></td>
+    </tr>
+    <tr>
+      <td><strong>score_calibrator.py</strong></td>
+      <td>ضبط الأوزان الذاتي</td>
+      <td>7% engagement</td>
+      <td>لا بيانات كافية</td>
+      <td><span class="badge badge-broken">غير قابل للتشغيل</span></td>
+    </tr>
+  </table>
+
+  <h3>الأعمدة الميتة عبر النظام (~40+ عمود)</h3>
+  <p style="color: #d1d5db; margin-bottom: 12px;">
+    <strong>Companies (12):</strong> Short Description, Company Name for Emails, Number of Retail Locations, NAICS Codes, SIC Codes, Lists, Subsidiary of, Facebook URL, Twitter URL, Company Postal Code, Latest Funding Amount, Headcount Growth 24M
+  </p>
+  <p style="color: #d1d5db; margin-bottom: 12px;">
+    <strong>Contacts (21):</strong> Company 1, Company Name for Emails, Lists, Home Phone, Other Phone (if empty), Corporate Phone (if empty), Secondary Email + 3 metadata, Primary Email metadata, Number of Retail Locations, Sub Departments, Primary/Secondary Intent Topic, Intent Strength, Job Change Event, Opportunity Created, etc.
+  </p>
+  <p style="color: #d1d5db; margin-bottom: 12px;">
+    <strong>Tasks (2):</strong> Task Owner, Company Stage at Creation
+  </p>
+  <p style="color: #d1d5db; margin-bottom: 12px;">
+    <strong>Meetings/Opportunities:</strong> معظم fields فارغة (لا توجد بيانات)
+  </p>
+
+  <h3>درجة النظام (System Score)</h3>
+  <div class="system-score">
+    <h3>OVERALL SYSTEM HEALTH: 2/10</h3>
+    <div class="score-grid">
+      <div class="item">
+        <div class="number" style="color: #22c55e;">8/10</div>
+        <div class="label">البنية الأساسية (Infrastructure)</div>
+      </div>
+      <div class="item">
+        <div class="number" style="color: #eab308;">4/10</div>
+        <div class="label">جودة البيانات (Data Quality)</div>
+      </div>
+      <div class="item">
+        <div class="number" style="color: #ef4444;">3/10</div>
+        <div class="label">التكامل بين القواعس (Integration)</div>
+      </div>
+      <div class="item">
+        <div class="number" style="color: #ef4444;">1/10</div>
+        <div class="label">جاهزية الإيرادات (Revenue Readiness)</div>
+      </div>
+      <div class="item">
+        <div class="number" style="color: #ef4444;">0/10</div>
+        <div class="label">استخدام بشري (Human Usage)</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>الحكم: نظام احترافي يعمل في فراغ</h3>
+  <div class="verdict">
+    <strong style="color: var(--orange);">التقييم الحقيقي:</strong> النظام ليس مكسوراً — إنه يعمل تماماً كما مبرمج. Sync يعمل (✅)، Score يعمل (✅)، Auto-tasks تُنشأ (✅). <strong>المشكلة أن لا أحد يستخدمه.</strong> المهام تُنشأ وتُكمل تلقائياً بدون مندوب. المجتمعات الحقيقية غير مسجلة. الفرص غير موجودة. النظام يصنع noise بدون signal.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 10: FIX PRIORITY -->
+<!-- ============================================ -->
+<div class="section" id="section-10">
+  <h2>10. خطة الإصلاح — ماذا نفعل الآن</h2>
+
+  <div class="alert alert-success">
+    <div class="alert-title">الخبر السار: البنية جاهزة، نحتاج فقط لملء الفجوات</div>
+    <p>لا نحتاج rebuild — نحتاج human engagement layer على القمة</p>
+  </div>
+
+  <h3>🔴 DELETE الفوري (ساعة واحدة)</h3>
+  <table>
+    <tr><th>الحقل</th><th>السبب</th><th>الحقل البديل</th></tr>
+    <tr>
+      <td>Companies: Short Description, Company Name for Emails, Facebook URL, Twitter URL (والـ 9 حقول أخرى)</td>
+      <td>0% ملء أو مكرر</td>
+      <td>AI Qualification Detail يغطي الوصف</td>
+    </tr>
+    <tr>
+      <td>Contacts: Company 1 (text), Secondary Email fields (5 حقول), Home Phone, Other Phone (إن فارغ)</td>
+      <td>ميت أو مكرر</td>
+      <td>استخدم Company (relation) فقط</td>
+    </tr>
+  </table>
+
+  <h3>🟡 FIX قبل الاستخدام (يوم واحد)</h3>
+  <table>
+    <tr><th>المشكلة</th><th>الحل</th><th>الأثر</th></tr>
+    <tr>
+      <td><strong>Contact Owner = 54% فارغ</strong></td>
+      <td>تشغيل archive_unqualified.py → Stage = "Archived" للاتصالات بدون owner</td>
+      <td>قاعدة نظيفة فقط اتصالات مملوكة</td>
+    </tr>
+    <tr>
+      <td><strong>Seniority "C Suite" vs "C-Suite"</strong></td>
+      <td>تشغيل data integrity script لتوحيد كل "C suite" إلى "C-Suite"</td>
+      <td>تصنيف موحد</td>
+    </tr>
+    <tr>
+      <td><strong>Company Stage = 33% فارغ</strong></td>
+      <td>default = "Prospect" للقيم الفارغة (formula في Notion)</td>
+      <td>كل شركة لها مرحلة</td>
+    </tr>
+    <tr>
+      <td><strong>Task Owner = 0%</strong></td>
+      <td>تحديث auto_tasks.py لكتابة Primary Company Owner</td>
+      <td>مسؤولية واضحة للمهام</td>
+    </tr>
+    <tr>
+      <td><strong>Lead Tier 53% HOT (خطأ)</strong></td>
+      <td>إعادة حساب Lead Score — يبدو أن الصيغة مكسورة</td>
+      <td>توزيع طبيعي: 1% HOT, 15% WARM, 84% COLD</td>
+    </tr>
+  </table>
+
+  <h3>🟢 BUILD الطبقة البشرية (أسبوع واحد)</h3>
+  <ul class="highlight-list">
+    <li>
+      <div class="icon">1️⃣</div>
+      <div class="content">
+        <div class="title">Human Feedback Loop من المهام</div>
+        <div class="desc">إضافة حقل Call Outcome إلى كل مهمة مكتملة — "رد العميل؟" "طلب meeting؟" "قال not interested؟"</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">2️⃣</div>
+      <div class="content">
+        <div class="title">تسجيل أول Meeting حقيقي</div>
+        <div class="desc">سجّل meeting مع عميل → أضفه إلى Meetings DB → ربطه بـ Contact و Company → سجّل النتائج</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">3️⃣</div>
+      <div class="content">
+        <div class="title">أول فرصة يدوية</div>
+        <div class="desc">بعد meeting ناجح → أنشئ Opportunity يدويا → ادخل Deal Value → تتبع Stage progression</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">4️⃣</div>
+      <div class="content">
+        <div class="title">Daily Sales View</div>
+        <div class="desc">أنشئ dashboard يجمع "ماذا تفعل اليوم؟" = Tasks الـ HOT + قادمة الـ Meetings + Opportunities الـ Red Flag</div>
+      </div>
+    </li>
+    <li>
+      <div class="icon">5️⃣</div>
+      <div class="content">
+        <div class="title">Revenue Dashboard</div>
+        <div class="desc">استخدم Opportunities DB (الآن فيه بيانات) لعمل pipeline chart → forecast → closed won tracking</div>
+      </div>
+    </li>
+  </ul>
+
+  <h3>📊 المقاييس التي ستتحسن بعد الإصلاح</h3>
+  <table>
+    <tr><th>المقياس</th><th>الحالي</th><th>الهدف</th><th>الأثر</th></tr>
+    <tr>
+      <td>Task Owner ممتلئ</td>
+      <td>0%</td>
+      <td>100%</td>
+      <td>مسؤولية واضحة</td>
+    </tr>
+    <tr>
+      <td>Meetings المسجلة</td>
+      <td>0 (بيع)</td>
+      <td>≥ 5/أسبوع</td>
+      <td>feedback من الانجذاب</td>
+    </tr>
+    <tr>
+      <td>Opportunities في Pipeline</td>
+      <td>0</td>
+      <td>≥ 10</td>
+      <td>visibility على الإيرادات</td>
+    </tr>
+    <tr>
+      <td>Contact Owner ممتلئ</td>
+      <td>46%</td>
+      <td>100%</td>
+      <td>مندوب واضح لكل اتصال</td>
+    </tr>
+    <tr>
+      <td>Email Opened</td>
+      <td>7%</td>
+      <td>25%+</td>
+      <td>أفضل أداء في الـ Sequences</td>
+    </tr>
+    <tr>
+      <td>System Score</td>
+      <td>2/10</td>
+      <td>7/10</td>
+      <td>نظام عملي فعلي</td>
+    </tr>
+  </table>
+
+  <h3>⚡ أولويات الإصلاح</h3>
+  <div style="background: #12121e; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #2d2d44;">
+    <h4 style="color: var(--red); margin-bottom: 12px;">الأسبوع 1: CRITICAL</h4>
+    <ol style="color: #d1d5db; padding-left: 20px; margin-bottom: 15px;">
+      <li>حذف 12 حقل في Companies (ساعة)</li>
+      <li>حذف 21 حقل في Contacts (ساعة)</li>
+      <li>توحيد Seniority dupes (ساعة)</li>
+      <li>تحديث auto_tasks.py لكتابة Task Owner (ساعتان)</li>
+      <li>إعادة حساب Lead Score — تحقق من صيغة Lead Tier (ساعة)</li>
+    </ol>
+
+    <h4 style="color: var(--yellow); margin-bottom: 12px;">الأسبوع 2: BUILD</h4>
+    <ol style="color: #d1d5db; padding-left: 20px; margin-bottom: 15px;">
+      <li>تسجيل أول 5 meetings حقيقية</li>
+      <li>إنشاء أول 3 opportunities يدوياً</li>
+      <li>أنشئ Daily Sales View (Notion dashboard)</li>
+      <li>أنشئ Revenue Dashboard من Opportunities</li>
+    </ol>
+
+    <h4 style="color: var(--green); margin-bottom: 12px;">الأسبوع 3: MONITOR</h4>
+    <ol style="color: #d1d5db; padding-left: 20px;">
+      <li>تتبع Call Outcomes من المهام</li>
+      <li>تتبع Meeting to Opportunity conversion</li>
+      <li>ضبط Lead Tier distribution (يجب تكون 1% HOT، 15% WARM، 84% COLD)</li>
+      <li>تشغيل score_calibrator.py مع feedback loop</li>
+    </ol>
+  </div>
+
+  <h3>الحكم: أصلح ثم أتمتة</h3>
+  <div class="verdict">
+    <strong>الحالة الحالية:</strong> النظام ينفذ العمليات بدون هدف. اترك الأتمتة جانباً للأسبوع الأول وركز على النظافة والـ ownership. بعد أسبوع، ستكون لديك:
+    <ul style="color: #d1d5db; margin-top: 10px; padding-left: 20px;">
+      <li>✅ قاعدة بيانات نظيفة (0 أعمدة ميتة)</li>
+      <li>✅ مالك واضح لكل مهمة وعميل</li>
+      <li>✅ أول meetings و opportunities في النظام</li>
+      <li>✅ Dashboard حقيقي للعمل اليومي</li>
+    </ul>
+    <br>عندها، ستصير الأتمتة (score calibrator, meeting analyzer, opportunity manager) لها بيانات حقيقية تعمل عليها.
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="background: #12121e; border: 1px solid #2d2d44; border-radius: 12px; padding: 20px; margin-top: 40px; text-align: center; color: #9ca3af;">
+  <p><strong style="color: var(--orange);">Full System Revenue Engine Analysis</strong></p>
+  <p style="margin-top: 8px; font-size: 0.9em;">AI Sales OS v5.0 | April 3, 2026</p>
+  <p style="margin-top: 8px; font-size: 0.85em;">Built on real Notion data: 5 databases, ~223 fields, 45,086 contacts, 15,407 companies</p>
+  <p style="margin-top: 15px; font-size: 0.8em; color: #6b7280;">هذا التقرير هو تشخيص شامل يوضح أين يعمل النظام وأين ينقطع. الحل ليس إعادة بناء — الحل هو ملء الفجوات البشرية وإضافة feedback loops.</p>
+</div>
+
+</div>
+</body>
+</html>

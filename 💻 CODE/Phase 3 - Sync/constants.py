@@ -364,6 +364,86 @@ STAGE_PROBABILITY = {
 STALE_DEAL_DAYS = 14
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# DATA GOVERNANCE — Ingestion Gate Rules (v6.0)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Company Entry Gate: must pass at least MIN_COMPANY_GATE_SCORE of these checks
+COMPANY_GATE_MIN_SCORE = 2  # Must satisfy at least 2 of the 5 criteria
+
+# ICP criteria — target industries and countries
+ICP_INDUSTRIES = {
+    "insurance", "financial services", "banking", "fintech",
+    "investment management", "accounting", "real estate",
+    "oil & energy", "construction", "government administration",
+    "information technology", "computer software", "telecommunications",
+    "health care", "hospital & health care", "medical devices",
+    "automotive", "logistics & supply chain", "defense & space",
+}
+
+ICP_COUNTRIES = {
+    "Saudi Arabia", "United Arab Emirates", "Bahrain", "Kuwait",
+    "Oman", "Qatar", "Jordan", "Egypt", "Lebanon",
+}
+
+ICP_MIN_EMPLOYEES = 50  # Minimum company size for ICP match
+
+# Senior contact seniorities that count toward gate
+SENIOR_SENIORITIES = {"C-Suite", "VP", "Director", "Owner", "Founder", "Partner"}
+
+# Senior title keywords (case-insensitive)
+SENIOR_TITLE_KEYWORDS = {
+    "ceo", "cfo", "coo", "cto", "cio", "ciso", "cmo", "cro",
+    "chief", "president", "vice president", "vp", "director",
+    "head of", "general manager", "managing director", "partner",
+    "svp", "evp", "avp",
+}
+
+# Contact Role Classification
+ROLE_DECISION_MAKER_KEYWORDS = {
+    "ceo", "cfo", "coo", "cto", "cio", "ciso", "chief", "president",
+    "owner", "founder", "managing director", "general manager", "partner",
+}
+ROLE_INFLUENCER_KEYWORDS = {
+    "director", "head of", "vp", "vice president", "svp", "evp",
+    "senior manager", "principal", "lead",
+}
+
+# Engagement signals that count toward gate
+ENGAGEMENT_SIGNALS = {"email_open", "replied", "meeting_booked", "demoed"}
+
+# Trigger events that count toward gate
+TRIGGER_HEADCOUNT_GROWTH_THRESHOLD = 0.10  # 10% growth = trigger
+TRIGGER_FUNDING_RECENCY_DAYS = 365  # Funding within last year = trigger
+
+# Contact entry requirements
+CONTACT_REQUIRED_FIELDS = {"email", "owner_id"}  # Must have both
+
+# Archive reasons
+ARCHIVE_REASON_NO_OWNER = "No Owner"
+ARCHIVE_REASON_NO_EMAIL = "No Email"
+ARCHIVE_REASON_BOUNCED = "Bounced"
+ARCHIVE_REASON_DNC = "DNC"
+ARCHIVE_REASON_NO_OUTREACH = "No Outreach"
+ARCHIVE_REASON_GATE_FAIL = "Gate Fail"
+ARCHIVE_REASON_NO_COMPANY = "No Company"
+ARCHIVE_REASON_MANUAL = "Manual"
+
+# Governance enforcement modes
+GOVERNANCE_MODE_STRICT = "strict"    # Reject all non-qualifying
+GOVERNANCE_MODE_REVIEW = "review"    # Flag for review but allow
+GOVERNANCE_MODE_AUDIT = "audit"      # Log only, don't block
+
+# Anti-noise thresholds
+MIN_DATA_COMPLETENESS = 0.4  # Company must have >= 40% of key fields populated
+COMPANY_KEY_FIELDS = [
+    "domain", "industry", "num_employees", "country",
+    "website_url", "phone",
+]
+
+# Data protection — soft delete cooldown
+SOFT_DELETE_DAYS = 30  # Days before soft-deleted records can be hard-deleted
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # NOTION DATABASE IDS (loaded from env at runtime, these are just references)
 # ═══════════════════════════════════════════════════════════════════════════════
 # NOTION_DATABASE_ID_CONTACTS = env

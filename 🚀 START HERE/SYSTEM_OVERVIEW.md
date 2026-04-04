@@ -1,17 +1,18 @@
-# AI Sales OS v4.2 — System Overview
+# AI Sales OS v5.0 — System Overview
 
 ## Architecture
 
 ```
 ┌──────────────┐     ┌──────────────────────────┐     ┌──────────────┐     ┌───────────────┐
-│  Apollo.io   │────►│  Python Scripts (19)      │────►│   Notion     │────►│ GitHub Actions│
+│  Apollo.io   │────►│  Python Scripts (25)      │────►│   Notion     │────►│ GitHub Actions│
 │  (Data)      │     │  Sync + Enrich + Score +  │     │  (CRM Hub)   │     │ (Daily Cron)  │
 └──────────────┘     │  Action + Sequence + Meet │     └──────────────┘     └───────────────┘
- 44,875 contacts     └──────────────────────────┘      7 Databases          2-job pipeline
- 15,407 companies                                      HOT/WARM/COLD Views  + weekly calibration
+ 44,875 contacts     │  + Govern + Analyze       │      7 Databases          2-job pipeline
+ 15,407 companies    └──────────────────────────┘      Company-Centric       + weekly calibration
+                                                        HOT/WARM/COLD Views  Live Dashboard
 ```
 
-## Autonomous Sales Loop (v4.2 — Local Timestamp Fix)
+## Autonomous Sales Loop (v5.0 — Company-Centric)
 
 ```
 Score → Task → Sequence → Meet → Analyze → Opportunity → Calibrate → Better Score

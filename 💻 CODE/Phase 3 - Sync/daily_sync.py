@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 """
-Apollo → Notion Sync (v3.0 — Company-Centric)
+Apollo → Notion Sync (v4.0 — Company-Centric + Governed Ingestion)
 
 Three sync modes:
     incremental  – Pull recently updated records (default: last 24h)
     backfill     – Pull a wider historical range with checkpoint logging
     full         – Pull ALL records from Apollo (no date filter), full rebuild
 
+v4.0 changes:
+    - Integrated Ingestion Gate: companies must pass gate before sync
+    - --gate flag controls gate mode (strict/review/audit/off)
+    - Gate runs AFTER Apollo fetch, BEFORE Notion write
+
 Usage:
     python daily_sync.py --mode incremental --days 7
+    python daily_sync.py --mode incremental --gate strict       # enforce gate
+    python daily_sync.py --mode incremental --gate audit        # log only
+    python daily_sync.py --mode incremental --gate off          # disable gate
     python daily_sync.py --mode backfill --days 365
     python daily_sync.py --mode full
     python daily_sync.py                          # defaults to incremental --hours 24
@@ -60,7 +68,10 @@ from constants import (
     COMPANY_STAGE_CUSTOMER,
     COMPANY_STAGE_CHURNED,
     COMPANY_STAGE_ARCHIVED,
+    GOVERNANCE_MODE_STRICT,
+    GOVERNANCE_MODE_AUDIT,
 )
+from ingestion_gate import IngestionGateRunner
 
 # ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -1162,12 +1173,15 @@ def compute_company_stage(contacts: List[Dict], company_lookup: Dict):
 
 # ─── Mode Runners ────────────────────────────────────────────────────────────
 
-def run_incremental(since: datetime, stats: SyncStats):
+def run_incremental(since: datetime, stats: SyncStats, gate_mode: str = "off"):
     """
     Incremental mode: fetch records updated since `since` and sync to Notion.
     Designed for daily/hourly runs (GitHub Actions, cron).
+
+    v4.0: Integrated Ingestion Gate between Apollo fetch and Notion write.
     """
     logger.info(f"MODE: INCREMENTAL — syncing changes since {since.strftime('%Y-%m-%d %H:%M')} UTC")
+    logger.info(f"  Ingestion Gate: {gate_mode.upper()}")
 
     # Pre-load Notion data
     logger.info("Step 1: Pre-loading Notion data...")
@@ -1183,6 +1197,17 @@ def run_incremental(since: datetime, stats: SyncStats):
         logger.info("No updates found in Apollo. Done!")
         return
 
+    # ── Ingestion Gate (v6.0) ────────────────────────────────────────
+    if gate_mode != "off" and accounts:
+        logger.info(f"Step 2.5: Running Ingestion Gate on {len(accounts)} companies...")
+        gate_runner = IngestionGateRunner(mode=gate_mode)
+        accounts, gate_results = gate_runner.gate_companies(accounts, contacts)
+        logger.info(gate_runner.summary())
+
+        # Save gate report for audit trail
+        gate_runner.save_report(gate_results, "ingestion_gate_report.json")
+    # ─────────────────────────────────────────────────────────────────
+
     # Sync companies first (contacts reference them)
     if accounts:
         logger.info(f"Step 3: Syncing {len(accounts)} companies to Notion...")
@@ -1191,6 +1216,14 @@ def run_incremental(since: datetime, stats: SyncStats):
     # Filter contacts: must have owner + email sent
     if contacts:
         contacts = filter_qualified_contacts(contacts, stats)
+
+    # ── Contact Gate (v6.0) ──────────────────────────────────────────
+    if gate_mode != "off" and contacts:
+        logger.info(f"Step 3.5: Running Contact Gate on {len(contacts)} contacts...")
+        gate_runner = IngestionGateRunner(mode=gate_mode)
+        contacts, contact_gate_results = gate_runner.gate_contacts(contacts, company_lookup)
+        logger.info(f"  Contact Gate: {len(contacts)} passed")
+    # ─────────────────────────────────────────────────────────────────
 
     # Sync contacts
     if contacts:
@@ -1340,6 +1373,12 @@ Examples:
     )
     parser.add_argument("--hours", type=int, default=None, help="Sync records updated in the last N hours")
     parser.add_argument("--days", type=int, default=None, help="Sync records updated in the last N days")
+    parser.add_argument(
+        "--gate",
+        choices=["strict", "review", "audit", "off"],
+        default="off",
+        help="Ingestion gate mode: strict=block, review=flag, audit=log only, off=disabled (default: off)",
+    )
     args = parser.parse_args()
 
     # Validate args
@@ -1370,7 +1409,7 @@ Examples:
 
     try:
         if args.mode == "incremental":
-            run_incremental(since, stats)
+            run_incremental(since, stats, gate_mode=args.gate)
         elif args.mode == "backfill":
             run_backfill(since, stats)
         elif args.mode == "full":

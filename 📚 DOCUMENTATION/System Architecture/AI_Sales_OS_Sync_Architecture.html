@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sales OS — Enterprise File Governance & Sync Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-tertiary: #242d3d;
+            --accent-primary: #0f3460;
+            --accent-secondary: #16213e;
+            --accent-bright: #e94560;
+            --accent-success: #2ecc71;
+            --accent-warning: #f39c12;
+            --accent-danger: #e74c3c;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --text-muted: #95a5a6;
+            --border-color: #34495e;
+            --code-bg: #1e2836;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Sticky Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background-color: var(--bg-secondary);
+            border-right: 2px solid var(--accent-primary);
+            overflow-y: auto;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        .sidebar-header h1 {
+            font-size: 16px;
+            color: var(--accent-bright);
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-toc {
+            list-style: none;
+        }
+
+        .sidebar-toc li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-toc a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-left: 3px solid transparent;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toc a:hover {
+            color: var(--accent-bright);
+            border-left-color: var(--accent-bright);
+            padding-left: 16px;
+        }
+
+        /* Main Content */
+        main {
+            margin-left: 280px;
+            padding: 40px;
+            background-color: var(--bg-primary);
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            padding: 50px 40px;
+            margin: -40px -40px 40px -40px;
+            border-bottom: 3px solid var(--accent-bright);
+        }
+
+        header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            color: #ffffff;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 10px;
+        }
+
+        header .metadata {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        section {
+            margin-bottom: 50px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background-color: var(--accent-primary);
+            padding: 20px;
+            border-bottom: 2px solid var(--accent-bright);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .section-header:hover {
+            background-color: var(--accent-secondary);
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            color: #ffffff;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .toggle-icon {
+            font-size: 20px;
+            color: var(--accent-bright);
+            transition: transform 0.3s ease;
+        }
+
+        .section-content {
+            padding: 30px;
+            display: block;
+        }
+
+        .section-content.collapsed {
+            display: none;
+        }
+
+        h3 {
+            font-size: 18px;
+            color: var(--accent-bright);
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent-bright);
+            padding-left: 12px;
+        }
+
+        h3:first-child {
+            margin-top: 0;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        thead {
+            background-color: var(--bg-tertiary);
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            color: var(--accent-bright);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        tbody tr:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        /* Code blocks */
+        pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        code {
+            color: var(--accent-bright);
+            font-family: 'Courier New', monospace;
+        }
+
+        pre code {
+            color: var(--text-secondary);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .badge-success {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: var(--accent-success);
+            border: 1px solid var(--accent-success);
+        }
+
+        .badge-warning {
+            background-color: rgba(243, 156, 18, 0.2);
+            color: var(--accent-warning);
+            border: 1px solid var(--accent-warning);
+        }
+
+        .badge-danger {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: var(--accent-danger);
+            border: 1px solid var(--accent-danger);
+        }
+
+        .badge-info {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            border: 1px solid #3498db;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+            display: flex;
+            gap: 12px;
+        }
+
+        .alert-info {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left-color: #3498db;
+            color: #85c1e9;
+        }
+
+        .alert-warning {
+            background-color: rgba(243, 156, 18, 0.1);
+            border-left-color: var(--accent-warning);
+            color: var(--accent-warning);
+        }
+
+        .alert-danger {
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left-color: var(--accent-danger);
+            color: var(--accent-danger);
+        }
+
+        .alert-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            main {
+                margin-left: 240px;
+                padding: 30px;
+            }
+
+            header {
+                margin: -30px -30px 30px -30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 2px solid var(--accent-primary);
+                overflow-y: visible;
+            }
+
+            main {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            header {
+                margin: -20px -20px 20px -20px;
+                padding: 30px 20px;
+            }
+
+            header h1 {
+                font-size: 32px;
+            }
+
+            .section-header h2 {
+                font-size: 18px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .sidebar {
+                display: none;
+            }
+
+            main {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            section {
+                page-break-inside: avoid;
+                margin-bottom: 30px;
+            }
+
+            .section-content {
+                display: block !important;
+            }
+        }
+
+        footer {
+            background-color: var(--bg-secondary);
+            border-top: 2px solid var(--accent-primary);
+            padding: 30px 40px;
+            margin-left: 280px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            footer {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sticky Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>🏗️ SYNC ARCH</h1>
+        </div>
+        <ul class="sidebar-toc">
+            <li><a href="#section-1">1. Executive Architecture</a></li>
+            <li><a href="#section-2">2. Source of Truth</a></li>
+            <li><a href="#section-3">3. Sync Rules</a></li>
+            <li><a href="#section-4">4. Conflict Resolution</a></li>
+            <li><a href="#section-5">5. File Classification</a></li>
+            <li><a href="#section-6">6. Folder Structure</a></li>
+            <li><a href="#section-7">7. GitHub Policy</a></li>
+            <li><a href="#section-8">8. Drive Policy</a></li>
+            <li><a href="#section-9">9. Local Policy</a></li>
+            <li><a href="#section-10">10. Manifest Schema</a></li>
+            <li><a href="#section-11">11. Implementation</a></li>
+            <li><a href="#section-12">12. Sync Pseudocode</a></li>
+            <li><a href="#section-13">13. Examples</a></li>
+            <li><a href="#section-14">14. Logging</a></li>
+            <li><a href="#section-15">15. Safety Rules</a></li>
+        </ul>
+    </aside>
+
+    <main>
+        <header>
+            <h1>Enterprise File Governance & Sync Architecture</h1>
+            <p>AI Sales OS — Production-Grade Multi-Source Synchronization System</p>
+            <div class="metadata">
+                <span>📅 Generated: March 31, 2026</span>
+                <span>🔐 Version: 1.0</span>
+                <span>📊 Status: Active Production</span>
+            </div>
+        </header>
+
+        <!-- SECTION 1: Executive Architecture -->
+        <section id="section-1">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>1. Executive Architecture</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <p>The AI Sales OS Sync Architecture orchestrates file governance across three distributed sources: Local Folder (working environment), Google Drive (business hub), and GitHub (code repository). The system applies the principle of <strong>hybrid push-pull synchronization</strong> with a decentralized source-of-truth model.</p>
+
+                <h3>The Three Pillars</h3>
+                <p>Local Folder ↔ Sync Engine ↔ Google Drive ↔ Manifest DB ↔ GitHub</p>
+
+                <h3>Key Architecture Principles</h3>
+                <ul>
+                    <li><strong>No Single Source of Truth:</strong> Truth is decentralized and file-type specific</li>
+                    <li><strong>Manifest-Driven:</strong> Unified manifest built from 3 scans, drives all sync decisions</li>
+                    <li><strong>Conflict-First:</strong> Detection before resolution; manual review for binary conflicts</li>
+                    <li><strong>Hash-Based Deduplication:</strong> Files identified by content hash, not path/name</li>
+                    <li><strong>Backup-Before-Destructive:</strong> Every risky operation preceded by backup snapshot</li>
+                    <li><strong>Audit Trail Complete:</strong> Every sync action logged with source, target, decision, result</li>
+                </ul>
+
+                <h3>Sync Flow Architecture</h3>
+                <div class="alert alert-info">
+                    <div class="alert-icon">ℹ️</div>
+                    <div>
+                        <strong>Flow:</strong> Local edits → staging → sync decision → push to Drive/GitHub based on file type. Sync engine polls all 3 sources, builds unified manifest, detects changes, resolves conflicts per rules, executes sync actions, generates audit trail.
+                    </div>
+                </div>
+
+                <h3>Decentralized Source of Truth Model</h3>
+                <p>Each file type has its own source of truth. This eliminates conflicts by design:</p>
+                <ul>
+                    <li><strong>Code files (.py, .js):</strong> GitHub is primary. Local is working copy. Drive doesn't store code.</li>
+                    <li><strong>Business docs (.docx, .pptx, .xlsx):</strong> Drive is primary. Local is working copy. GitHub stores only small/critical docs.</li>
+                    <li><strong>Markdown (.md):</strong> GitHub is primary (version history). Drive is secondary (collaboration).</li>
+                    <li><strong>Secrets (.env):</strong> Local ONLY. Never sync to Drive or GitHub.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Source of Truth Matrix -->
+        <section id="section-2">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>2. Source of Truth Matrix</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <p>This matrix defines the primary, secondary, and tertiary sources for each file type, plus sync direction rules.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File Type</th>
+                            <th>Extensions</th>
+                            <th>Primary SoT</th>
+                            <th>→ GitHub</th>
+                            <th>→ Drive</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Python Code</strong></td>
+                            <td>.py</td>
+                            <td><span class="badge badge-success">GitHub</span></td>
+                            <td><span class="badge badge-success">YES</span></td>
+                            <td><span class="badge badge-danger">NO</span></td>
+                            <td>Git version control</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Config Files</strong></td>
+                            <td>.yaml, .yml, .json</td>
+                            <td><span class="badge badge-success">GitHub</span></td>
+                            <td><span class="badge badge-success">YES</span></td>
+                            <td><span class="badge badge-danger">NO</span></td>
+                            <td>Non-sensitive only</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Word Docs</strong></td>
+                            <td>.docx, .doc</td>
+                            <td><span class="badge badge-info">Drive</span></td>
+                            <td><span class="badge badge-danger">NO</span></td>
+                            <td><span class="badge badge-success">YES</span></td>
+                            <td>Business docs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Presentations</strong></td>
+                            <td>.pptx, .ppt</td>
+                            <td><span class="badge badge-info">Drive</span></td>
+                            <td><span class="badge badge-danger">NO</span></td>
+                            <td><span class="badge badge-success">YES</span></td>
+                            <td>Sales/exec decks</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Spreadsheets</strong></td>
+                            <td>.xlsx, .xls</td>
+                            <td><span class="badge badge-info">Drive</span></td>
+                            <td><span class="badge badge-danger">NO</span></td>
+                            <td><span class="badge badge-success">YES</span></td>
+                            <td>Business data</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CSV Data</strong></td>
+                            <td>.csv</td>
+                            <td><span class="badge badge-success">GitHub</span></td>
+                            <td><span class="badge badge-info">&lt; 50MB</span></td>
+                            <td><span class="badge badge-info">BACKUP</span></td>
+                            <td>If non-sensitive</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Secrets</strong></td>
+                            <td>.env</td>
+                            <td><span class="badge badge-danger">Local ONLY</span></td>
+                            <td><span class="badge badge-danger">NEVER</span></td>
+                            <td><span class="badge badge-danger">NEVER</span></td>
+                            <td>SECURITY CRITICAL</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert alert-warning">
+                    <div class="alert-icon">⚠️</div>
+                    <div>
+                        <strong>Critical Rule:</strong> Never override a file's source of truth. If GitHub is SoT for code, never edit code directly in Drive. Make the edit locally, push to GitHub, then sync down to Drive as secondary.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: Sync Rules Table -->
+        <section id="section-3">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>3. Sync Rules Table</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <p>Deterministic rules that govern sync behavior for each file type and condition.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rule ID</th>
+                            <th>Rule</th>
+                            <th>Source</th>
+                            <th>Target</th>
+                            <th>Condition</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-info">SR-001</span></td>
+                            <td>Code push</td>
+                            <td>Local</td>
+                            <td>GitHub</td>
+                            <td>.py/.js modified locally</td>
+                            <td><code>git add + commit + push</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-info">SR-002</span></td>
+                            <td>Code pull</td>
+                            <td>GitHub</td>
+                            <td>Local</td>
+                            <td>Remote has newer commits</td>
+                            <td><code>git pull --rebase</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-info">SR-003</span></td>
+                            <td>Doc upload</td>
+                            <td>Local</td>
+                            <td>Drive</td>
+                            <td>.docx/.pptx modified</td>
+                            <td>Upload to matching Drive folder</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-info">SR-004</span></td>
+                            <td>Doc download</td>
+                            <td>Drive</td>
+                            <td>Local</td>
+                            <td>Drive version newer</td>
+                            <td>Download to local path</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-danger">SR-007</span></td>
+                            <td>Secret block</td>
+                            <td>Local</td>
+                            <td>GitHub/Drive</td>
+                            <td>.env detected</td>
+                            <td><strong>BLOCK</strong> — never sync</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Rule Execution Priority</h3>
+                <p>Rules are evaluated in order: Security rules (SR-007) execute first, then file-specific rules, then protection rules last.</p>
+
+                <div class="alert alert-info">
+                    <div class="alert-icon">ℹ️</div>
+                    <div>
+                        <strong>Rule Conflict Resolution:</strong> If multiple rules apply to the same file, the rule with highest priority (smallest ID) wins.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: Conflict Resolution -->
+        <section id="section-4">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>4. Conflict Resolution Table</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <p>Deterministic conflict resolution strategy for each conflict type and file category.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Conflict Type</th>
+                            <th>File Types</th>
+                            <th>Strategy</th>
+                            <th>Auto/Manual</th>
+                            <th>Priority</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Both modified (text)</strong></td>
+                            <td>.py, .md, .json</td>
+                            <td>Attempt git merge/diff. If clean → auto. If conflicts → manual</td>
+                            <td>Auto then Manual</td>
+                            <td>GitHub wins if unsure</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Both modified (binary)</strong></td>
+                            <td>.docx, .pptx, .xlsx</td>
+                            <td>Create conflict copies: `file_LOCAL` + `file_DRIVE`. Flag manual review</td>
+                            <td>Manual</td>
+                            <td>Drive wins (latest approved)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Deleted in one</strong></td>
+                            <td>Any</td>
+                            <td>Do NOT propagate delete. Move to `.trash/` with timestamp. Alert user</td>
+                            <td>Manual</td>
+                            <td>Preserve always</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Renamed</strong></td>
+                            <td>Any</td>
+                            <td>If hash matches → treat as rename. If hash differs → treat as new file</td>
+                            <td>Auto</td>
+                            <td>Hash-based</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Duplicate detected</strong></td>
+                            <td>Any</td>
+                            <td>Flag for review. Suggest keeping one per folder governance</td>
+                            <td>Manual</td>
+                            <td>Folder structure wins</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert alert-warning">
+                    <div class="alert-icon">⚠️</div>
+                    <div>
+                        <strong>Binary Conflict Policy:</strong> Binary files (.docx, .pptx, .xlsx) NEVER auto-merge. Create conflict copies and flag for manual review. Preserve all versions until human decision.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: File Classification -->
+        <section id="section-5">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>5. File Classification Table</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <p>Detailed classification rules for each of the major file categories.</p>
+
+                <h3>Code Files (.py, .js, .ts, .sql)</h3>
+                <ul>
+                    <li><strong>Primary Source:</strong> GitHub</li>
+                    <li><strong>Versioning:</strong> Git (full history)</li>
+                    <li><strong>Sync to Drive:</strong> NO (except HTML dashboards)</li>
+                    <li><strong>Sync to GitHub:</strong> YES (required)</li>
+                    <li><strong>Conflict strategy:</strong> Git merge for text files</li>
+                    <li><strong>Naming:</strong> snake_case, no spaces</li>
+                </ul>
+
+                <h3>Documentation (.md, .txt, .docx, .pdf)</h3>
+                <ul>
+                    <li><strong>.md/.txt:</strong> GitHub primary, Drive secondary</li>
+                    <li><strong>.docx/.pdf:</strong> Drive primary, GitHub optional</li>
+                    <li><strong>Versioning:</strong> Git for .md, Drive version history for .docx/.pdf</li>
+                    <li><strong>Conflict strategy:</strong> Git merge for .md, manual for .docx/.pdf</li>
+                </ul>
+
+                <h3>Presentations (.pptx, .ppt, .key)</h3>
+                <ul>
+                    <li><strong>Primary Source:</strong> Google Drive</li>
+                    <li><strong>Versioning:</strong> Drive version history</li>
+                    <li><strong>Sync to GitHub:</strong> NO</li>
+                    <li><strong>Sync to Drive:</strong> YES (required)</li>
+                    <li><strong>Naming:</strong> <code>AI_Sales_OS_[Type]_v[X.Y].[ext]</code></li>
+                </ul>
+
+                <h3>Spreadsheets (.csv, .xlsx, .xls, .json)</h3>
+                <ul>
+                    <li><strong>.csv/.json:</strong> GitHub (if < 50MB, non-sensitive)</li>
+                    <li><strong>.xlsx/.xls:</strong> Drive primary</li>
+                    <li><strong>.parquet:</strong> Drive or GitHub depending on size</li>
+                </ul>
+
+                <h3>Media & Archives</h3>
+                <ul>
+                    <li><strong>Images < 1MB:</strong> GitHub OK</li>
+                    <li><strong>Images > 1MB or videos:</strong> Drive only</li>
+                    <li><strong>Archives (.zip, .rar):</strong> Drive only, never GitHub</li>
+                    <li><strong>Brand assets:</strong> GitHub + Drive</li>
+                </ul>
+
+                <h3>Config & Secrets</h3>
+                <ul>
+                    <li><strong>.env:</strong> Local ONLY, NEVER sync</li>
+                    <li><strong>.env.example:</strong> GitHub (template)</li>
+                    <li><strong>.gitignore, requirements.txt:</strong> GitHub</li>
+                    <li><strong>Dockerfile:</strong> GitHub</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION 6: Folder Structure -->
+        <section id="section-6">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>6. Recommended Folder Structure</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <p>Unified folder structure that should be mirrored across all 3 sources (with exceptions noted). NOTE: Current project uses emoji names. Recommended structure uses standard names for cross-platform compatibility.</p>
+
+                <pre>AI Sales OS/
+├── src/                          # GitHub ✓ | Drive ✗ | Local ✓
+│   ├── sync/                     # Sync scripts (daily_sync.py, lead_score.py, etc.)
+│   ├── file_sync/                # NEW: The sync engine itself
+│   └── tests/
+├── docs/                         # GitHub ✓ | Drive ✓ | Local ✓
+│   ├── architecture/
+│   ├── guides/
+│   └── analysis/
+├── presentations/                # GitHub ✗ | Drive ✓ | Local ✓
+│   ├── english/
+│   ├── arabic/
+│   └── executive/
+├── data/                         # GitHub (selected) | Drive ✓ | Local ✓
+│   ├── imports/
+│   └── exports/
+├── reports/                      # GitHub ✗ | Drive ✓ | Local ✓
+├── assets/                       # GitHub (small) | Drive ✓ | Local ✓
+├── config/                       # GitHub ✓ | Drive ✗ | Local ✓
+├── archive/                      # GitHub ✗ | Drive ✓ | Local ✓
+├── backups/                      # GitHub ✗ | Drive ✓ | Local ✓
+├── .github/workflows/            # GitHub ✓ | Drive ✗ | Local ✓
+├── .claude/skills/               # GitHub ✓ | Drive ✗ | Local ✓
+├── logs/                         # GitHub ✗ | Drive ✗ | Local ✓ (ephemeral)
+├── .trash/                       # GitHub ✗ | Drive ✗ | Local ✓ (staging)
+└── manifest/                     # GitHub ✓ | Drive ✗ | Local ✓
+    ├── sync_manifest.json
+    └── sync_history.jsonl</pre>
+
+                <h3>Migration Mapping: Old → New Names</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Old Name (Emoji)</th>
+                            <th>New Name</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>💻 CODE/Phase 3 - Sync</td>
+                            <td>src/sync/</td>
+                            <td>Main production scripts</td>
+                        </tr>
+                        <tr>
+                            <td>🎯 PRESENTATIONS</td>
+                            <td>presentations/</td>
+                            <td>Slide decks & pitches</td>
+                        </tr>
+                        <tr>
+                            <td>📊 DATA</td>
+                            <td>data/</td>
+                            <td>Imports, exports, snapshots</td>
+                        </tr>
+                        <tr>
+                            <td>📚 DOCUMENTATION</td>
+                            <td>docs/</td>
+                            <td>Technical documentation</td>
+                        </tr>
+                        <tr>
+                            <td>🗂️ ARCHIVED</td>
+                            <td>archive/</td>
+                            <td>Legacy code & old docs</td>
+                        </tr>
+                        <tr>
+                            <td>🚀 START HERE</td>
+                            <td>docs/quickstart/</td>
+                            <td>Entry guides</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert alert-info">
+                    <div class="alert-icon">ℹ️</div>
+                    <div>
+                        <strong>Cross-Platform Compatibility:</strong> Emoji folder names work on macOS/Linux but cause issues on Windows and in Git. Recommend migration to standard ASCII names with gradual rollout.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 7: GitHub Policy -->
+        <section id="section-7">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>7. GitHub Policy</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <h3>What Goes to GitHub</h3>
+                <ul>
+                    <li>All .py, .js, .ts, .sh, .sql code files</li>
+                    <li>.md documentation files</li>
+                    <li>.yaml/.yml config and workflow files</li>
+                    <li>.json config files (non-sensitive)</li>
+                    <li>.csv data files (< 50MB, non-sensitive)</li>
+                    <li>.html dashboards and tools</li>
+                    <li>.gitignore, requirements.txt, Dockerfile</li>
+                    <li>.env.example (template only)</li>
+                    <li>Small images (< 1MB) used in README/docs</li>
+                    <li>Claude skills (.claude/skills/)</li>
+                </ul>
+
+                <h3>What NEVER Goes to GitHub</h3>
+                <ul>
+                    <li>.env (secrets)</li>
+                    <li>.pptx, .docx, .xlsx (unless explicitly needed and < 10MB)</li>
+                    <li>.mp4, .mov (videos)</li>
+                    <li>.zip, .rar, .7z (archives)</li>
+                    <li>Large .pdf (> 10MB)</li>
+                    <li>__pycache__/, .venv/, node_modules/</li>
+                    <li>.log files</li>
+                    <li>Confidential business data</li>
+                    <li>Personal/client data files</li>
+                </ul>
+
+                <h3>Recommended .gitignore</h3>
+                <pre># Secrets
+.env
+*.pem
+*.key
+credentials.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Binary docs
+*.pptx
+*.docx
+*.xlsx
+
+# Media
+*.mp4
+*.mov
+
+# Archives
+*.zip
+*.rar
+
+# Temp
+.trash/
+backups/
+*.tmp
+*.bak</pre>
+
+                <h3>Branch Strategy</h3>
+                <ul>
+                    <li><strong>main</strong> — production, always stable</li>
+                    <li><strong>develop</strong> — integration branch</li>
+                    <li><strong>feature/*</strong> — new features</li>
+                    <li><strong>fix/*</strong> — bug fixes</li>
+                    <li><strong>sync/*</strong> — sync engine changes</li>
+                </ul>
+
+                <h3>Commit Format</h3>
+                <p><code>[scope] action: description</code></p>
+                <p>Examples:</p>
+                <ul>
+                    <li><code>[sync] fix: handle Apollo 429 rate limit</code></li>
+                    <li><code>[score] add: Lead Tier writer v1.1</code></li>
+                    <li><code>[docs] update: architecture guide with conflict resolution</code></li>
+                </ul>
+
+                <h3>Naming Conventions</h3>
+                <ul>
+                    <li><strong>Files:</strong> snake_case.py</li>
+                    <li><strong>Folders:</strong> lowercase, hyphens OK</li>
+                    <li><strong>Branches:</strong> lowercase/with-hyphens</li>
+                    <li><strong>No spaces, no emoji</strong> in git-tracked paths (cross-platform issues)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION 8: Google Drive Policy -->
+        <section id="section-8">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>8. Google Drive Policy</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <h3>Drive Structure</h3>
+                <p>Drive should mirror the recommended folder structure with these exceptions:</p>
+                <ul>
+                    <li><strong>NO src/ folder:</strong> Code stays in GitHub, local working copies only</li>
+                    <li><strong>NO .github/ folder:</strong> Workflows stay in GitHub only</li>
+                    <li><strong>YES presentations/, docs/, data/, reports/, assets/, backups/</strong> — all business files</li>
+                </ul>
+
+                <h3>Rules</h3>
+                <ul>
+                    <li><strong>Primary for:</strong> .pptx, .docx, .xlsx, .pdf (business docs)</li>
+                    <li><strong>Version history:</strong> Keep last 100 versions (Drive default)</li>
+                    <li><strong>Naming:</strong> <code>AI_Sales_OS_[Description]_v[X.Y].[ext]</code> for major docs</li>
+                    <li><strong>Folder permissions:</strong> Owner=Ragheed, Editor=team, Viewer=stakeholders</li>
+                    <li><strong>Sharing:</strong> Use Drive sharing for collaboration, not email attachments</li>
+                    <li><strong>Weekly:</strong> Review Drive for orphan files not in manifest</li>
+                    <li><strong>NEVER store:</strong> .env or secrets in Drive</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION 9: Local Folder Policy -->
+        <section id="section-9">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>9. Local Folder Policy</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <h3>Local is the Working Environment</h3>
+                <ul>
+                    <li><strong>Daily edits:</strong> All changes happen here first</li>
+                    <li><strong>Before syncing:</strong> Review changes, classify files, run manifest comparison</li>
+                    <li><strong>Staging area:</strong> <code>_staging/</code> folder for files being prepared</li>
+                    <li><strong>Temporary exports:</strong> <code>_temp/</code> folder, auto-cleaned after 7 days</li>
+                    <li><strong>Backup snapshots:</strong> Weekly automatic via backup_manager.py</li>
+                </ul>
+
+                <h3>Pre-Sync Checklist</h3>
+                <ul>
+                    <li>(1) No uncommitted secrets</li>
+                    <li>(2) No large binaries staged for git</li>
+                    <li>(3) Manifest up to date</li>
+                    <li>(4) No unstaged changes before push</li>
+                </ul>
+
+                <h3>Delete Safety</h3>
+                <p><strong>NEVER delete locally without checking if file exists in other sources first.</strong> Use the manifest to verify before deleting.</p>
+            </div>
+        </section>
+
+        <!-- SECTION 10: Manifest Schema -->
+        <section id="section-10">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>10. Manifest Schema</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <p>The Manifest is the central intelligence layer. It records every file in the project plus its state across all 3 sources.</p>
+
+                <h3>Manifest JSON Structure</h3>
+                <pre>{
+  "manifest_version": "1.0",
+  "project": "AI Sales OS",
+  "generated_at": "2026-03-31T14:00:00Z",
+  "total_files": 142,
+  "files": [
+    {
+      "file_id": "f_001",
+      "file_name": "daily_sync.py",
+      "relative_path": "src/sync/daily_sync.py",
+      "file_type": "code",
+      "extension": ".py",
+      "classification": "code_python",
+      "source_of_truth": "github",
+      "size_bytes": 45230,
+      "sources": {
+        "local": {
+          "exists": true,
+          "path": "/Users/ragheed/AI Sales OS/src/sync/",
+          "last_modified": "2026-03-31T10:15:00Z",
+          "hash_sha256": "a1b2c3d4...",
+          "size_bytes": 45230
+        },
+        "drive": {
+          "exists": false,
+          "file_id": null,
+          "last_modified": null,
+          "hash_md5": null
+        },
+        "github": {
+          "exists": true,
+          "path": "src/sync/daily_sync.py",
+          "last_modified": "2026-03-31T09:30:00Z",
+          "hash_sha256": "a1b2c3d4...",
+          "commit_sha": "abc123f"
+        }
+      },
+      "status": "synced",
+      "sync_decision": "no_action",
+      "conflict_flag": false,
+      "review_required": false,
+      "last_synced": "2026-03-31T10:20:00Z",
+      "notes": ""
+    }
+  ]
+}</pre>
+
+                <h3>Status Values</h3>
+                <ul>
+                    <li><strong>synced</strong> — all sources in sync</li>
+                    <li><strong>local_newer</strong> — local version ahead</li>
+                    <li><strong>remote_newer</strong> — remote version ahead</li>
+                    <li><strong>conflict</strong> — conflicting versions detected</li>
+                    <li><strong>missing_local</strong> — not on local</li>
+                    <li><strong>missing_drive</strong> — not on Drive</li>
+                    <li><strong>missing_github</strong> — not on GitHub</li>
+                    <li><strong>new_file</strong> — newly created</li>
+                    <li><strong>deleted</strong> — marked for deletion</li>
+                    <li><strong>renamed</strong> — path changed</li>
+                    <li><strong>moved</strong> — folder changed</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION 11: Python Implementation -->
+        <section id="section-11">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>11. Python Implementation Plan</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <h3>Module Architecture</h3>
+                <pre>file_sync/
+├── sync_engine.py         # Main orchestrator
+├── scan_local.py          # Walk local filesystem
+├── scan_drive.py          # Google Drive API scanner
+├── scan_github.py         # GitHub API / git commands
+├── classify_files.py      # Classify by type
+├── build_manifest.py      # Build unified manifest
+├── compare_manifests.py   # Detect changes
+├── detect_conflicts.py    # Find conflicts
+├── resolve_conflicts.py   # Apply resolution rules
+├── sync_to_local.py       # Download/copy files
+├── sync_to_drive.py       # Upload to Drive
+├── sync_to_github.py      # Git push
+├── backup_manager.py      # Backup before ops
+├── logging_manager.py     # Audit trail
+├── config.py              # Configuration
+└── models.py              # Data models</pre>
+
+                <h3>Key Modules</h3>
+                <ul>
+                    <li><strong>sync_engine.py:</strong> Main orchestrator — runs full sync cycle. Calls other modules in sequence.</li>
+                    <li><strong>scan_local.py:</strong> Walk filesystem, compute SHA256 hashes, build file list. Returns dict of {path: hash, metadata}</li>
+                    <li><strong>scan_drive.py:</strong> Use Google Drive API to list all files in project folder. Compute MD5 from API response.</li>
+                    <li><strong>scan_github.py:</strong> Use git commands to list tracked files + commits. Get hash from git object store.</li>
+                    <li><strong>build_manifest.py:</strong> Merge 3 scans into unified manifest. Deduplicate by hash.</li>
+                    <li><strong>compare_manifests.py:</strong> Compare current vs previous manifest. Return change list (added, modified, deleted, renamed).</li>
+                    <li><strong>detect_conflicts.py:</strong> For each file, check if it's modified in multiple sources. Flag conflicts.</li>
+                    <li><strong>resolve_conflicts.py:</strong> Apply conflict resolution rules. Return auto-resolved + manual queue.</li>
+                    <li><strong>sync_to_*.py:</strong> Execute sync actions. Handle API errors, retries, backups.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION 12: Sync Engine Pseudocode -->
+        <section id="section-12">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>12. Sync Engine Pseudocode</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <h3>Main Sync Flow</h3>
+                <pre>def run_sync():
+    # 1. Pre-flight checks
+    verify_credentials(drive_api, github_token)
+    create_backup_snapshot()
+    
+    # 2. Scan all sources
+    local_files = scan_local(LOCAL_ROOT)
+    drive_files = scan_drive(DRIVE_FOLDER_ID)
+    github_files = scan_github(REPO_NAME, BRANCH)
+    
+    # 3. Build unified manifest
+    manifest = build_manifest(local_files, drive_files, github_files)
+    
+    # 4. Load previous manifest for comparison
+    prev_manifest = load_manifest("sync_manifest.json")
+    
+    # 5. Detect changes
+    changes = compare_manifests(manifest, prev_manifest)
+    
+    # 6. Classify and route
+    for change in changes:
+        change.classification = classify_file(change)
+        change.source_of_truth = get_source_of_truth(change.classification)
+    
+    # 7. Detect conflicts
+    conflicts = detect_conflicts(changes)
+    auto_resolved, manual_queue = resolve_conflicts(conflicts)
+    
+    # 8. Execute sync actions
+    for action in auto_resolved:
+        if action.target == "local":
+            sync_to_local(action)
+        elif action.target == "drive":
+            sync_to_drive(action)
+        elif action.target == "github":
+            sync_to_github(action)
+    
+    # 9. Save manifest
+    save_manifest(manifest)
+    
+    # 10. Generate report
+    report = generate_sync_report(changes, conflicts, manual_queue)
+    log_audit_trail(report)
+    
+    return report</pre>
+
+                <h3>Pseudocode for Key Functions</h3>
+
+                <h4>build_manifest(local_files, drive_files, github_files)</h4>
+                <pre>def build_manifest(local, drive, github):
+    manifest = {}
+    all_hashes = set()
+    
+    # Collect all hashes
+    all_hashes.update(local.keys())
+    all_hashes.update(drive.keys())
+    all_hashes.update(github.keys())
+    
+    # For each unique hash, create FileRecord
+    for hash in all_hashes:
+        local_info = local.get(hash, {exists: false})
+        drive_info = drive.get(hash, {exists: false})
+        github_info = github.get(hash, {exists: false})
+        
+        record = FileRecord(
+            hash=hash,
+            local=local_info,
+            drive=drive_info,
+            github=github_info,
+            status=determine_status(local_info, drive_info, github_info)
+        )
+        
+        manifest[hash] = record
+    
+    return manifest</pre>
+
+                <h4>detect_conflicts(changes)</h4>
+                <pre>def detect_conflicts(changes):
+    conflicts = []
+    
+    for change in changes:
+        local_exists = change.sources["local"]["exists"]
+        drive_exists = change.sources["drive"]["exists"]
+        github_exists = change.sources["github"]["exists"]
+        
+        local_hash = change.sources["local"].get("hash")
+        drive_hash = change.sources["drive"].get("hash")
+        github_hash = change.sources["github"].get("hash")
+        
+        # Conflict: file modified in 2+ sources with different hashes
+        hashes = [local_hash, drive_hash, github_hash]
+        unique_hashes = set(h for h in hashes if h is not None)
+        
+        if len(unique_hashes) > 1:
+            conflict = Conflict(
+                file=change,
+                type="both_modified",
+                sources_affected=count_true([local_exists, drive_exists, github_exists]),
+                severity="warning"
+            )
+            conflicts.append(conflict)
+    
+    return conflicts</pre>
+
+                <h4>resolve_conflicts(conflicts)</h4>
+                <pre>def resolve_conflicts(conflicts):
+    auto_resolved = []
+    manual_queue = []
+    
+    for conflict in conflicts:
+        file_type = conflict.file.classification
+        
+        # Text files: try git merge
+        if file_type in ["code_python", "markdown", "json"]:
+            try:
+                merged = attempt_git_merge(conflict)
+                auto_resolved.append(merged)
+            except MergeConflictError:
+                manual_queue.append(conflict)
+        
+        # Binary files: never auto-merge
+        elif file_type in ["presentation", "document", "spreadsheet"]:
+            manual_queue.append(conflict)
+        
+        # Deleted-in-one: move to trash
+        elif conflict.type == "deleted_in_one":
+            action = MoveToTrash(file=conflict.file, reason="safe_delete")
+            auto_resolved.append(action)
+        
+        # Rename: auto-update path
+        elif conflict.type == "renamed":
+            action = UpdatePath(file=conflict.file)
+            auto_resolved.append(action)
+    
+    return auto_resolved, manual_queue</pre>
+            </div>
+        </section>
+
+        <!-- SECTION 13: Real-World Conflict Examples -->
+        <section id="section-13">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>13. Real-World Conflict Examples</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <h3>Example 1: Python File Modified Locally, GitHub Newer</h3>
+                <p><strong>Scenario:</strong> You edit <code>daily_sync.py</code> locally at 10:15 AM. GitHub has a newer commit at 11:00 AM.</p>
+                <ul>
+                    <li><strong>Detection:</strong> Local hash != GitHub hash. Local timestamp < GitHub timestamp.</li>
+                    <li><strong>Classification:</strong> Code file → GitHub is Source of Truth</li>
+                    <li><strong>Decision:</strong> <code>git pull --rebase</code> to get GitHub version, then re-apply local changes on top</li>
+                    <li><strong>Auto/Manual:</strong> Auto (git merge). If conflicts → manual</li>
+                    <li><strong>Logging:</strong> <code>SYNC | daily_sync.py | LOCAL_BEHIND | git pull --rebase | auto_resolved</code></li>
+                </ul>
+
+                <h3>Example 2: PowerPoint in Drive and Local Only</h3>
+                <p><strong>Scenario:</strong> <code>AI_Sales_OS_Presentation.pptx</code> exists in Drive (modified 10:00) and Local (modified 09:00). Not in GitHub.</p>
+                <ul>
+                    <li><strong>Detection:</strong> Manifest shows Drive exists, Local exists, GitHub doesn't.</li>
+                    <li><strong>Classification:</strong> Presentation → Drive is Source of Truth. Should NOT be in GitHub.</li>
+                    <li><strong>Decision:</strong> Drive version is newer → download to local. No GitHub action.</li>
+                    <li><strong>Auto/Manual:</strong> Auto</li>
+                    <li><strong>Logging:</strong> <code>SYNC | presentation.pptx | DRIVE_NEWER | download_to_local | auto</code></li>
+                </ul>
+
+                <h3>Example 3: Word Doc Modified in Both Local and Drive</h3>
+                <p><strong>Scenario:</strong> <code>AI_Sales_OS_Audit.docx</code> modified locally 14:00, Drive 15:30. Hashes differ.</p>
+                <ul>
+                    <li><strong>Detection:</strong> Binary file. Two different hashes in 2 sources.</li>
+                    <li><strong>Classification:</strong> .docx → Drive is SoT. Both modified = CONFLICT</li>
+                    <li><strong>Decision:</strong> Cannot merge binary. Create conflict copies: <code>Audit_LOCAL_20260331.docx</code> + <code>Audit_DRIVE_20260331.docx</code>. Flag manual review.</li>
+                    <li><strong>Auto/Manual:</strong> Manual</li>
+                    <li><strong>Logging:</strong> <code>CONFLICT | Audit.docx | BOTH_MODIFIED_BINARY | conflict_copies_created | manual_review</code></li>
+                </ul>
+
+                <h3>Example 4: Excel File Moved Between Folders</h3>
+                <p><strong>Scenario:</strong> <code>companies.xlsx</code> was in <code>data/imports/</code>. Now in <code>data/exports/</code>. Same size, same hash.</p>
+                <ul>
+                    <li><strong>Detection:</strong> Hash matches file in old location. New path detected.</li>
+                    <li><strong>Decision:</strong> Treat as move/rename. Update manifest path. Propagate move to Drive.</li>
+                    <li><strong>Auto/Manual:</strong> Auto</li>
+                    <li><strong>Logging:</strong> <code>MOVE | companies.xlsx | data/imports/ → data/exports/ | path_updated | auto</code></li>
+                </ul>
+
+                <h3>Example 5: PDF Duplicate Detected</h3>
+                <p><strong>Scenario:</strong> Two PDFs with same hash but different names: <code>report_final.pdf</code> and <code>report_v3.pdf</code></p>
+                <ul>
+                    <li><strong>Detection:</strong> Hash matching identifies duplicates.</li>
+                    <li><strong>Decision:</strong> Flag as duplicate. Keep the one in correct folder per governance. Archive the other.</li>
+                    <li><strong>Auto/Manual:</strong> Manual (user decides which to keep)</li>
+                    <li><strong>Logging:</strong> <code>DUPLICATE | report_final.pdf = report_v3.pdf | same_hash | manual_review</code></li>
+                </ul>
+
+                <h3>Example 6: .env Detected (Security Block)</h3>
+                <p><strong>Scenario:</strong> <code>.env</code> file found locally with API keys.</p>
+                <ul>
+                    <li><strong>Detection:</strong> Filename matches secret pattern.</li>
+                    <li><strong>Classification:</strong> Secret file → Local ONLY</li>
+                    <li><strong>Decision:</strong> BLOCK sync. Verify .gitignore includes .env. Alert if staged for git.</li>
+                    <li><strong>Auto/Manual:</strong> Auto (block)</li>
+                    <li><strong>Logging:</strong> <code>BLOCK | .env | SECRET_FILE | sync_blocked | security</code></li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION 14: Logging & Audit Trail -->
+        <section id="section-14">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>14. Logging & Audit Trail</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <h3>Structured Log Format</h3>
+                <pre>[2026-03-31 14:00:00] [SYNC] [INFO] Sync cycle started — scanning 3 sources
+[2026-03-31 14:00:05] [SCAN] [INFO] Local: 142 files found
+[2026-03-31 14:00:12] [SCAN] [INFO] Drive: 89 files found
+[2026-03-31 14:00:18] [SCAN] [INFO] GitHub: 67 files found
+[2026-03-31 14:00:20] [MANIFEST] [INFO] Unified manifest: 156 unique files
+[2026-03-31 14:00:22] [COMPARE] [INFO] Changes detected: 12 new, 5 modified, 2 deleted, 1 conflict
+[2026-03-31 14:00:23] [CONFLICT] [WARN] Binary conflict: AI_Sales_OS_Audit.docx (Local vs Drive)
+[2026-03-31 14:00:25] [RESOLVE] [INFO] Auto-resolved: 18 actions. Manual queue: 1
+[2026-03-31 14:00:30] [SYNC] [INFO] Synced daily_sync.py → GitHub (git push)
+[2026-03-31 14:00:45] [SYNC] [INFO] Downloaded presentation.pptx ← Drive
+[2026-03-31 14:01:00] [BACKUP] [INFO] Pre-sync backup created: backup_20260331_140000.tar.gz
+[2026-03-31 14:01:05] [SYNC] [DONE] Cycle complete. 19 synced, 1 manual review pending.</pre>
+
+                <h3>Audit Trail JSON</h3>
+                <pre>{
+  "timestamp": "2026-03-31T14:00:30Z",
+  "action": "sync",
+  "file": "daily_sync.py",
+  "source": "local",
+  "target": "github",
+  "change_type": "modified",
+  "decision": "push_to_github",
+  "result": "success",
+  "conflict": false,
+  "manual_review": false,
+  "backup_created": true,
+  "hash_before": "abc123",
+  "hash_after": "def456",
+  "duration_ms": 1250,
+  "api_calls": 3
+}</pre>
+
+                <h3>Log Levels</h3>
+                <ul>
+                    <li><strong>INFO:</strong> Normal operations (file synced, no changes, etc.)</li>
+                    <li><strong>WARN:</strong> Unexpected but handled (binary conflict, delete protected, duplicate detected)</li>
+                    <li><strong>ERROR:</strong> Sync failed for this file, but cycle continues</li>
+                    <li><strong>CRITICAL:</strong> Cycle-level failure (no credentials, backup failed)</li>
+                </ul>
+
+                <h3>Audit Trail Retention</h3>
+                <ul>
+                    <li>Keep 90 days of detailed logs</li>
+                    <li>Keep 2 years of summary stats</li>
+                    <li>Auto-archive logs older than 90 days</li>
+                    <li>Never delete audit trail (compliance requirement)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION 15: Safety Rules -->
+        <section id="section-15">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>15. Safety Rules</h2>
+                <span class="toggle-icon">−</span>
+            </div>
+            <div class="section-content">
+                <p>These are non-negotiable rules that protect the integrity of the multi-source sync system.</p>
+
+                <div class="alert alert-danger">
+                    <div class="alert-icon">⛔</div>
+                    <div>
+                        <strong>Rule 1:</strong> NEVER delete a file permanently without creating a backup first
+                    </div>
+                </div>
+
+                <div class="alert alert-danger">
+                    <div class="alert-icon">⛔</div>
+                    <div>
+                        <strong>Rule 2:</strong> NEVER propagate a delete from one source to all sources automatically
+                    </div>
+                </div>
+
+                <div class="alert alert-danger">
+                    <div class="alert-icon">⛔</div>
+                    <div>
+                        <strong>Rule 3:</strong> NEVER sync .env, credentials, API keys, or secrets to GitHub or Drive
+                    </div>
+                </div>
+
+                <div class="alert alert-danger">
+                    <div class="alert-icon">⛔</div>
+                    <div>
+                        <strong>Rule 4:</strong> NEVER auto-merge binary files (.docx, .pptx, .xlsx, .pdf, images)
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <div class="alert-icon">⚠️</div>
+                    <div>
+                        <strong>Rule 5:</strong> ALWAYS create a backup snapshot before any destructive sync operation
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <div class="alert-icon">⚠️</div>
+                    <div>
+                        <strong>Rule 6:</strong> ALWAYS preserve conflict copies — never overwrite without backup
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <div class="alert-icon">⚠️</div>
+                    <div>
+                        <strong>Rule 7:</strong> ALWAYS verify .gitignore includes all sensitive patterns before git push
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-icon">ℹ️</div>
+                    <div>
+                        <strong>Rule 8:</strong> Any file missing from one source is NOT assumed deleted — flag for review
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-icon">ℹ️</div>
+                    <div>
+                        <strong>Rule 9:</strong> Any overwrite operation must be reversible within 30 days
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-icon">ℹ️</div>
+                    <div>
+                        <strong>Rule 10:</strong> Binary conflict → manual review queue, never auto-resolve
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-icon">ℹ️</div>
+                    <div>
+                        <strong>Rule 11:</strong> If sync fails mid-operation → rollback to last backup, log error
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-icon">ℹ️</div>
+                    <div>
+                        <strong>Rule 12:</strong> Maximum 3 auto-retries on API failures, then halt and alert
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-icon">ℹ️</div>
+                    <div>
+                        <strong>Rule 13:</strong> Sync engine must run health check before and after each cycle
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-icon">ℹ️</div>
+                    <div>
+                        <strong>Rule 14:</strong> All sync operations logged to audit trail — no silent operations
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <div class="alert-icon">ℹ️</div>
+                    <div>
+                        <strong>Rule 15:</strong> Weekly backup verification — ensure backups are complete and restorable
+                    </div>
+                </div>
+
+                <h3>Enforcement</h3>
+                <ul>
+                    <li>Rules 1-4 are code-level assertions. Violation = sync halts with CRITICAL error.</li>
+                    <li>Rules 5-7 are pre-flight checks. Violation = warning logged, sync continues but with caution flag.</li>
+                    <li>Rules 8-15 are operational policies. Violation = post-operation review required.</li>
+                </ul>
+
+                <h3>Emergency Override</h3>
+                <p>Only Ragheed (owner) can override rules 1-4. All overrides must be logged with reason and timestamp. Overrides trigger mandatory post-mortem review.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>AI Sales OS Enterprise File Governance Architecture v1.0 | Generated March 31, 2026 | Ragheed Systems</p>
+    </footer>
+
+    <script>
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.toggle-icon');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                icon.textContent = '−';
+            } else {
+                content.classList.add('collapsed');
+                icon.textContent = '+';
+            }
+        }
+    </script>
+</body>
+</html>

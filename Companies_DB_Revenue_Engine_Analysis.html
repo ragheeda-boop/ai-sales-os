@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Companies DB — Revenue Engine Analysis | AI Sales OS</title>
+<style>
+  :root {
+    --orange: #F57C1E;
+    --black: #151214;
+    --light: #FAFAFA;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #8b5cf6;
+    --gray: #6b7280;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0f0f14; color: #e5e7eb; line-height: 1.7; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+  /* Header */
+  .header { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #F57C1E33; border-radius: 16px; padding: 40px; margin-bottom: 30px; text-align: center; }
+  .header h1 { font-size: 2.2em; color: var(--orange); margin-bottom: 10px; }
+  .header .subtitle { color: #9ca3af; font-size: 1.1em; }
+  .header .date { color: #6b7280; font-size: 0.9em; margin-top: 8px; }
+
+  /* Executive Summary */
+  .exec-summary { background: linear-gradient(135deg, #1e1e30, #1a1a2e); border: 1px solid #F57C1E44; border-radius: 12px; padding: 30px; margin-bottom: 30px; }
+  .exec-summary h2 { color: var(--orange); margin-bottom: 15px; font-size: 1.4em; }
+  .exec-summary p { color: #d1d5db; margin-bottom: 10px; }
+
+  /* Stats Row */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+  .stat-card { background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 12px; padding: 20px; text-align: center; }
+  .stat-card .number { font-size: 2em; font-weight: 700; color: var(--orange); }
+  .stat-card .label { color: #9ca3af; font-size: 0.85em; margin-top: 5px; }
+
+  /* Section */
+  .section { background: #1a1a2e; border: 1px solid #2d2d44; border-radius: 12px; padding: 30px; margin-bottom: 25px; }
+  .section h2 { color: var(--orange); font-size: 1.5em; margin-bottom: 20px; border-bottom: 2px solid #F57C1E33; padding-bottom: 10px; }
+  .section h3 { color: #e5e7eb; font-size: 1.15em; margin: 20px 0 10px; }
+  .section p { color: #d1d5db; margin-bottom: 12px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.9em; }
+  th { background: #252540; color: var(--orange); padding: 12px 10px; text-align: right; border-bottom: 2px solid #F57C1E44; font-weight: 600; }
+  td { padding: 10px; border-bottom: 1px solid #2d2d44; color: #d1d5db; vertical-align: top; }
+  tr:hover { background: #252540; }
+
+  /* Status Badges */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.8em; font-weight: 600; }
+  .badge-keep { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e44; }
+  .badge-improve { background: #eab30822; color: #eab308; border: 1px solid #eab30844; }
+  .badge-delete { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
+  .badge-add { background: #3b82f622; color: #3b82f6; border: 1px solid #3b82f644; }
+  .badge-dead { background: #6b728022; color: #6b7280; border: 1px solid #6b728044; }
+  .badge-critical { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
+  .badge-duplicate { background: #8b5cf622; color: #8b5cf6; border: 1px solid #8b5cf644; }
+
+  /* Fill Rate Bar */
+  .fill-bar { background: #2d2d44; border-radius: 4px; height: 8px; width: 100px; display: inline-block; vertical-align: middle; margin-left: 8px; }
+  .fill-bar-inner { height: 100%; border-radius: 4px; }
+  .fill-high { background: var(--green); }
+  .fill-medium { background: var(--yellow); }
+  .fill-low { background: var(--red); }
+  .fill-zero { background: var(--gray); }
+
+  /* Decision Box */
+  .decision-box { background: #12121e; border-radius: 8px; padding: 15px; margin: 10px 0; border-right: 4px solid; }
+  .decision-box.keep { border-color: var(--green); }
+  .decision-box.improve { border-color: var(--yellow); }
+  .decision-box.delete { border-color: var(--red); }
+  .decision-box.add { border-color: var(--blue); }
+  .decision-box .title { font-weight: 700; margin-bottom: 5px; }
+
+  /* Alert */
+  .alert { background: #ef444418; border: 1px solid #ef444444; border-radius: 8px; padding: 15px; margin: 15px 0; }
+  .alert-warning { background: #eab30818; border-color: #eab30844; }
+  .alert-info { background: #3b82f618; border-color: #3b82f644; }
+  .alert-title { font-weight: 700; color: #ef4444; margin-bottom: 5px; }
+  .alert-warning .alert-title { color: #eab308; }
+  .alert-info .alert-title { color: #3b82f6; }
+
+  /* Collapsible */
+  details { margin: 10px 0; }
+  summary { cursor: pointer; color: var(--orange); font-weight: 600; padding: 8px 0; }
+  summary:hover { color: #f89c4e; }
+
+  /* Nav */
+  .nav { background: #12121e; border: 1px solid #2d2d44; border-radius: 12px; padding: 20px; margin-bottom: 25px; position: sticky; top: 10px; z-index: 100; }
+  .nav a { color: var(--orange); text-decoration: none; margin: 0 10px; font-size: 0.9em; }
+  .nav a:hover { text-decoration: underline; }
+
+  /* Score Card */
+  .score-card { display: inline-block; background: #12121e; border-radius: 8px; padding: 8px 16px; margin: 5px; border: 1px solid #2d2d44; }
+  .score-card .score { font-size: 1.5em; font-weight: 700; }
+  .score-card .desc { font-size: 0.8em; color: #9ca3af; }
+
+  /* Timeline */
+  .timeline-item { position: relative; padding: 15px 25px; margin-right: 20px; border-right: 3px solid var(--orange); }
+  .timeline-item:last-child { border-right-color: transparent; }
+  .timeline-item::before { content: ''; position: absolute; right: -8px; top: 20px; width: 12px; height: 12px; background: var(--orange); border-radius: 50%; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .container { padding: 10px; }
+    .header h1 { font-size: 1.6em; }
+    table { font-size: 0.8em; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+  <h1>تحليل Companies DB — Revenue Engine</h1>
+  <div class="subtitle">تحويل قاعدة الشركات من مخزن بيانات إلى محرك إيرادات</div>
+  <div class="date">AI Sales OS v5.0 | April 3, 2026 | تحليل مبني على بيانات حقيقية من Notion</div>
+</div>
+
+<!-- Nav -->
+<div class="nav" style="text-align: center;">
+  <a href="#exec">الخلاصة التنفيذية</a> |
+  <a href="#audit">تحليل الأعمدة</a> |
+  <a href="#dead">الأعمدة الميتة</a> |
+  <a href="#relations">العلاقات</a> |
+  <a href="#usage">الاستخدام الفعلي</a> |
+  <a href="#upgrade">التحسينات</a> |
+  <a href="#revenue">ربط الإيرادات</a> |
+  <a href="#dashboard">Dashboard</a> |
+  <a href="#final">التصور النهائي</a>
+</div>
+
+<!-- Executive Summary -->
+<div class="exec-summary" id="exec">
+  <h2>الخلاصة التنفيذية — كرئيس مبيعات</h2>
+  <p><strong style="color: var(--orange);">الحقيقة المباشرة:</strong> قاعدة Companies فيها 68 عمود. منها 12 عمود ميت تماماً (0% بيانات)، و8 أعمدة مكررة أو متعارضة. القاعدة حالياً تعمل كـ <strong>"مخزن بيانات Apollo"</strong> وليس كـ Revenue Engine.</p>
+
+  <p><strong style="color: var(--red);">المشكلة الجوهرية:</strong> لا يمكن لأي مندوب مبيعات أن يفتح Companies DB ويعرف فوراً: أي شركة أتصل بها اليوم؟ لماذا؟ وما القيمة المتوقعة؟ — هذه الأسئلة الثلاثة غير قابلة للإجابة من البيانات الحالية.</p>
+
+  <p><strong style="color: var(--green);">الإيجابي:</strong> الأساس قوي — الـ MUHIDE fields (Fit Score, Priority, Best Buyer, Strategic Analysis) نسبة ملئها 91% وهي أذكى بيانات في القاعدة. Company Stage و Primary Owner يعملان. البنية التحتية للـ Company-Centric Model جاهزة.</p>
+
+  <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center;">
+    <div class="score-card"><div class="score" style="color: var(--red);">12</div><div class="desc">أعمدة نحذفها</div></div>
+    <div class="score-card"><div class="score" style="color: var(--yellow);">15</div><div class="desc">أعمدة نطورها</div></div>
+    <div class="score-card"><div class="score" style="color: var(--green);">32</div><div class="desc">أعمدة نبقيها</div></div>
+    <div class="score-card"><div class="score" style="color: var(--blue);">8</div><div class="desc">أعمدة نضيفها</div></div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="number">68</div>
+    <div class="label">إجمالي الأعمدة</div>
+  </div>
+  <div class="stat-card">
+    <div class="number" style="color: var(--red);">12</div>
+    <div class="label">أعمدة ميتة (0%)</div>
+  </div>
+  <div class="stat-card">
+    <div class="number" style="color: var(--yellow);">100%</div>
+    <div class="label">Data Status = "Raw"</div>
+  </div>
+  <div class="stat-card">
+    <div class="number" style="color: var(--red);">0%</div>
+    <div class="label">Account Stage ممتلئ</div>
+  </div>
+  <div class="stat-card">
+    <div class="number" style="color: var(--green);">91%</div>
+    <div class="label">MUHIDE Fit Score ممتلئ</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">67%</div>
+    <div class="label">Company Stage ممتلئ</div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 1: COLUMN AUDIT -->
+<!-- ============================================ -->
+<div class="section" id="audit">
+  <h2>1. تحليل الأعمدة (Column Audit) — 68 عمود</h2>
+
+  <div class="alert alert-warning">
+    <div class="alert-title">تنبيه: تضخم الأعمدة (Column Bloat)</div>
+    68 عمود لقاعدة واحدة = عبء على الأداء والقراءة والصيانة. الهدف: تقليصها إلى ~48 عمود فعال بعد حذف الميت ودمج المكرر.
+  </div>
+
+  <h3>المجموعة 1: الهوية والمعلومات الأساسية (Identity & Core Info)</h3>
+  <table>
+    <tr><th>العمود</th><th>النوع</th><th>نسبة الملء</th><th>الحكم</th><th>التوصية</th></tr>
+    <tr>
+      <td><strong>Company Name</strong></td><td>title</td>
+      <td>100% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:100%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>Primary key مرئي. لا تغيير.</td>
+    </tr>
+    <tr>
+      <td><strong>Apollo Account Id</strong></td><td>text</td>
+      <td>100% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:100%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>Primary key تقني. أساس الـ dedup. لا تغيير.</td>
+    </tr>
+    <tr>
+      <td><strong>Domain</strong></td><td>text</td>
+      <td>99% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:99%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>Validation key. يستخدمه daily_sync. لا تغيير.</td>
+    </tr>
+    <tr>
+      <td><strong>Website</strong></td><td>url</td>
+      <td>98% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:98%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>مفيد للبحث السريع. يبقى.</td>
+    </tr>
+    <tr>
+      <td><strong>Industry</strong></td><td>text</td>
+      <td>43% <div class="fill-bar"><div class="fill-bar-inner fill-low" style="width:43%"></div></div></td>
+      <td><span class="badge badge-improve">IMPROVE</span></td>
+      <td><strong>مشكلة:</strong> text حر → قيم غير موحدة ("real estate" vs "Real Estate"). يجب تحويله إلى <strong>select</strong> مع قيم معيارية. نسبة 43% ضعيفة لحقل استراتيجي.</td>
+    </tr>
+    <tr>
+      <td><strong>Short Description</strong></td><td>text</td>
+      <td>0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-delete">DELETE</span></td>
+      <td>فارغ 100%. AI Qualification Detail يغطي الحاجة بشكل أعمق.</td>
+    </tr>
+    <tr>
+      <td><strong>Logo URL</strong></td><td>url</td>
+      <td>83% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:83%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>مفيد للـ Dashboard. تجميلي لكن يحسن تجربة المستخدم.</td>
+    </tr>
+    <tr>
+      <td><strong>Company Name for Emails</strong></td><td>text</td>
+      <td>5% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:5%"></div></div></td>
+      <td><span class="badge badge-delete">DELETE</span></td>
+      <td>شبه فارغ. Company Name يكفي. إذا الاسم مختلف للإيميلات، ضعه في حقل الـ Sequence وليس هنا.</td>
+    </tr>
+  </table>
+
+  <h3>المجموعة 2: الحجم والمالية (Size & Financials)</h3>
+  <table>
+    <tr><th>العمود</th><th>النوع</th><th>نسبة الملء</th><th>الحكم</th><th>التوصية</th></tr>
+    <tr>
+      <td><strong>Employees</strong></td><td>number</td>
+      <td>~43%</td>
+      <td><span class="badge badge-improve">IMPROVE</span></td>
+      <td>رقم دقيق. مهم للـ scoring (45% من الوزن حالياً). لكن الملء ضعيف — يجب إثراؤه من Apollo Enrich API.</td>
+    </tr>
+    <tr>
+      <td><strong>Employee Size</strong></td><td>text</td>
+      <td>43% <div class="fill-bar"><div class="fill-bar-inner fill-low" style="width:43%"></div></div></td>
+      <td><span class="badge badge-duplicate">DUPLICATE</span></td>
+      <td><strong>مكرر مع Employees.</strong> "51–200" مقابل 190. اترك Employees (الرقم) واحذف Employee Size (النص) أو ادمجهما: إذا Employees فارغ، استنتجه من Employee Size.</td>
+    </tr>
+    <tr>
+      <td><strong>Annual Revenue</strong></td><td>number</td>
+      <td>~15%</td>
+      <td><span class="badge badge-improve">IMPROVE</span></td>
+      <td>حرج للـ Revenue Engine. 0 في معظم السجلات (ليس فارغ — مكتوب 0). يجب التفريق بين "لا نعرف" و"فعلاً صفر".</td>
+    </tr>
+    <tr>
+      <td><strong>Revenue Range</strong></td><td>text</td>
+      <td>40% <div class="fill-bar"><div class="fill-bar-inner fill-low" style="width:40%"></div></div></td>
+      <td><span class="badge badge-improve">IMPROVE</span></td>
+      <td>يجب تحويله إلى <strong>select</strong>. "Unknown" ليس قيمة مفيدة — حوّلها إلى فارغ. ادمج مع Annual Revenue: Revenue Range هو الـ fallback.</td>
+    </tr>
+    <tr>
+      <td><strong>Total Funding</strong></td><td>number</td>
+      <td>~10%</td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>إشارة على قدرة الشراء. ضعيف الملء لكن قيّم عند توفره.</td>
+    </tr>
+    <tr>
+      <td><strong>Latest Funding Amount</strong></td><td>number</td>
+      <td>~10%</td>
+      <td><span class="badge badge-delete">DELETE</span></td>
+      <td>مكرر جزئياً مع Total Funding. إذا حذفت، ابقِ Total Funding + Last Raised At فقط.</td>
+    </tr>
+    <tr>
+      <td><strong>Latest Funding</strong></td><td>number</td>
+      <td>~10%</td>
+      <td><span class="badge badge-delete">DELETE</span></td>
+      <td>غير واضح ماذا يعني (type؟ stage؟). number لكن بدون وصف. ادمجه مع Total Funding أو احذفه.</td>
+    </tr>
+    <tr>
+      <td><strong>Last Raised At</strong></td><td>date</td>
+      <td>~10%</td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>تمويل حديث = شركة نشطة ولديها سيولة. ابقِه.</td>
+    </tr>
+    <tr>
+      <td><strong>Number of Retail Locations</strong></td><td>number</td>
+      <td>~5%</td>
+      <td><span class="badge badge-delete">DELETE</span></td>
+      <td>لا علاقة له بـ MUHIDE B2B model. غير مستخدم. احذف.</td>
+    </tr>
+    <tr>
+      <td><strong>Founded Year</strong></td><td>number</td>
+      <td>~30%</td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>عمر الشركة = إشارة على الاستقرار. مفيد للـ ICP analysis.</td>
+    </tr>
+  </table>
+
+  <h3>المجموعة 3: الموقع الجغرافي (Location)</h3>
+  <table>
+    <tr><th>العمود</th><th>النوع</th><th>نسبة الملء</th><th>الحكم</th><th>التوصية</th></tr>
+    <tr>
+      <td><strong>Company Country</strong></td><td>text</td>
+      <td>96% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:96%"></div></div></td>
+      <td><span class="badge badge-improve">IMPROVE</span></td>
+      <td>مهم جداً للـ ICP (السعودية = أولوية). حوّله إلى <strong>select</strong> لمنع التكرار.</td>
+    </tr>
+    <tr>
+      <td><strong>Company City</strong></td><td>text</td>
+      <td>90% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:90%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>مفيد للتقسيم الجغرافي (الرياض vs جدة).</td>
+    </tr>
+    <tr>
+      <td><strong>Company State</strong></td><td>text</td>
+      <td>96% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:96%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>مفيد للشركات الأمريكية. أقل أهمية للسوق السعودي.</td>
+    </tr>
+    <tr>
+      <td><strong>Company Address</strong></td><td>text</td>
+      <td>99% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:99%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>مرجعي. لا يستخدم في القرارات لكن مفيد للمراسلات.</td>
+    </tr>
+    <tr>
+      <td><strong>Company Postal Code</strong></td><td>text</td>
+      <td>37% <div class="fill-bar"><div class="fill-bar-inner fill-low" style="width:37%"></div></div></td>
+      <td><span class="badge badge-delete">DELETE</span></td>
+      <td>لا يُستخدم في أي قرار بيعي. Company Address يكفي.</td>
+    </tr>
+  </table>
+
+  <h3>المجموعة 4: التواصل الاجتماعي والهاتف (Social & Contact)</h3>
+  <table>
+    <tr><th>العمود</th><th>النوع</th><th>نسبة الملء</th><th>الحكم</th><th>التوصية</th></tr>
+    <tr>
+      <td><strong>Company Linkedin Url</strong></td><td>url</td>
+      <td>100% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:100%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>أهم قناة B2B. يبقى حتماً.</td>
+    </tr>
+    <tr>
+      <td><strong>Company Phone</strong></td><td>phone</td>
+      <td>73% <div class="fill-bar"><div class="fill-bar-inner fill-medium" style="width:73%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>مفيد للمكالمات. يبقى.</td>
+    </tr>
+    <tr>
+      <td><strong>Facebook Url</strong></td><td>url</td>
+      <td>48% <div class="fill-bar"><div class="fill-bar-inner fill-low" style="width:48%"></div></div></td>
+      <td><span class="badge badge-delete">DELETE</span></td>
+      <td>غير مستخدم في أي عملية بيعية B2B. لا أحد يتواصل مع CFO عبر Facebook.</td>
+    </tr>
+    <tr>
+      <td><strong>Twitter Url</strong></td><td>url</td>
+      <td>40% <div class="fill-bar"><div class="fill-bar-inner fill-low" style="width:40%"></div></div></td>
+      <td><span class="badge badge-delete">DELETE</span></td>
+      <td>نفس السبب. LinkedIn يكفي للـ B2B.</td>
+    </tr>
+  </table>
+
+  <h3>المجموعة 5: الملكية والمرحلة (Ownership & Stage)</h3>
+  <table>
+    <tr><th>العمود</th><th>النوع</th><th>نسبة الملء</th><th>الحكم</th><th>التوصية</th></tr>
+    <tr>
+      <td><strong>Primary Company Owner</strong></td><td>select</td>
+      <td>67% <div class="fill-bar"><div class="fill-bar-inner fill-medium" style="width:67%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>أساس المسؤولية. 33% فارغة = شركات بدون مالك = لا أحد يتابعها. <strong>مشكلة حرجة.</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Company Owners</strong></td><td>text</td>
+      <td>67% <div class="fill-bar"><div class="fill-bar-inner fill-medium" style="width:67%"></div></div></td>
+      <td><span class="badge badge-duplicate">DUPLICATE</span></td>
+      <td>نسخة legacy من Primary Company Owner. مكرر. <strong>ادمج البيانات في Primary ثم احذف.</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Supporting Owners</strong></td><td>text</td>
+      <td>1% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:1%"></div></div></td>
+      <td><span class="badge badge-dead">DEAD</span></td>
+      <td>1% فقط. الكود يكتبه نظرياً لكن عملياً لا يوجد شركات بأكثر من owner واحد فعّال. <strong>احذف أو أعد هيكلته.</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Account Owner</strong></td><td>text</td>
+      <td>29% <div class="fill-bar"><div class="fill-bar-inner fill-low" style="width:29%"></div></div></td>
+      <td><span class="badge badge-duplicate">DUPLICATE</span></td>
+      <td><strong>ثالث حقل ownership مكرر!</strong> هذا من Apollo (email format). Primary Company Owner هو المرجع. احذف هذا.</td>
+    </tr>
+    <tr>
+      <td><strong>Company Stage</strong></td><td>select</td>
+      <td>67% <div class="fill-bar"><div class="fill-bar-inner fill-medium" style="width:67%"></div></div></td>
+      <td><span class="badge badge-improve">IMPROVE</span></td>
+      <td>State machine ممتاز (Prospect→Outreach→Engaged→Meeting→Opportunity→Customer). لكن 33% فارغ = فجوة. يجب أن يكون 100% — كل شركة لها مرحلة.</td>
+    </tr>
+    <tr>
+      <td><strong>Account Stage</strong></td><td>select</td>
+      <td>0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-delete">DELETE</span></td>
+      <td><strong>فارغ 100%. مكرر مع Company Stage.</strong> القيم مختلفة (Lead/Prospect/Qualified vs Prospect/Outreach/Engaged). Company Stage هو الحي. احذف Account Stage فوراً.</td>
+    </tr>
+    <tr>
+      <td><strong>Data Status</strong></td><td>text</td>
+      <td>100% (كله "Raw")</td>
+      <td><span class="badge badge-improve">IMPROVE</span></td>
+      <td>100% = "Raw". لا أحد يغيّره. إما أضف أتمتة لتحديثه (Raw→Enriched→Verified→Qualified) أو احذفه.</td>
+    </tr>
+    <tr>
+      <td><strong>Record Source</strong></td><td>text</td>
+      <td>100% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:100%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>كله "Apollo" حالياً. سيصبح مهم عند إضافة مصادر أخرى.</td>
+    </tr>
+    <tr>
+      <td><strong>Sales OS Active</strong></td><td>checkbox</td>
+      <td>67% true <div class="fill-bar"><div class="fill-bar-inner fill-medium" style="width:67%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>فلتر أساسي. يفصل الشركات النشطة عن الأرشيف. يبقى.</td>
+    </tr>
+  </table>
+
+  <h3>المجموعة 6: MUHIDE Intelligence (أذكى مجموعة)</h3>
+  <table>
+    <tr><th>العمود</th><th>النوع</th><th>نسبة الملء</th><th>الحكم</th><th>التوصية</th></tr>
+    <tr>
+      <td><strong>MUHIDE Fit Score</strong></td><td>number</td>
+      <td>91% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:91%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>أهم حقل استراتيجي. Company-level ICP score. يجب أن يقود الأولويات.</td>
+    </tr>
+    <tr>
+      <td><strong>MUHIDE Priority</strong></td><td>select</td>
+      <td>91% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:91%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>P1/P2/P3. مباشر وقابل للفعل. يبقى.</td>
+    </tr>
+    <tr>
+      <td><strong>MUHIDE Best Buyer</strong></td><td>select</td>
+      <td>91% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:91%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>يوجه المندوب: تكلم مع CEO أو CFO. ممتاز.</td>
+    </tr>
+    <tr>
+      <td><strong>MUHIDE Outreach Angle</strong></td><td>text</td>
+      <td>91% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:91%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>رسالة جاهزة للاستخدام. يختصر وقت الإعداد.</td>
+    </tr>
+    <tr>
+      <td><strong>MUHIDE Strategic Analysis</strong></td><td>text</td>
+      <td>91% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:91%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>تحليل AI عميق. مرجع استراتيجي ممتاز.</td>
+    </tr>
+  </table>
+
+  <h3>المجموعة 7: AI & Intent (Apollo AI)</h3>
+  <table>
+    <tr><th>العمود</th><th>النوع</th><th>نسبة الملء</th><th>الحكم</th><th>التوصية</th></tr>
+    <tr>
+      <td><strong>AI Qualification Status</strong></td><td>select</td>
+      <td>89% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:89%"></div></div></td>
+      <td><span class="badge badge-improve">IMPROVE</span></td>
+      <td>ملء ممتاز. لكن <strong>58% = Disqualified</strong>. هل نرسل إيميلات لشركات disqualified؟ يجب ربطه بالأتمتة.</td>
+    </tr>
+    <tr>
+      <td><strong>AI Qualification Detail</strong></td><td>text</td>
+      <td>98% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:98%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>تفسير غني. يغني عن Short Description.</td>
+    </tr>
+    <tr>
+      <td><strong>Primary Intent Score</strong></td><td>number</td>
+      <td>0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-dead">DEAD</span></td>
+      <td><strong>فارغ 100%. موثق أنه فارغ.</strong> Apollo لا يوفر intent data. ابقِه فقط إذا خطتك لملئه من Job Postings Enricher.</td>
+    </tr>
+    <tr>
+      <td><strong>Primary Intent Topic</strong></td><td>text</td>
+      <td>0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-dead">DEAD</span></td>
+      <td>فارغ 100%. لا مصدر بيانات له.</td>
+    </tr>
+    <tr>
+      <td><strong>Secondary Intent Score</strong></td><td>number</td>
+      <td>0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-dead">DEAD</span></td>
+      <td>فارغ 100%. احذف.</td>
+    </tr>
+    <tr>
+      <td><strong>Secondary Intent Topic</strong></td><td>text</td>
+      <td>0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-dead">DEAD</span></td>
+      <td>فارغ 100%. احذف.</td>
+    </tr>
+  </table>
+
+  <h3>المجموعة 8: Engagement & Metrics (Company-Centric v5.0)</h3>
+  <table>
+    <tr><th>العمود</th><th>النوع</th><th>نسبة الملء</th><th>الحكم</th><th>التوصية</th></tr>
+    <tr>
+      <td><strong>Active Contacts</strong></td><td>number</td>
+      <td>67% <div class="fill-bar"><div class="fill-bar-inner fill-medium" style="width:67%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>يقيس عمق الاختراق. يبقى.</td>
+    </tr>
+    <tr>
+      <td><strong>Emailed Contacts</strong></td><td>number</td>
+      <td>67% <div class="fill-bar"><div class="fill-bar-inner fill-medium" style="width:67%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>يقيس مدى التواصل. يبقى.</td>
+    </tr>
+    <tr>
+      <td><strong>Engaged Contacts</strong></td><td>number</td>
+      <td>0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-dead">DEAD</span></td>
+      <td><strong>فارغ 100%.</strong> الكود يكتبه نظرياً لكن لا أحد يتفاعل (Engaged = replied/opened). إما أصلح الأتمتة أو احذف.</td>
+    </tr>
+    <tr>
+      <td><strong>Contact Count</strong></td><td>rollup</td>
+      <td>100% <div class="fill-bar"><div class="fill-bar-inner fill-high" style="width:100%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>Rollup تلقائي. ممتاز. يبقى.</td>
+    </tr>
+    <tr>
+      <td><strong>Last Engagement Date</strong></td><td>date</td>
+      <td>66% <div class="fill-bar"><div class="fill-bar-inner fill-medium" style="width:66%"></div></div></td>
+      <td><span class="badge badge-improve">IMPROVE</span></td>
+      <td>حرج للـ staleness detection. 34% فارغ. يجب أن يتحدث تلقائياً عند كل تفاعل.</td>
+    </tr>
+    <tr>
+      <td><strong>Account Engagement Score</strong></td><td>number</td>
+      <td>~0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-dead">DEAD</span></td>
+      <td>موجود في الـ schema لكن فارغ. لا سكريبت يملأه حالياً. <strong>إما أضف حسابه أو احذفه.</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Buying Committee Strength</strong></td><td>select</td>
+      <td>~0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-dead">DEAD</span></td>
+      <td>Strong/Moderate/Weak — مفهوم ممتاز لكن <strong>لا شيء يملأه</strong>. يجب حسابه تلقائياً من Contact Count × Seniority mix.</td>
+    </tr>
+    <tr>
+      <td><strong>Company Health</strong></td><td>select</td>
+      <td>~0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-dead">DEAD</span></td>
+      <td>Green/Yellow/Red — لا سكريبت يحسبه. <strong>يجب أتمتته: composite من Engagement + Stage velocity + Buying Committee.</strong></td>
+    </tr>
+  </table>
+
+  <h3>المجموعة 9: Growth Signals</h3>
+  <table>
+    <tr><th>العمود</th><th>النوع</th><th>نسبة الملء</th><th>الحكم</th><th>التوصية</th></tr>
+    <tr>
+      <td><strong>Headcount Growth 6M</strong></td><td>number</td>
+      <td>~15%</td>
+      <td><span class="badge badge-improve">IMPROVE</span></td>
+      <td>إشارة نمو قوية. ملء ضعيف. إثراء من Apollo.</td>
+    </tr>
+    <tr>
+      <td><strong>Headcount Growth 12M</strong></td><td>number</td>
+      <td>~15%</td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>الأكثر فائدة من الثلاثة — يغطي سنة كاملة.</td>
+    </tr>
+    <tr>
+      <td><strong>Headcount Growth 24M</strong></td><td>number</td>
+      <td>~15%</td>
+      <td><span class="badge badge-delete">DELETE</span></td>
+      <td>24 شهر = طويل جداً. اختلاف ضئيل عن 12M. احذفه واكتفِ بـ 6M + 12M.</td>
+    </tr>
+  </table>
+
+  <h3>المجموعة 10: التصنيفات والكلمات المفتاحية</h3>
+  <table>
+    <tr><th>العمود</th><th>النوع</th><th>نسبة الملء</th><th>الحكم</th><th>التوصية</th></tr>
+    <tr>
+      <td><strong>Keywords</strong></td><td>text</td>
+      <td>41% <div class="fill-bar"><div class="fill-bar-inner fill-low" style="width:41%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>مفيد للبحث. لا يستخدم في القرارات لكن يساعد الاكتشاف.</td>
+    </tr>
+    <tr>
+      <td><strong>Technologies</strong></td><td>text</td>
+      <td>41% <div class="fill-bar"><div class="fill-bar-inner fill-low" style="width:41%"></div></div></td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>Tech stack = إشارة على النضج التقني. قد يفيد في personalization.</td>
+    </tr>
+    <tr>
+      <td><strong>NAICS Codes</strong></td><td>text</td>
+      <td>76% <div class="fill-bar"><div class="fill-bar-inner fill-medium" style="width:76%"></div></div></td>
+      <td><span class="badge badge-delete">DELETE</span></td>
+      <td>كود تصنيفي أمريكي. لا أحد يفتحه لاتخاذ قرار. Industry يكفي.</td>
+    </tr>
+    <tr>
+      <td><strong>SIC Codes</strong></td><td>text</td>
+      <td>74% <div class="fill-bar"><div class="fill-bar-inner fill-medium" style="width:74%"></div></div></td>
+      <td><span class="badge badge-delete">DELETE</span></td>
+      <td>نفس المشكلة. كود تقني لا يقرأه إنسان.</td>
+    </tr>
+    <tr>
+      <td><strong>Lists</strong></td><td>text</td>
+      <td>0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-dead">DEAD</span></td>
+      <td>فارغ 100%. لا مصدر له. احذف.</td>
+    </tr>
+    <tr>
+      <td><strong>Subsidiary of</strong></td><td>text</td>
+      <td>0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-dead">DEAD</span></td>
+      <td>فارغ 100%. احذف.</td>
+    </tr>
+    <tr>
+      <td><strong>Subsidiary of Organization ID</strong></td><td>text</td>
+      <td>0% <div class="fill-bar"><div class="fill-bar-inner fill-zero" style="width:0%"></div></div></td>
+      <td><span class="badge badge-dead">DEAD</span></td>
+      <td>فارغ 100%. احذف.</td>
+    </tr>
+  </table>
+
+  <h3>المجموعة 11: System/Audit</h3>
+  <table>
+    <tr><th>العمود</th><th>النوع</th><th>نسبة الملء</th><th>الحكم</th><th>التوصية</th></tr>
+    <tr>
+      <td><strong>Created At</strong></td><td>created_time</td>
+      <td>100%</td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>تلقائي. لا تغيير.</td>
+    </tr>
+    <tr>
+      <td><strong>Updated At</strong></td><td>last_edited_time</td>
+      <td>100%</td>
+      <td><span class="badge badge-keep">KEEP</span></td>
+      <td>تلقائي. مهم للـ staleness detection.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 2: DEAD FIELDS -->
+<!-- ============================================ -->
+<div class="section" id="dead">
+  <h2>4. الأعمدة الميتة — Dead Fields Report</h2>
+
+  <div class="alert">
+    <div class="alert-title">12 عمود ميت = ضوضاء بصرية + بطء أداء</div>
+    كل عمود ميت هو عمود يراه المندوب ويتجاهله. هذا يبني عادة "تجاهل الأعمدة" — وبعدها يتجاهل حتى الأعمدة المهمة.
+  </div>
+
+  <table>
+    <tr><th>العمود</th><th>نسبة الملء</th><th>السبب</th><th>القرار</th></tr>
+    <tr><td>Account Stage</td><td>0%</td><td>مكرر مع Company Stage</td><td><span class="badge badge-delete">حذف فوري</span></td></tr>
+    <tr><td>Primary Intent Score</td><td>0%</td><td>Apollo لا يوفر البيانات</td><td><span class="badge badge-delete">حذف</span> (أو انتظر Job Postings)</td></tr>
+    <tr><td>Primary Intent Topic</td><td>0%</td><td>لا مصدر</td><td><span class="badge badge-delete">حذف فوري</span></td></tr>
+    <tr><td>Secondary Intent Score</td><td>0%</td><td>لا مصدر</td><td><span class="badge badge-delete">حذف فوري</span></td></tr>
+    <tr><td>Secondary Intent Topic</td><td>0%</td><td>لا مصدر</td><td><span class="badge badge-delete">حذف فوري</span></td></tr>
+    <tr><td>Engaged Contacts</td><td>0%</td><td>أتمتة معطلة</td><td><span class="badge badge-improve">إصلاح الأتمتة</span></td></tr>
+    <tr><td>Account Engagement Score</td><td>0%</td><td>لا سكريبت يحسبه</td><td><span class="badge badge-improve">بناء الحساب</span></td></tr>
+    <tr><td>Buying Committee Strength</td><td>0%</td><td>لا سكريبت يحسبه</td><td><span class="badge badge-improve">بناء الحساب</span></td></tr>
+    <tr><td>Company Health</td><td>0%</td><td>لا سكريبت يحسبه</td><td><span class="badge badge-improve">بناء الحساب</span></td></tr>
+    <tr><td>Short Description</td><td>0%</td><td>مغطى بـ AI Qualification</td><td><span class="badge badge-delete">حذف فوري</span></td></tr>
+    <tr><td>Lists</td><td>0%</td><td>لا مصدر</td><td><span class="badge badge-delete">حذف فوري</span></td></tr>
+    <tr><td>Subsidiary of</td><td>0%</td><td>لا مصدر</td><td><span class="badge badge-delete">حذف فوري</span></td></tr>
+    <tr><td>Subsidiary of Organization ID</td><td>0%</td><td>لا مصدر</td><td><span class="badge badge-delete">حذف فوري</span></td></tr>
+    <tr><td>Supporting Owners</td><td>1%</td><td>شبه ميت</td><td><span class="badge badge-delete">حذف</span></td></tr>
+  </table>
+
+  <h3>الأعمدة المكررة — يجب الدمج</h3>
+  <table>
+    <tr><th>المكرر</th><th>الأصل</th><th>القرار</th></tr>
+    <tr><td>Account Stage (0%)</td><td>Company Stage (67%)</td><td>حذف Account Stage</td></tr>
+    <tr><td>Employee Size (text)</td><td>Employees (number)</td><td>حذف Employee Size — استنتج منه أولاً</td></tr>
+    <tr><td>Account Owner (email)</td><td>Primary Company Owner (name)</td><td>حذف Account Owner</td></tr>
+    <tr><td>Company Owners (text)</td><td>Primary Company Owner (select)</td><td>حذف Company Owners</td></tr>
+    <tr><td>Latest Funding Amount</td><td>Total Funding</td><td>حذف Latest Funding Amount</td></tr>
+    <tr><td>Latest Funding</td><td>Total Funding</td><td>حذف Latest Funding</td></tr>
+  </table>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 3: RELATIONS -->
+<!-- ============================================ -->
+<div class="section" id="relations">
+  <h2>3. تحليل العلاقات (Relations Audit)</h2>
+
+  <table>
+    <tr><th>العلاقة</th><th>الاتجاه</th><th>الحالة</th><th>التقييم</th></tr>
+    <tr>
+      <td><strong>Contacts</strong></td>
+      <td>Companies ← Contacts</td>
+      <td><span class="badge badge-keep">فعالة</span></td>
+      <td>97% من الشركات مرتبطة بجهات اتصال. أساس الـ Company-Centric Model. ممتازة.</td>
+    </tr>
+    <tr>
+      <td><strong>Tasks</strong></td>
+      <td>Companies ← Tasks</td>
+      <td><span class="badge badge-improve">ضعيفة</span></td>
+      <td>موجودة في الـ schema لكن auto_tasks.py بدأ مؤخراً. يجب التحقق من نسبة الربط الفعلية.</td>
+    </tr>
+    <tr>
+      <td><strong>Meetings</strong></td>
+      <td>Companies ← Meetings</td>
+      <td><span class="badge badge-improve">جديدة</span></td>
+      <td>Phase 3.5. meeting_tracker v2.0 يربطها تلقائياً. لكن هل هناك meetings فعلية؟</td>
+    </tr>
+    <tr>
+      <td><strong>Opportunities</strong></td>
+      <td>Companies ← Opportunities</td>
+      <td><span class="badge badge-improve">شبه فارغة</span></td>
+      <td>opportunity_manager موجود لكن لا opportunities حقيقية بعد = العلاقة نظرية.</td>
+    </tr>
+  </table>
+
+  <h3>علاقات ناقصة يجب إضافتها</h3>
+  <div class="decision-box add">
+    <div class="title" style="color: var(--blue);">Activities / Email Hub → Companies</div>
+    لا يوجد ربط مباشر بين الشركة وسجل الأنشطة. يجب أن يكون هناك relation يتيح رؤية كل التفاعلات على مستوى الشركة.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 4: USAGE REALITY -->
+<!-- ============================================ -->
+<div class="section" id="usage">
+  <h2>2. تحليل الاستخدام الفعلي — Usage Reality</h2>
+
+  <div class="alert">
+    <div class="alert-title">التشخيص: مخزن بيانات وليس أداة عمل</div>
+    <p style="color: #fca5a5;">الدليل: Data Status = "Raw" لكل السجلات. لا أحد يحدّث الشركات يدوياً. الفريق يعتمد على الأتمتة فقط.</p>
+  </div>
+
+  <h3>فجوة "البيانات الموجودة" vs "القرارات المطلوبة"</h3>
+  <table>
+    <tr><th>القرار المطلوب</th><th>البيانات المطلوبة</th><th>الحالة</th></tr>
+    <tr>
+      <td>أي شركة أتصل بها اليوم؟</td>
+      <td>MUHIDE Priority + Company Stage + Last Engagement</td>
+      <td><span class="badge badge-improve">جزئي</span> — MUHIDE Priority ممتلئ لكن لا يوجد "Next Action Date"</td>
+    </tr>
+    <tr>
+      <td>ما احتمال إغلاق هذه الصفقة؟</td>
+      <td>Deal Value + Probability + Buying Committee</td>
+      <td><span class="badge badge-delete">غائب</span> — لا deal value ولا probability على مستوى الشركة</td>
+    </tr>
+    <tr>
+      <td>كم revenue متوقع هذا الشهر؟</td>
+      <td>Pipeline Value + Expected Close</td>
+      <td><span class="badge badge-delete">غائب</span> — لا pipeline view ممكن</td>
+    </tr>
+    <tr>
+      <td>أي شركات "ماتت" ويجب إيقافها؟</td>
+      <td>Last Engagement + Days Since Contact</td>
+      <td><span class="badge badge-improve">جزئي</span> — Last Engagement موجود لكن لا "Days Stale" محسوب</td>
+    </tr>
+    <tr>
+      <td>هل نحن نتكلم مع صانع القرار؟</td>
+      <td>Buying Committee + Decision Maker Identified</td>
+      <td><span class="badge badge-delete">غائب</span> — الحقول موجودة لكن فارغة 100%</td>
+    </tr>
+    <tr>
+      <td>ما نسبة التحويل من Outreach → Meeting؟</td>
+      <td>Company Stage transitions over time</td>
+      <td><span class="badge badge-delete">غائب</span> — لا stage history tracking</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 5: UPGRADE -->
+<!-- ============================================ -->
+<div class="section" id="upgrade">
+  <h2>5. تحسين بنية البيانات — Revenue Engine Upgrade</h2>
+
+  <h3>أعمدة جديدة مطلوبة</h3>
+  <table>
+    <tr><th>العمود الجديد</th><th>النوع</th><th>الوصف</th><th>مصدر البيانات</th><th>التأثير</th></tr>
+    <tr>
+      <td><strong style="color: var(--blue);">Next Action Date</strong></td>
+      <td>date</td>
+      <td>متى يجب التحرك مع هذه الشركة تالياً</td>
+      <td>محسوب من Tasks + SLA + Last Engagement</td>
+      <td><span class="badge badge-critical">حرج</span> — يجيب "ماذا أفعل اليوم؟"</td>
+    </tr>
+    <tr>
+      <td><strong style="color: var(--blue);">Days Since Last Activity</strong></td>
+      <td>formula</td>
+      <td>عدد الأيام منذ آخر تفاعل</td>
+      <td>formula: now() - Last Engagement Date</td>
+      <td><span class="badge badge-critical">حرج</span> — يكشف الصفقات الميتة</td>
+    </tr>
+    <tr>
+      <td><strong style="color: var(--blue);">Estimated Deal Value</strong></td>
+      <td>number</td>
+      <td>قيمة الصفقة المتوقعة</td>
+      <td>يدوي أو محسوب من Employee Count × ARPU</td>
+      <td><span class="badge badge-critical">حرج</span> — يربط الشركة بالإيرادات</td>
+    </tr>
+    <tr>
+      <td><strong style="color: var(--blue);">Win Probability</strong></td>
+      <td>select</td>
+      <td>احتمال الإغلاق (10%/25%/50%/75%/90%)</td>
+      <td>محسوب من Company Stage + Engagement Score</td>
+      <td><span class="badge badge-critical">حرج</span> — Pipeline forecasting</td>
+    </tr>
+    <tr>
+      <td><strong style="color: var(--blue);">Weighted Pipeline Value</strong></td>
+      <td>formula</td>
+      <td>Deal Value × Win Probability</td>
+      <td>formula تلقائي</td>
+      <td>Revenue forecasting</td>
+    </tr>
+    <tr>
+      <td><strong style="color: var(--blue);">ICP Match Score</strong></td>
+      <td>number</td>
+      <td>Composite: MUHIDE Fit + AI Qual + Country + Size</td>
+      <td>محسوب</td>
+      <td>يوحّد كل signals الأهلية في رقم واحد</td>
+    </tr>
+    <tr>
+      <td><strong style="color: var(--blue);">Account Temperature</strong></td>
+      <td>select</td>
+      <td>HOT/WARM/COLD على مستوى الشركة</td>
+      <td>محسوب من ICP Match + Engagement + Stage</td>
+      <td>المندوب يعرف فوراً الحرارة</td>
+    </tr>
+    <tr>
+      <td><strong style="color: var(--blue);">Target Market</strong></td>
+      <td>select</td>
+      <td>Saudi Arabia / GCC / MENA / Global</td>
+      <td>مستنتج من Country</td>
+      <td>تقسيم السوق الجغرافي</td>
+    </tr>
+  </table>
+
+  <h3>أعمدة موجودة يجب أتمتتها (الآن فارغة)</h3>
+  <table>
+    <tr><th>العمود</th><th>طريقة الحساب</th><th>الأولوية</th></tr>
+    <tr>
+      <td><strong>Account Engagement Score</strong></td>
+      <td>Composite: (Emailed Contacts/Active Contacts × 30) + (Engaged Contacts/Active Contacts × 50) + (Stage advancement × 20)</td>
+      <td><span class="badge badge-critical">عالية</span></td>
+    </tr>
+    <tr>
+      <td><strong>Buying Committee Strength</strong></td>
+      <td>Strong: ≥3 contacts مع C-Suite/VP. Moderate: 2 contacts senior. Weak: أقل.</td>
+      <td><span class="badge badge-critical">عالية</span></td>
+    </tr>
+    <tr>
+      <td><strong>Company Health</strong></td>
+      <td>Green: Engaged + recent activity + strong committee. Yellow: partial. Red: stale + weak committee.</td>
+      <td><span class="badge badge-critical">عالية</span></td>
+    </tr>
+    <tr>
+      <td><strong>Engaged Contacts</strong></td>
+      <td>Count of contacts where Replied=true OR Email Opened=true</td>
+      <td>عالية</td>
+    </tr>
+    <tr>
+      <td><strong>Company Stage (الفارغ)</strong></td>
+      <td>Default: "Prospect" لكل شركة بدون stage. الكود يحسبه لكن 33% فارغ = شركات لم تُعالج.</td>
+      <td>عالية</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 6: REVENUE MAPPING -->
+<!-- ============================================ -->
+<div class="section" id="revenue">
+  <h2>6. ربط الإيرادات — Revenue Mapping</h2>
+
+  <h3>المسار الحالي: Company → ??? → Revenue</h3>
+  <div style="background: #12121e; border-radius: 8px; padding: 20px; margin: 15px 0; text-align: center; font-family: monospace;">
+    <span style="color: var(--green);">Company (Prospect)</span>
+    <span style="color: #6b7280;"> → </span>
+    <span style="color: var(--blue);">Outreach</span>
+    <span style="color: #6b7280;"> → </span>
+    <span style="color: var(--yellow);">Engaged</span>
+    <span style="color: #6b7280;"> → </span>
+    <span style="color: var(--orange);">Meeting</span>
+    <span style="color: #6b7280;"> → </span>
+    <span style="color: var(--red);">⚠️ فجوة ⚠️</span>
+    <span style="color: #6b7280;"> → </span>
+    <span style="color: #6b7280;">Opportunity (فارغ)</span>
+    <span style="color: #6b7280;"> → </span>
+    <span style="color: #6b7280;">Revenue (غير موجود)</span>
+  </div>
+
+  <div class="alert">
+    <div class="alert-title">الفجوة الجوهرية: لا يوجد Deal Value على مستوى الشركة</div>
+    <p style="color: #fca5a5;">Company Stage يذهب حتى "Opportunity" لكن لا أحد يعرف قيمة هذه الـ Opportunity. الـ Opportunities DB موجود لكن فارغ فعلياً. النتيجة: لا يمكن حساب Pipeline Value أو Revenue Forecast.</p>
+  </div>
+
+  <h3>ما ينقص لربط Company → Revenue</h3>
+  <table>
+    <tr><th>الحلقة</th><th>الحالة</th><th>ما ينقص</th></tr>
+    <tr>
+      <td>Company → Scored Priority</td>
+      <td><span class="badge badge-keep">يعمل</span></td>
+      <td>MUHIDE Fit Score + Priority يعملان. ممتاز.</td>
+    </tr>
+    <tr>
+      <td>Priority → Outreach</td>
+      <td><span class="badge badge-keep">يعمل</span></td>
+      <td>auto_sequence + auto_tasks تعمل. Company Stage يتحدث.</td>
+    </tr>
+    <tr>
+      <td>Outreach → Engagement</td>
+      <td><span class="badge badge-improve">جزئي</span></td>
+      <td>analytics_tracker يسحب البيانات لكن Engaged Contacts = 0%. الحلقة مكسورة.</td>
+    </tr>
+    <tr>
+      <td>Engagement → Meeting</td>
+      <td><span class="badge badge-improve">بنيوي</span></td>
+      <td>meeting_tracker جاهز لكن لا meetings فعلية مسجلة بعد.</td>
+    </tr>
+    <tr>
+      <td>Meeting → Opportunity</td>
+      <td><span class="badge badge-delete">مكسور</span></td>
+      <td>opportunity_manager موجود لكن Opportunities DB فارغ. <strong>لا يوجد Deal Value ولا Probability.</strong></td>
+    </tr>
+    <tr>
+      <td>Opportunity → Revenue</td>
+      <td><span class="badge badge-delete">غائب</span></td>
+      <td><strong>لا يوجد Closed Won tracking ولا Revenue recording.</strong> Odoo integration مخطط لكن لم يبدأ.</td>
+    </tr>
+  </table>
+
+  <div class="decision-box add">
+    <div class="title" style="color: var(--blue);">الحل: أضف Revenue Fields على Companies DB مباشرة</div>
+    <p>بدلاً من انتظار Odoo:</p>
+    <p>1. <strong>Estimated Deal Value</strong> (number) — يُحسب أو يُدخل يدوياً</p>
+    <p>2. <strong>Win Probability</strong> (select: 10%/25%/50%/75%/90%) — مربوط بـ Company Stage</p>
+    <p>3. <strong>Weighted Pipeline Value</strong> (formula: Deal Value × Probability)</p>
+    <p>4. <strong>Expected Close Date</strong> (date) — متى نتوقع الإغلاق</p>
+    <p>هذه الأربعة تحوّل القاعدة فوراً إلى Pipeline tracker بدون انتظار Odoo.</p>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 7: DASHBOARD -->
+<!-- ============================================ -->
+<div class="section" id="dashboard">
+  <h2>7. Dashboard Perspective — ماذا نرى وماذا لا نرى</h2>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div>
+      <h3 style="color: var(--green);">ما نستطيع رؤيته الآن</h3>
+      <div class="decision-box keep">
+        <p>• عدد الشركات حسب Company Stage</p>
+        <p>• توزيع MUHIDE Priority (P1/P2/P3)</p>
+        <p>• عدد جهات الاتصال لكل شركة</p>
+        <p>• AI Qualification (Qualified/Disqualified)</p>
+        <p>• توزيع الملكية (Ibrahim/Ragheed/Soha)</p>
+        <p>• الشركات المحدثة مؤخراً</p>
+        <p>• الشركات بدون Domain</p>
+        <p>• التوزيع حسب Industry</p>
+      </div>
+    </div>
+    <div>
+      <h3 style="color: var(--red);">ما لا نستطيع رؤيته (وهذا خطير)</h3>
+      <div class="decision-box delete">
+        <p>• <strong>Pipeline Value</strong> — كم ريال في الأنبوب؟ مستحيل</p>
+        <p>• <strong>Revenue Forecast</strong> — كم نتوقع هذا الشهر؟ مستحيل</p>
+        <p>• <strong>Conversion Rates</strong> — كم % يتحول من Outreach → Meeting؟ مستحيل (لا stage history)</p>
+        <p>• <strong>Stale Deals</strong> — أي شركات ماتت؟ جزئي (لا Days Since Last Activity)</p>
+        <p>• <strong>Win/Loss Analysis</strong> — لماذا خسرنا صفقة؟ غائب تماماً</p>
+        <p>• <strong>Sales Velocity</strong> — كم يوم من Prospect → Customer؟ مستحيل</p>
+        <p>• <strong>Team Performance</strong> — من يحقق أكثر؟ مستحيل (لا revenue per owner)</p>
+        <p>• <strong>Account Health Overview</strong> — Company Health فارغ 100%</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SECTION 8: FINAL VISION -->
+<!-- ============================================ -->
+<div class="section" id="final">
+  <h2>8. التصور النهائي — Companies DB كـ Revenue Engine</h2>
+
+  <h3>ملخص القرارات</h3>
+
+  <h4 style="color: var(--red); margin-top: 20px;">حذف فوري (12 عمود)</h4>
+  <div style="background: #ef444412; padding: 15px; border-radius: 8px; margin: 10px 0;">
+    Account Stage · Short Description · Company Name for Emails · Facebook Url · Twitter Url · Company Postal Code · Latest Funding Amount · Latest Funding · Number of Retail Locations · Headcount Growth 24M · NAICS Codes · SIC Codes
+  </div>
+
+  <h4 style="color: var(--red); margin-top: 15px;">حذف بعد الدمج (6 أعمدة)</h4>
+  <div style="background: #ef444412; padding: 15px; border-radius: 8px; margin: 10px 0;">
+    Employee Size (ادمج في Employees) · Account Owner (ادمج في Primary Owner) · Company Owners (ادمج في Primary Owner) · Lists · Subsidiary of · Subsidiary of Organization ID
+  </div>
+
+  <h4 style="color: var(--yellow); margin-top: 15px;">تطوير (15 عمود)</h4>
+  <div style="background: #eab30812; padding: 15px; border-radius: 8px; margin: 10px 0;">
+    Industry (→ select) · Company Country (→ select) · Revenue Range (→ select) · Employees (→ إثراء) · Annual Revenue (→ تفريق 0 vs unknown) · Company Stage (→ 100% fill) · Data Status (→ أتمتة أو حذف) · AI Qualification Status (→ ربط بالأتمتة) · Last Engagement Date (→ أتمتة) · Headcount Growth 6M (→ إثراء) · Account Engagement Score (→ بناء الحساب) · Buying Committee Strength (→ بناء الحساب) · Company Health (→ بناء الحساب) · Engaged Contacts (→ إصلاح الأتمتة) · Supporting Owners (→ أتمتة أو حذف)
+  </div>
+
+  <h4 style="color: var(--blue); margin-top: 15px;">إضافة (8 أعمدة جديدة)</h4>
+  <div style="background: #3b82f612; padding: 15px; border-radius: 8px; margin: 10px 0;">
+    Next Action Date · Days Since Last Activity · Estimated Deal Value · Win Probability · Weighted Pipeline Value · ICP Match Score · Account Temperature · Target Market
+  </div>
+
+  <h3>الحصيلة: من 68 → ~50 عمود فعّال</h3>
+
+  <div style="margin-top: 30px;">
+    <h3>خريطة التحول: مخزن بيانات → Revenue Engine</h3>
+    <div style="display: grid; grid-template-columns: 1fr 40px 1fr; gap: 10px; align-items: start; margin-top: 15px;">
+      <div style="background: #ef444418; padding: 20px; border-radius: 8px; border: 1px solid #ef444444;">
+        <h4 style="color: var(--red); text-align: center;">الآن</h4>
+        <p style="font-size: 0.9em;">• 68 عمود (12 ميت)</p>
+        <p style="font-size: 0.9em;">• 3 أعمدة ownership مكررة</p>
+        <p style="font-size: 0.9em;">• 2 stage fields متعارضة</p>
+        <p style="font-size: 0.9em;">• 0 revenue fields</p>
+        <p style="font-size: 0.9em;">• 0 pipeline visibility</p>
+        <p style="font-size: 0.9em;">• Company Health = 0%</p>
+        <p style="font-size: 0.9em;">• Engagement Score = 0%</p>
+        <p style="font-size: 0.9em;">• "ماذا أفعل اليوم؟" = ❌</p>
+      </div>
+      <div style="text-align: center; padding-top: 60px; font-size: 2em; color: var(--orange);">→</div>
+      <div style="background: #22c55e18; padding: 20px; border-radius: 8px; border: 1px solid #22c55e44;">
+        <h4 style="color: var(--green); text-align: center;">بعد التحسين</h4>
+        <p style="font-size: 0.9em;">• ~50 عمود فعّال</p>
+        <p style="font-size: 0.9em;">• 1 owner field واضح</p>
+        <p style="font-size: 0.9em;">• 1 Company Stage (100% fill)</p>
+        <p style="font-size: 0.9em;">• Deal Value + Probability + Forecast</p>
+        <p style="font-size: 0.9em;">• Full pipeline visibility</p>
+        <p style="font-size: 0.9em;">• Automated Company Health</p>
+        <p style="font-size: 0.9em;">• Real Engagement tracking</p>
+        <p style="font-size: 0.9em;">• "ماذا أفعل اليوم؟" = ✅</p>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top: 30px;">أولوية التنفيذ (War Mode)</h3>
+  <div class="timeline-item">
+    <strong style="color: var(--orange);">الأسبوع 1: تنظيف</strong><br>
+    حذف 12 عمود ميت. دمج 6 أعمدة مكررة. تحويل Industry + Country + Revenue Range إلى select. ملء Company Stage الفارغ بـ "Prospect".
+  </div>
+  <div class="timeline-item">
+    <strong style="color: var(--orange);">الأسبوع 2: أتمتة</strong><br>
+    بناء حساب Account Engagement Score + Buying Committee Strength + Company Health. إصلاح Engaged Contacts (0% → حقيقي). أتمتة Last Engagement Date.
+  </div>
+  <div class="timeline-item">
+    <strong style="color: var(--orange);">الأسبوع 3: Revenue Fields</strong><br>
+    إضافة Estimated Deal Value + Win Probability + Weighted Pipeline Value + Expected Close Date. إنشاء Pipeline View. ربط بـ Opportunities DB.
+  </div>
+  <div class="timeline-item">
+    <strong style="color: var(--orange);">الأسبوع 4: Intelligence</strong><br>
+    إضافة Next Action Date + Days Since Last Activity + Account Temperature + ICP Match Score. بناء Revenue Dashboard. تفعيل Company Health monitoring.
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="text-align: center; padding: 30px; color: #6b7280; font-size: 0.85em;">
+  <div style="color: var(--orange); font-weight: 700; margin-bottom: 5px;">AI Sales OS v5.0 — Companies Revenue Engine Analysis</div>
+  Generated on April 3, 2026 | Based on live Notion data (100 company sample) | 68 columns analyzed
+</div>
+
+</div>
+</body>
+</html>

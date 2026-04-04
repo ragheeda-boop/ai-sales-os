@@ -4,30 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Sales OS — Live Intelligence Dashboard v5.3 | MUHIDE</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Viga,Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
-  --orange:    #E8771A;
+  --orange:    #F57C1E;
   --orange-d:  #C4600D;
   --orange-l:  #F5924A;
   --orange-xl: #FFF0E5;
-  --black:     #1A1A1A;
+  --black:     #151214;
   --dark:      #2D2D2D;
   --gray-d:    #4A4A4A;
   --gray-m:    #7A7A7A;
   --gray-l:    #BEBEBE;
-  --gray-xl:   #EBEBEB;
+  --gray-xl:   #FAFAFA;
   --white:     #FFFFFF;
-  --bg:        #F0F0F0;
+  --bg:        #FAFAFA;
   --card:      #FFFFFF;
   --border:    #E0E0E0;
-  --g-orange:  linear-gradient(135deg, #E8771A, #C4600D);
-  --g-black:   linear-gradient(135deg, #1A1A1A, #2D2D2D);
-  --g-dark:    linear-gradient(120deg, #1A1A1A 0%, #4A4A4A 100%);
+  --g-orange:  linear-gradient(135deg, #F57C1E, #C4600D);
+  --g-black:   linear-gradient(135deg, #151214, #2D2D2D);
+  --g-dark:    linear-gradient(120deg, #151214 0%, #4A4A4A 100%);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Montserrat','Segoe UI',sans-serif; background:var(--bg); color:var(--black); min-height:100vh; }
+body { font-family:'Montserrat','Viga','Geeza Pro','Segoe UI',sans-serif; background:var(--bg); color:var(--black); min-height:100vh; }
 
 /* HEADER */
 .header { background:var(--g-black); color:var(--white); padding:0 36px; height:68px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:300; box-shadow:0 4px 20px rgba(0,0,0,.4); }
@@ -41,18 +41,18 @@ body { font-family:'Montserrat','Segoe UI',sans-serif; background:var(--bg); col
 .h-sys .sys-name { font-size:13px; font-weight:800; color:var(--white); }
 .h-sys .sys-sub { font-size:10px; color:var(--gray-l); font-weight:500; }
 .h-right { display:flex; align-items:center; gap:12px; }
-.live-pill { display:flex; align-items:center; gap:6px; border:1px solid rgba(232,119,26,.5); background:rgba(232,119,26,.1); border-radius:20px; padding:5px 12px; font-size:10px; font-weight:800; color:var(--orange-l); letter-spacing:.5px; }
+.live-pill { display:flex; align-items:center; gap:6px; border:1px solid rgba(245,124,30,.5); background:rgba(245,124,30,.1); border-radius:20px; padding:5px 12px; font-size:10px; font-weight:800; color:var(--orange-l); letter-spacing:.5px; }
 .live-dot { width:7px; height:7px; background:var(--orange); border-radius:50%; animation:pulse 1.8s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.4;transform:scale(.75);} }
 .h-ts { font-size:10px; color:var(--gray-m); font-weight:600; }
-.version-badge { background:rgba(232,119,26,.15); border:1px solid rgba(232,119,26,.35); border-radius:6px; padding:4px 10px; font-size:10px; font-weight:800; color:var(--orange-l); }
+.version-badge { background:rgba(245,124,30,.15); border:1px solid rgba(245,124,30,.35); border-radius:6px; padding:4px 10px; font-size:10px; font-weight:800; color:var(--orange-l); }
 
 /* PIPELINE BAR */
 .pipe-bar { background:#111; padding:6px 36px; display:flex; align-items:center; overflow-x:auto; border-bottom:2px solid var(--orange); scrollbar-width:none; }
 .pipe-bar::-webkit-scrollbar { display:none; }
 .ps-item { padding:3px 9px; border-radius:5px; font-size:9px; font-weight:800; color:var(--gray-d); white-space:nowrap; letter-spacing:.3px; flex-shrink:0; }
 .ps-item.done { color:#8A8A8A; }
-.ps-item.active { color:var(--orange); background:rgba(232,119,26,.1); }
+.ps-item.active { color:var(--orange); background:rgba(245,124,30,.1); }
 .ps-arrow { color:#333; font-size:9px; flex-shrink:0; }
 
 /* TABS */
@@ -209,7 +209,7 @@ body { font-family:'Montserrat','Segoe UI',sans-serif; background:var(--bg); col
       <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
         <rect x="8" y="14" width="7" height="20" rx="2" fill="white"/>
         <rect x="21" y="14" width="7" height="20" rx="2" fill="white"/>
-        <circle cx="18" cy="9" r="5" fill="#E8771A"/>
+        <circle cx="18" cy="9" r="5" fill="#F57C1E"/>
       </svg>
       <div class="h-name">
         <div class="brand-name">M<span>Ü</span>HIDE</div>
@@ -679,12 +679,12 @@ body { font-family:'Montserrat','Segoe UI',sans-serif; background:var(--bg); col
   </div>
   <div class="g2 gap">
     <div>
-      <div style="background:#E8771A;color:#fff;border-radius:8px;padding:6px 14px;font-size:.75em;font-weight:700;margin-bottom:8px;">⚙️ JOB 1 — sync-and-score &nbsp;|&nbsp; timeout: 5h 50min</div>
+      <div style="background:#F57C1E;color:#fff;border-radius:8px;padding:6px 14px;font-size:.75em;font-weight:700;margin-bottom:8px;">⚙️ JOB 1 — sync-and-score &nbsp;|&nbsp; timeout: 5h 50min</div>
       <div class="pipe-step"><div class="ps-n">1</div><div class="ps-info"><div class="ps-cmd">daily_sync.py --mode incremental --hours 26</div><div class="ps-desc">Apollo &rarr; Notion sync &middot; Triple dedup &middot; Local timestamp filter (v4.2) &middot; minutes not hours</div></div><div class="ps-badge ok">CORE</div></div>
       <div class="pipe-step"><div class="ps-n">2</div><div class="ps-info"><div class="ps-cmd">job_postings_enricher.py --limit 50</div><div class="ps-desc">Intent proxy &middot; Job postings &rarr; Intent Score &middot; 7-day cache</div></div><div class="ps-badge warn">OPTIONAL</div></div>
       <div class="pipe-step"><div class="ps-n">3</div><div class="ps-info"><div class="ps-cmd">lead_score.py</div><div class="ps-desc">Score 0-100 &middot; HOT/WARM/COLD tier write &middot; v1.1 weights</div></div><div class="ps-badge ok">CORE</div></div>
       <div class="pipe-step"><div class="ps-n">4</div><div class="ps-info"><div class="ps-cmd">action_ready_updater.py</div><div class="ps-desc">5-condition gate &middot; Action Ready checkbox write</div></div><div class="ps-badge ok">CORE</div></div>
-      <div style="background:#1A1A1A;color:#E8771A;border-radius:8px;padding:6px 14px;font-size:.75em;font-weight:700;margin:8px 0;">⚡ JOB 2 — action-and-track &nbsp;|&nbsp; timeout: 3h &nbsp;|&nbsp; starts after Job 1</div>
+      <div style="background:#151214;color:#F57C1E;border-radius:8px;padding:6px 14px;font-size:.75em;font-weight:700;margin:8px 0;">⚡ JOB 2 — action-and-track &nbsp;|&nbsp; timeout: 3h &nbsp;|&nbsp; starts after Job 1</div>
       <div class="pipe-step"><div class="ps-n">5</div><div class="ps-info"><div class="ps-cmd">auto_tasks.py</div><div class="ps-desc">SLA-based task creation &middot; HOT=24h / WARM=48h</div></div><div class="ps-badge warn">OPTIONAL</div></div>
       <div class="pipe-step"><div class="ps-n">6</div><div class="ps-info"><div class="ps-cmd">auto_sequence.py --limit 50</div><div class="ps-desc">Apollo sequence enrollment &middot; Role routing &middot; Round-robin</div></div><div class="ps-badge warn">OPTIONAL</div></div>
       <div class="pipe-step"><div class="ps-n">7</div><div class="ps-info"><div class="ps-cmd">analytics_tracker.py --days 7</div><div class="ps-desc">Engagement sync &middot; Apollo &rarr; Notion &middot; Open/Reply/Bounce</div></div><div class="ps-badge warn">OPTIONAL</div></div>
@@ -774,16 +774,16 @@ function switchTab(id, el) {
 }
 
 // MUHIDE COLORS
-var O  = '#E8771A';
+var O  = '#F57C1E';
 var OL = '#F5924A';
 var OD = '#C4600D';
 var G1 = '#4A4A4A';
 var G2 = '#7A7A7A';
 var G3 = '#BEBEBE';
-var G4 = '#EBEBEB';
+var G4 = '#FAFAFA';
 var WH = '#FFFFFF';
 
-Chart.defaults.font.family = "'Montserrat','Segoe UI',sans-serif";
+Chart.defaults.font.family = "'Montserrat','Viga','Geeza Pro','Segoe UI',sans-serif";
 Chart.defaults.font.weight = '700';
 Chart.defaults.color = G1;
 Chart.defaults.plugins.legend.labels.boxWidth = 12;
@@ -809,7 +809,7 @@ new Chart(document.getElementById('sizeBar'), {
     datasets: [{ label:'Contacts', data:[4820,9240,12640,7840,4830,3280,1420,805], backgroundColor:[G4,G4,G3,G2,G1,O,OD,OL], borderRadius:5 }]
   },
   options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-    scales:{ y:{grid:{color:'#F0F0F0'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} }
+    scales:{ y:{grid:{color:'#FAFAFA'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} }
   }
 });
 
@@ -821,7 +821,7 @@ new Chart(document.getElementById('seniorityBar'), {
     datasets: [{ label:'Contacts', data:[4820,7340,9820,8640,7830,4280,2145], backgroundColor:[O,O,G1,G1,G2,G3,G4], borderRadius:5 }]
   },
   options: { indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-    scales:{ x:{grid:{color:'#F0F0F0'},ticks:{font:{size:10}}}, y:{grid:{display:false},ticks:{font:{size:11}}} }
+    scales:{ x:{grid:{color:'#FAFAFA'},ticks:{font:{size:10}}}, y:{grid:{display:false},ticks:{font:{size:11}}} }
   }
 });
 
@@ -833,7 +833,7 @@ new Chart(document.getElementById('scoreBar'), {
     datasets: [{ label:'Contacts', data:[3240,6820,8940,7610,10996,3820,1480,1431,462,76], backgroundColor:[G4,G4,G4,G4,G4,G2,G1,G1,O,O], borderRadius:5 }]
   },
   options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-    scales:{ y:{grid:{color:'#F0F0F0'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} }
+    scales:{ y:{grid:{color:'#FAFAFA'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} }
   }
 });
 
@@ -845,7 +845,7 @@ new Chart(document.getElementById('indCompaniesBar'), {
     datasets: [{ label:'Companies', data:[4122,2881,2164,1541,1234,924,771,617,1153], backgroundColor:[O,O,G1,G1,G2,G2,G3,G3,G4], borderRadius:5 }]
   },
   options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-    scales:{ y:{grid:{color:'#F0F0F0'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0}} }
+    scales:{ y:{grid:{color:'#FAFAFA'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0}} }
   }
 });
 
@@ -857,7 +857,7 @@ new Chart(document.getElementById('indHotBar'), {
     datasets: [{ label:'HOT Leads', data:[194,118,76,62,43,29,16], backgroundColor:[O,O,G1,G1,G2,G2,G3], borderRadius:5 }]
   },
   options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-    scales:{ y:{grid:{color:'#F0F0F0'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0}} }
+    scales:{ y:{grid:{color:'#FAFAFA'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0}} }
   }
 });
 
@@ -869,7 +869,7 @@ new Chart(document.getElementById('indScoreBar'), {
     datasets: [{ label:'Avg Lead Score', data:[74,71,68,65,62,58,55,48], backgroundColor:[O,O,G1,G1,G2,G2,G3,G4], borderRadius:5 }]
   },
   options: { indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-    scales:{ x:{min:0,max:100,grid:{color:'#F0F0F0'},ticks:{font:{size:10}}}, y:{grid:{display:false},ticks:{font:{size:11}}} }
+    scales:{ x:{min:0,max:100,grid:{color:'#FAFAFA'},ticks:{font:{size:10}}}, y:{grid:{display:false},ticks:{font:{size:11}}} }
   }
 });
 
@@ -878,7 +878,7 @@ new Chart(document.getElementById('outreachDonut'), {
   type: 'doughnut',
   data: {
     labels: ['Uncontacted','In Sequence','Sent','Opened','Replied','Meeting Booked','DNC','Bounced'],
-    datasets: [{ data:[36482,2847,1820,1240,341,18,84,43], backgroundColor:[G4,O,G2,G1,OD,'#1A1A1A',G3,G3], borderColor:WH, borderWidth:2 }]
+    datasets: [{ data:[36482,2847,1820,1240,341,18,84,43], backgroundColor:[G4,O,G2,G1,OD,'#151214',G3,G3], borderColor:WH, borderWidth:2 }]
   },
   options: { responsive:true, maintainAspectRatio:false, cutout:'60%',
     plugins:{ legend:{position:'right',labels:{font:{size:10},padding:8}} }
@@ -896,7 +896,7 @@ new Chart(document.getElementById('seqPerf'), {
     ]
   },
   options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top'}},
-    scales:{ y:{grid:{color:'#F0F0F0'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:11}}} }
+    scales:{ y:{grid:{color:'#FAFAFA'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:11}}} }
   }
 });
 
@@ -911,7 +911,7 @@ new Chart(document.getElementById('tierCompare'), {
     ]
   },
   options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top'}},
-    scales:{ y:{grid:{color:'#F0F0F0'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} }
+    scales:{ y:{grid:{color:'#FAFAFA'},ticks:{font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} }
   }
 });
 </script>

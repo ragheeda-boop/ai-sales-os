@@ -1,0 +1,198 @@
+# Module Dependency Graph
+# File Synchronization Engine for AI Sales OS
+
+## Layer 0: Configuration & Constants
+├── config.py
+│   └── (reads from .env)
+
+## Layer 1: Data Models
+├── models.py
+│   └── depends on: (none - pure data structures)
+
+## Layer 2: Classification & Utilities
+├── classify_files.py
+│   ├── depends on: config.py
+│   └── used by: all scanners
+
+## Layer 3: Source Scanners (Independent)
+├── scan_local.py
+│   ├── depends on: config.py, models.py, classify_files.py
+│   └── produces: List[FileRecord]
+│
+├── scan_drive.py
+│   ├── depends on: config.py, models.py, classify_files.py
+│   ├── requires: google-api-python-client, google-auth-oauthlib
+│   └── produces: List[FileRecord]
+│
+└── scan_github.py
+    ├── depends on: config.py, models.py, classify_files.py
+    └── produces: List[FileRecord]
+
+## Layer 4: Manifest Building
+├── build_manifest.py
+│   ├── depends on: config.py, models.py
+│   ├── consumes: List[FileRecord] × 3 (from scanners)
+│   └── produces: Manifest
+
+└── compare_manifests.py
+    ├── depends on: models.py
+    ├── consumes: Manifest, Manifest
+    └── produces: List[Change]
+
+## Layer 5: Conflict Management
+├── detect_conflicts.py
+│   ├── depends on: models.py, classify_files.py
+│   ├── consumes: Manifest
+│   └── produces: List[ConflictRecord]
+
+└── resolve_conflicts.py
+    ├── depends on: models.py, config.py
+    ├── consumes: List[ConflictRecord]
+    └── produces: (auto_resolved, manual_required)
+
+## Layer 6: Sync Operators (Independent)
+├── sync_to_local.py
+│   ├── depends on: models.py, config.py
+│   ├── consumes: List[SyncAction]
+│   └── produces: dict (results)
+│
+├── sync_to_drive.py
+│   ├── depends on: models.py, config.py
+│   ├── requires: google-api-python-client
+│   ├── consumes: List[SyncAction]
+│   └── produces: dict (results)
+│
+└── sync_to_github.py
+    ├── depends on: models.py, config.py
+    ├── consumes: List[SyncAction]
+    └── produces: dict (results)
+
+## Layer 7: Supporting Services
+├── backup_manager.py
+│   ├── depends on: config.py
+│   ├── operations: create, verify, restore, rotate
+│   └── storage: .sync/backups/
+│
+└── logging_manager.py
+    ├── depends on: config.py
+    ├── classes: ColoredFormatter, JsonFormatter, AuditLogger
+    └── outputs: sync.log, audit.log, errors.log, audit_trail.jsonl
+
+## Layer 8: Orchestration
+└── sync_engine.py
+    ├── depends on: all modules
+    ├── coordinates: SyncEngine class
+    ├── runs: scan_local, scan_drive, scan_github
+    ├── builds: build_manifest, compare_manifests
+    ├── detects: detect_conflicts, resolve_conflicts
+    ├── executes: sync_to_local, sync_to_drive, sync_to_github
+    ├── logs: logging_manager, audit_logger
+    ├── backs up: backup_manager
+    └── CLI: argparse with modes (scan, compare, sync, report)
+
+## Data Flow Diagram
+
+┌─────────────┐  ┌─────────────┐  ┌──────────────┐
+│Local Scan   │  │Drive Scan   │  │GitHub Scan   │
+└──────┬──────┘  └──────┬──────┘  └──────┬───────┘
+       │                │                │
+       └────────────────┼────────────────┘
+                        │
+                        ▼
+              ┌─────────────────────┐
+              │  Build Manifest     │
+              │  (merge 3 sources)  │
+              └──────────┬──────────┘
+                         │
+              ┌──────────┴──────────┐
+              │ Load Previous       │
+              │ Manifest (if any)   │
+              └──────────┬──────────┘
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │  Compare Manifests  │
+              │  (detect changes)   │
+              └──────────┬──────────┘
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │ Detect Conflicts    │
+              │ (multi-source issues)
+              └──────────┬──────────┘
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │ Resolve Conflicts   │
+              │ (auto + manual)     │
+              └──────────┬──────────┘
+                         │
+        ┌────────────────┼────────────────┐
+        │                │                │
+        ▼                ▼                ▼
+   Sync to Local    Sync to Drive    Sync to GitHub
+        │                │                │
+        └────────────────┼────────────────┘
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │ Save Manifest       │
+              │ (for next run)      │
+              └─────────────────────┘
+
+## Execution Paths
+
+### Mode: SCAN
+sync_engine.py → [scan_local, scan_drive, scan_github] → build_manifest → DONE
+
+### Mode: COMPARE
+sync_engine.py → [scan_local, scan_drive, scan_github] → build_manifest → 
+  compare_manifests → DONE
+
+### Mode: SYNC (full cycle)
+sync_engine.py → [scan_local, scan_drive, scan_github] → build_manifest → 
+  compare_manifests → detect_conflicts → resolve_conflicts →
+  [sync_to_local, sync_to_drive, sync_to_github] → 
+  backup_manager (backups) →
+  save_manifest → logging_manager (audit trail) → DONE
+
+### Mode: REPORT
+sync_engine.py → load_manifest → generate_report → DONE
+
+## Key Integration Points
+
+1. **config.py** → Every module imports for constants
+2. **models.py** → Data structures used throughout
+3. **classify_files.py** → Called by all scanners for file classification
+4. **sync_engine.py** → Main orchestrator calls all other modules
+5. **logging_manager.py** → All modules log via this
+6. **backup_manager.py** → Called before sync operations
+7. **audit_logger** → Records all decisions in immutable trail
+
+## External Dependencies
+
+- google-api-python-client (optional: Drive scanning)
+- google-auth-oauthlib (optional: Drive auth)
+- PyGithub (optional: GitHub API fallback)
+- python-dotenv (required: .env loading)
+- colorama (optional: colored console output)
+- tqdm (optional: progress bars - future use)
+- subprocess (standard library: git commands)
+- tarfile (standard library: backups)
+- json (standard library: serialization)
+
+## No Circular Dependencies ✓
+
+All dependencies flow downward:
+- Orchestration depends on Services
+- Services depend on Operators
+- Operators depend on Conflict/Manifest layers
+- Manifest layers depend on Scanners
+- Scanners depend on Classification
+- Classification depends on Config/Models
+
+This allows:
+- Modular testing
+- Easy extension
+- Clear responsibilities
+- Safe refactoring
