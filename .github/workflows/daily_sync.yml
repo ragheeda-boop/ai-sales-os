@@ -88,7 +88,7 @@ jobs:
           MODE="${{ github.event.inputs.sync_mode || 'incremental' }}"
           echo "🔄 Sync mode: $MODE"
           case $MODE in
-            incremental)    python daily_sync.py --mode incremental --hours 26 ;;
+            incremental)    python daily_sync.py --mode incremental --hours 26 --gate strict ;;
             backfill_week)  python daily_sync.py --mode backfill --days 7 ;;
             backfill_month) python daily_sync.py --mode backfill --days 30 ;;
             full)           python daily_sync.py --mode full ;;
@@ -351,12 +351,4 @@ jobs:
           python score_calibrator.py --days 30 --export
 
       - name: "📋 Upload Calibration Report"
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: calibration-${{ github.run_number }}
-          path: |
-            💻 CODE/Phase 3 - Sync/score_calibrator.log
-            💻 CODE/Phase 3 - Sync/calibration_analysis_*.json
-            💻 CODE/Phase 3 - Sync/calibration_history.json
-          retention-days: 90
+        
