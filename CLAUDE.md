@@ -7,24 +7,25 @@ This is a production-grade Sales Operating System, not a hobby project.
 
 **System:** Apollo.io → Python Engine → Notion CRM → GitHub Actions → Odoo (future)
 **Owner:** Ragheed
-**Version:** 5.0 | April 2026 | Company-Centric Operating Model + Phase 3.5 Complete + Live Dashboard
+**Version:** 6.1 | April 2026 | Modular Architecture + Company-Centric Operating Model + Phase 3.5 Complete + Live Dashboard + Outcome Tracker + Safe Execution Order + Stage Conflict Guards + Freshness Guard
 
 ---
 
 ## System Architecture
 
 ```
-Apollo.io (Data)  ──►  Python Scripts (25 scripts)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily + Weekly)
-  45,086 contacts         Sync + Filter + Enrich +           7 Databases            7:00 AM KSA
-  15,407 companies        Score + Action + Sequence +        HOT/WARM/COLD          2-job pipeline + weekly calibration
-                          Meet + Dashboard + Govern          Live Sales Dashboard   Sales_Dashboard_Accounts.html
-                          Company-Centric (v5.0)             Primary/Supporting Owners
-                                                             Company Stage Machine
+Apollo.io (Data)  ──►  Python Engine (8 modules)  ──►  Notion (CRM Hub)  ──►  GitHub Actions (Daily + Weekly)
+  45,086 contacts         Core / Scoring /               7 Databases            7:00 AM KSA
+  15,407 companies        Automation / Governance /      HOT/WARM/COLD          2-job pipeline + weekly calibration
+                          Enrichment / Meetings /        Live Sales Dashboard   Sales_Dashboard_Accounts.html
+                          Monitoring / Webhooks          Primary/Supporting Owners
+                          (26 active scripts)            Company Stage Machine
+Additional Pipelines: pipelines/muqawil/ (contractors) + pipelines/engineering_offices/ (ministry offices) + pipelines/file_sync/
 ```
 
 **Company-Centric Model (v5.0):** Company = Primary Entity. ONE task per company. ONE opportunity per company. Primary Owner = most contacts. Company Stage state machine: Prospect → Outreach → Engaged → Meeting → Opportunity → Customer → Churned → Archived.
 
-**Autonomous Sales Loop:** Score → Task → Auto-Sequence → Track Results → Meet → Analyze → Opportunity → Calibrate → Better Score
+**Autonomous Sales Loop:** Score → Task → Auto-Sequence → Track Results → Outcome → Meet → Analyze → Opportunity → Calibrate → Better Score
 
 **Key design decision:** NO middleware. No n8n, no Make.com, no Zapier. Pure Python + GitHub Actions = full control, zero cost.
 
@@ -36,82 +37,122 @@ Apollo.io (Data)  ──►  Python Scripts (25 scripts)  ──►  Notion (CRM
 AI Sales OS/
 ├── CLAUDE.md                    → AI instructions & system reference (this file)
 ├── README.md                    → Project overview
-├── AI_Sales_OS_MindMap.html     → Interactive mind map v8.0 (Arabic)
-├── Muhide.png                   → Brand logo
 │
-├── Sales_Dashboard_Accounts.html → Account-based Sales Dashboard (auto-regenerated daily)
+├── assets/                      → Brand assets
+│   └── Muhide.png               → Brand logo
 │
-├── 💻 CODE/Phase 3 - Sync/      → All 19 production scripts
-│   ├── daily_sync.py            → Main sync engine v2.3 (3 modes + local timestamp filter)
-│   ├── lead_score.py            → Lead scoring engine (writes Score + Tier)
-│   ├── constants.py             → Unified field names & thresholds (single source of truth)
-│   ├── notion_helpers.py        → Shared Notion API utilities
-│   ├── auto_tasks.py            → Action Engine — SLA-based task creator
-│   ├── action_ready_updater.py  → Computes Action Ready checkbox (5 conditions)
-│   ├── health_check.py          → Pipeline health validator
-│   ├── job_postings_enricher.py → Intent proxy from Apollo Job Postings
-│   ├── auto_sequence.py         → Auto-enroll contacts in Apollo Sequences
-│   ├── analytics_tracker.py     → Apollo Analytics → Notion engagement sync
-│   ├── score_calibrator.py      → Self-learning weight adjustment
-│   ├── morning_brief.py         → Daily intelligence report generator
-│   ├── meeting_tracker.py       → Meeting sync + Contact stage update [Phase 3.5]
-│   ├── meeting_analyzer.py      → AI meeting intelligence via Claude API [Phase 3.5]
-│   ├── opportunity_manager.py   → Meetings → Opportunities + stale deal detection [Phase 3.5]
-│   ├── dashboard_generator.py   → Pulls live Notion data → regenerates Sales_Dashboard_Accounts.html [v4.2]
-│   ├── doc_sync_checker.py      → Documentation drift validator [v4.1]
-│   ├── archive_unqualified.py   → Archive contacts without owner/email [v4.4]
-│   ├── data_governor.py         → Data governance enforcer — audit + archive unqualified records [v6.0]
-│   ├── ingestion_gate.py        → Ingestion gate — validates companies/contacts before entry [v6.0]
-│   ├── cleanup_overdue_tasks.py → Bulk-complete legacy pre-v5.0 contact-level tasks
-│   ├── audit_ownership.py       → Audit ownership gaps across all Notion DBs
-│   ├── muhide_strategic_analysis.py → AI engine — scores all companies vs MUHIDE ICP (Fit Score + Priority)
-│   ├── webhook_server.py        → Apollo webhook receiver
-│   ├── verify_links.py          → Contact-company link verifier
+├── dashboards/                  → Live dashboard reports (9 HTML files)
+│   ├── AI_Sales_OS_Live_Dashboard.html        → Main live dashboard (65 KB)
+│   ├── AI_Sales_OS_MindMap.html               → Interactive system mind map (54 KB)
+│   ├── AI_Sales_OS_Test_Report.html           → Test/validation report (15 KB)
+│   ├── Companies_DB_Revenue_Engine_Analysis.html → Company DB revenue analysis (60 KB)
+│   ├── Company_Centric_Enforcement_Plan.html  → Company-centric enforcement plan (98 KB)
+│   ├── Full_System_Revenue_Engine_Analysis.html → Full system revenue engine analysis (60 KB)
+│   ├── Sales_Dashboard_Accounts.html          → Account-based Sales Dashboard (auto-regenerated daily)
+│   ├── Sales_Dashboard_Accounts_view.html     → Sales Dashboard extended view (77 KB)
+│   └── تقرير_الاكتتابات_السعودية_2026.html    → Saudi IPO report 2026 (46 KB)
+│
+├── scripts/                     → Core application (26 active production scripts, 8 modules)
+│   ├── core/
+│   │   ├── constants.py         → Unified field names & thresholds (single source of truth)
+│   │   ├── notion_helpers.py    → Shared Notion API utilities
+│   │   ├── daily_sync.py        → Main sync engine v4.0 (3 modes + local timestamp filter + Company-Centric)
+│   │   └── doc_sync_checker.py  → Documentation drift validator [v4.1]
+│   ├── scoring/
+│   │   ├── lead_score.py        → Lead scoring engine (writes Score + Tier)
+│   │   ├── score_calibrator.py  → Self-learning weight adjustment
+│   │   └── action_ready_updater.py → Computes Action Ready checkbox (5 conditions)
+│   ├── automation/
+│   │   ├── auto_tasks.py        → Action Engine — SLA-based task creator
+│   │   ├── auto_sequence.py     → Auto-enroll contacts in Apollo Sequences
+│   │   ├── outcome_tracker.py   → Task → Contact outcome loop (v1.0: Contact Responded + Last Contacted + Meeting Booked)
+│   │   ├── cleanup_overdue_tasks.py → Bulk-complete legacy pre-v5.0 contact-level tasks
+│   │   ├── lead_inbox_mover.py  → v0.2 — Move Qualified Lead Inbox → real Company+Contact records (backfill + forward, Domain/Name/Email dedup)
+│   │   └── outcome_tracker_backup.py → [ARCHIVED] Previous version of outcome_tracker (keyword-based meeting detection)
+│   ├── governance/
+│   │   ├── ingestion_gate.py    → Ingestion gate — validates companies/contacts before entry [v6.0]
+│   │   ├── data_governor.py     → Data governance enforcer — audit + archive unqualified records [v6.0]
+│   │   ├── archive_unqualified.py → Archive contacts without owner/email [v4.4]
+│   │   ├── audit_ownership.py   → Audit ownership gaps across all Notion DBs
+│   │   └── fix_seniority.py     → [ONE-TIME] Migration: "C suite" → "C-Suite" in Notion Contacts
+│   ├── enrichment/
+│   │   ├── job_postings_enricher.py → Intent proxy from Apollo Job Postings
+│   │   ├── muhide_strategic_analysis.py → AI engine — scores all companies vs MUHIDE ICP (Fit Score + Priority)
+│   │   └── analytics_tracker.py → Apollo Analytics → Notion engagement sync
+│   ├── meetings/
+│   │   ├── meeting_tracker.py   → Meeting sync + Contact stage update [Phase 3.5]
+│   │   ├── meeting_analyzer.py  → AI meeting intelligence via Claude API [Phase 3.5]
+│   │   └── opportunity_manager.py → Meetings → Opportunities + stale deal detection [Phase 3.5]
+│   ├── monitoring/
+│   │   ├── health_check.py      → Pipeline health validator
+│   │   ├── morning_brief.py     → Daily intelligence report generator
+│   │   └── dashboard_generator.py → Pulls live Notion data → regenerates Sales_Dashboard_Accounts.html [v4.2]
+│   ├── webhooks/
+│   │   ├── webhook_server.py    → Apollo webhook receiver
+│   │   └── verify_links.py      → Contact-company link verifier
 │   ├── .env                     → API credentials (NEVER commit)
 │   ├── .env.example             → Credential template
 │   ├── requirements.txt         → Python dependencies
 │   └── *.log                    → Runtime logs (auto-generated, gitignored)
 │
-├── 💻 CODE/file_sync/           → Tri-directional sync engine (Local ↔ Drive ↔ GitHub)
-│   ├── sync_engine.py           → Master orchestrator
-│   ├── scan_local.py / scan_drive.py / scan_github.py → Source scanners
-│   ├── sync_to_drive.py / sync_to_github.py / sync_to_local.py → Target writers
-│   ├── build_manifest.py        → Unified manifest builder
-│   ├── detect_conflicts.py / resolve_conflicts.py → Conflict handling
-│   ├── backup_manager.py        → Pre-sync backups
-│   └── 00_START_HERE.md         → Setup & usage guide
+├── pipelines/                   → Specialized data pipelines (separate from main workflow)
+│   ├── muqawil/                 → [UNDOCUMENTED] Contractors data pipeline (14,089 records, 80.7% completeness)
+│   ├── engineering_offices/     → [UNDOCUMENTED] Ministry engineering offices pipeline (inactive — all zeros in last_activity_stats.json)
+│   └── file_sync/               → Tri-directional sync engine (Local ↔ Drive ↔ GitHub)
+│       ├── sync_engine.py       → Master orchestrator
+│       ├── scan_local.py / scan_drive.py / scan_github.py → Source scanners
+│       ├── sync_to_drive.py / sync_to_github.py / sync_to_local.py → Target writers
+│       ├── build_manifest.py    → Unified manifest builder
+│       ├── detect_conflicts.py / resolve_conflicts.py → Conflict handling
+│       ├── backup_manager.py    → Pre-sync backups
+│       └── 00_START_HERE.md     → Setup & usage guide
 │
-├── 🎯 PRESENTATIONS/            → All presentation files
-│   ├── English/
+├── presentations/               → All presentation files
+│   ├── english/
 │   │   └── AI_Sales_OS_Presentation.pptx       → Main English technical deck (v4.1)
-│   ├── Arabic/
+│   ├── arabic/
 │   │   ├── عرض_تقديمي_AI_Sales_OS_v4.1.pptx   → Arabic v4.1 (latest)
 │   │   └── عرض_تقديمي_v2.pptx                 → Arabic v2 overview
-│   └── CEO Pitch/
+│   └── ceo_pitch/
 │       └── AI_Sales_OS_CEO_Pitch_v2.pptx       → Executive pitch deck (Arabic)
 │
-├── 📊 DATA/
-│   ├── Import CSVs/             → Initial data import files (companies + contacts)
-│   ├── Logs/                    → Sync run logs and runtime stats JSON
-│   ├── Mapping Files/           → Apollo↔Notion field mapping + setup tracker
-│   └── Notion Snapshots/        → Point-in-time JSON snapshots
+├── data/                        → Operational data
+│   ├── imports/                 → Initial data import files (companies + contacts)
+│   ├── logs/                    → Sync run logs and runtime stats JSON
+│   ├── mapping/                 → Apollo↔Notion field mapping + setup tracker
+│   └── snapshots/               → Point-in-time JSON snapshots
 │
-├── 📚 DOCUMENTATION/
-│   ├── EXECUTION_PLAN_v3.2.docx → Master execution plan (phases 1–4)
-│   ├── AI_Sales_OS_Deep_Analysis.md           → 12-section system analysis (v4.1)
-│   ├── AI_Sales_OS_Comprehensive_Audit.docx   → Comprehensive audit report
-│   ├── AI_Sales_OS_Revenue_Gap_Analysis.docx  → Revenue gap analysis
-│   ├── MUHIDE_Brand_Identity_Guide.md         → Brand guidelines
-│   ├── GITHUB_SETUP_GUIDE.md                  → GitHub Actions setup instructions
-│   ├── Phase 1 - Notion Setup/  → Notion database setup documentation
-│   ├── Phase 2 - Data Import/   → Data import strategy and guides
-│   ├── Phase 3 - Apollo API Pull/ → Apollo API integration documentation
-│   └── System Architecture/     → Technical architecture + field mapping + assessment docs
+├── docs/                        → Documentation
+│   ├── reports/                 → Generated reports
+│   │   ├── EXECUTION_PLAN_v3.2.docx → Master execution plan (phases 1–4)
+│   │   ├── AI_Sales_OS_Deep_Analysis.md → 12-section system analysis (v4.1)
+│   │   ├── AI_Sales_OS_Comprehensive_Audit.docx → Comprehensive audit report
+│   │   ├── AI_Sales_OS_Revenue_Gap_Analysis.docx → Revenue gap analysis
+│   │   ├── AI_Sales_OS_المرجع_الشامل_v5.1.docx → Arabic comprehensive reference document (all 16 sections)
+│   │   ├── AI_Sales_OS_Audit_CLAUDE_vs_Code_v5.1.docx → Forensic audit: CLAUDE.md vs actual code (40 findings)
+│   │   └── MUHIDE_AI_Sales_OS_Strategic_Report.docx → Combined strategic report: AI Sales OS + MUHIDE market positioning
+│   ├── architecture/            → Technical architecture documentation
+│   │   ├── System Architecture/ → Technical architecture + field mapping + assessment docs
+│   │   ├── MUHIDE_Brand_Identity_Guide.md → Brand guidelines
+│   │   └── GITHUB_SETUP_GUIDE.md → GitHub Actions setup instructions
+│   ├── setup/                   → Setup and migration guides
+│   │   ├── Phase 1 - Notion Setup/ → Notion database setup documentation
+│   │   ├── Phase 2 - Data Import/ → Data import strategy and guides
+│   │   └── Phase 3 - Apollo API Pull/ → Apollo API integration documentation
+│   └── start_here/              → Entry docs: QUICK_START, SYSTEM_OVERVIEW, PROJECT_MAP
+│
+├── commands/                    → CLI command reference (6 shell scripts)
+│   ├── 00_README.md             → Command guide & recommended daily sequence
+│   ├── 01_project_full_pipeline.sh → Full project pipeline commands (Sync→Score→Action→Monitor)
+│   ├── 02_governance.sh         → Governance & data quality commands
+│   ├── 03_scoring.sh            → Scoring & classification commands
+│   ├── 04_cleanup.sh            → Cleanup & maintenance commands
+│   ├── 05_muqawil_pipeline.sh   → Muqawil contractors pipeline commands
+│   └── 06_engineering_offices.sh → Engineering offices pipeline commands
 │
 ├── .claude/skills/              → 12 Claude Skills for AI Sales OS operations
 ├── .github/workflows/           → daily_sync.yml (CI/CD — 2-job pipeline: Job1 Sync/Score + Job2 Action/Track + weekly calibration)
-├── 🚀 START HERE/               → Entry docs: QUICK_START, SYSTEM_OVERVIEW, PROJECT_MAP
-├── 🗂️ ARCHIVED/                 → Superseded scripts, old docs, old presentations
+├── archive/                     → Superseded scripts, old docs, old presentations
 └── .gitignore
 ```
 
@@ -119,40 +160,43 @@ AI Sales OS/
 
 ## Active Scripts
 
-| Script | Purpose | Status |
-|--------|---------|--------|
-| `daily_sync.py` | Apollo → Notion sync engine (v3.0, Company-Centric: Primary/Supporting Owner, Company Metrics, Company Stage derivation, 3 modes, local timestamp filter, seniority normalization, safe booleans, Apollo signals + AI fields) | **ACTIVE** |
-| `lead_score.py` | Lead Score calculator (0-100) + Lead Tier writer (HOT/WARM/COLD) | **ACTIVE** |
-| `constants.py` | Unified field names, score thresholds, SLA hours, seniority normalization map | **ACTIVE** |
-| `notion_helpers.py` | Shared Notion API utilities (create, update, preload, rate limiter) | **ACTIVE** |
-| `auto_tasks.py` | Action Engine v2.0 — Company-Centric: ONE task per company per tier, Task Owner from Primary Company Owner, company-level dedup | **ACTIVE** |
-| `action_ready_updater.py` | Evaluates 5 conditions to set Action Ready checkbox | **ACTIVE** |
-| `health_check.py` | Post-pipeline health validator (checks stats files for anomalies) | **ACTIVE** |
-| `job_postings_enricher.py` | Intent proxy — uses Apollo Job Postings API for intent scoring | **ACTIVE (v4.0)** |
-| `auto_sequence.py` | Auto-enrolls Action Ready contacts into Apollo Sequences | **ACTIVE (v4.0)** |
-| `analytics_tracker.py` | Pulls Apollo Analytics, syncs engagement data back to Notion | **ACTIVE (v4.0)** |
-| `score_calibrator.py` | Self-learning weight adjustment based on actual outcomes | **ACTIVE (v4.0)** |
-| `morning_brief.py` | Daily intelligence report (urgent calls, tasks, replies, stats) | **ACTIVE (v4.0)** |
-| `meeting_tracker.py` | Meeting sync v2.0 — Company-Centric: auto-links Company from Contact, propagates Company Stage → Meeting, assigns Meeting Owner from Primary Company Owner | **ACTIVE** |
-| `meeting_analyzer.py` | Claude AI analysis of meeting notes → key takeaways, sentiment, next steps | **ACTIVE (v4.1) — requires ANTHROPIC_API_KEY** |
-| `opportunity_manager.py` | Opportunity Manager v2.0 — Company-Centric: ONE active opportunity per company, stakeholder tracking, Buying Committee Size, company-level stage advancement, stale deal detection (14 days) | **ACTIVE** |
-| `dashboard_generator.py` | Pulls live Notion Contacts + Companies data → aggregates by account → injects into Sales_Dashboard_Accounts.html via regex template injection | **ACTIVE (v4.2)** |
-| `doc_sync_checker.py` | Validates documentation vs codebase state — catches drift after development | **ACTIVE (v4.1)** |
-| `archive_unqualified.py` | Archives contacts without owner or email sent → Stage = Archived | **ACTIVE (v4.4)** |
-| `data_governor.py` | Data Governor v6.0 — audits existing Notion records against ingestion gates, archives unqualified, enforces company-contact links and owner assignment, generates data quality report | **ACTIVE (v6.0)** |
-| `ingestion_gate.py` | Ingestion Gate v6.0 — validates companies (≥2 of 5 ICP criteria) and contacts (all 4 gates) before entry into Notion; prevents junk data at source | **ACTIVE (v6.0)** |
-| `cleanup_overdue_tasks.py` | Bulk-completes legacy pre-v5.0 contact-level auto-tasks that were never actioned and are now superseded by company-level tasks | **ACTIVE** |
-| `audit_ownership.py` | Audits ownership gaps across all 5 Notion DBs (Contacts, Companies, Tasks, Meetings, Opportunities) and reports unowned records | **ACTIVE** |
-| `muhide_strategic_analysis.py` | AI strategic analysis engine — processes all Notion Companies, scores each vs MUHIDE ICP (Fit Score 1-100, Priority P1/P2/P3, Best Buyer, Outreach Angle), writes 5 fields per company | **ACTIVE** |
-| `webhook_server.py` | Apollo webhook receiver | **ACTIVE** |
-| `verify_links.py` | Contact-company link verifier | **ACTIVE** |
+| Script | Module | Purpose | Status |
+|--------|--------|---------|--------|
+| `core/constants.py` | core | Unified field names, score thresholds, SLA hours, seniority normalization map, ICP_INDUSTRY_SCORES, STAGE_INFER_FROM_OUTREACH | **ACTIVE** |
+| `core/notion_helpers.py` | core | Shared Notion API utilities (create, update, preload, rate limiter) | **ACTIVE** |
+| `core/daily_sync.py` | core | Apollo → Notion sync engine (**v5.1**, Company-Centric: Apollo-First Ownership Priority, Primary/Supporting Owner, Company Metrics, Company Stage derivation, 3 modes, local timestamp filter, seniority normalization, safe booleans, Apollo signals + AI fields, **AI Sales Actions raw block** from typed_custom_fields) | **ACTIVE** |
+| `core/doc_sync_checker.py` | core | Documentation drift validator [v4.1] | **ACTIVE** |
+| `scoring/lead_score.py` | scoring | Lead Score v1.5 (0-100) + Lead Tier (HOT/WARM/COLD) + Sort Score — v1.5 adds Industry Fit (15%) + Recency Tiebreaker | **ACTIVE** |
+| `scoring/action_ready_updater.py` | scoring | Evaluates 5 conditions to set Action Ready checkbox | **ACTIVE** |
+| `scoring/score_calibrator.py` | scoring | Self-learning weight adjustment based on actual outcomes | **ACTIVE (v4.0)** |
+| `automation/auto_tasks.py` | automation | Action Engine v2.0 — Company-Centric: ONE task per company per tier (HOT→"Urgent Call", WARM→"Follow-up"), Task Owner from Primary Company Owner, company-level dedup, bulk preload for owners | **ACTIVE** |
+| `automation/auto_sequence.py` | automation | Auto-enrolls Action Ready contacts into Apollo Sequences | **ACTIVE (v4.0)** |
+| `automation/outcome_tracker.py` | automation | Outcome Tracker v1.0 — closes Task → Contact loop: sets Contact Responded, Last Contacted, Meeting Booked. Filters auto-closed bulk tasks. Idempotent. Requires NOTION_DATABASE_ID_TASKS + NOTION_DATABASE_ID_CONTACTS (no hardcoded fallbacks). | **ACTIVE** |
+| `automation/cleanup_overdue_tasks.py` | automation | Bulk-completes legacy pre-v5.0 contact-level auto-tasks that were never actioned and are now superseded by company-level tasks | **ACTIVE** |
+| `automation/lead_inbox_mover.py` | automation | **v0.2** — Moves Qualified leads from 📥 Lead Inbox into real Company + Contact records. Two modes: `backfill` (retroactive for already-Moved leads missing CRM refs) and `forward` (new Qualified leads). Dedup: Company by Domain → Name, Contact by Email. Writes CRM Company Ref, CRM Contact Ref, CRM Sync State, CRM Synced At back to Lead Inbox. Generic email domains excluded from domain dedup. Pipe-separated multi-person emails are stripped and flagged in Notes. | **ACTIVE (v0.2)** |
+| `governance/ingestion_gate.py` | governance | Ingestion Gate v6.0 — validates companies (≥2 of 5 ICP criteria) and contacts (all 4 gates) before entry into Notion; prevents junk data at source | **ACTIVE (v6.0)** |
+| `governance/data_governor.py` | governance | Data Governor v6.0 — audits existing Notion records against ingestion gates, archives unqualified, enforces company-contact links and owner assignment, generates data quality report | **ACTIVE (v6.0)** |
+| `governance/archive_unqualified.py` | governance | Archives contacts without owner or email sent → Stage = Archived | **ACTIVE (v4.4)** |
+| `governance/audit_ownership.py` | governance | Audits ownership gaps across all 5 Notion DBs (Contacts, Companies, Tasks, Meetings, Opportunities) and reports unowned records | **ACTIVE** |
+| `governance/fix_seniority.py` | governance | One-time migration — normalizes "C suite" → "C-Suite" in Notion Contacts DB. Run once, then retire. | **ONE-TIME** |
+| `enrichment/job_postings_enricher.py` | enrichment | Intent proxy — uses Apollo Job Postings API for intent scoring | **ACTIVE (v4.0)** |
+| `enrichment/analytics_tracker.py` | enrichment | Apollo Analytics → Notion engagement sync | **ACTIVE (v4.0)** |
+| `enrichment/muhide_strategic_analysis.py` | enrichment | AI engine — scores all companies vs MUHIDE ICP (Fit Score + Priority) | **ACTIVE** |
+| `meetings/meeting_tracker.py` | meetings | Meeting sync v2.0 — Company-Centric: auto-links Company from Contact, propagates Company Stage → Meeting, assigns Meeting Owner from Primary Company Owner | **ACTIVE** |
+| `meetings/meeting_analyzer.py` | meetings | Claude AI analysis of meeting notes → key takeaways, sentiment, next steps | **ACTIVE (v4.1) — requires ANTHROPIC_API_KEY** |
+| `meetings/opportunity_manager.py` | meetings | Opportunity Manager v2.0 — Company-Centric: ONE active opportunity per company, stakeholder tracking, Buying Committee Size, company-level stage advancement, stale deal detection (14 days) | **ACTIVE** |
+| `monitoring/health_check.py` | monitoring | Post-pipeline health validator (checks stats files for anomalies) | **ACTIVE** |
+| `monitoring/morning_brief.py` | monitoring | Daily intelligence report (urgent calls, tasks, replies, stats) | **ACTIVE (v4.0)** |
+| `monitoring/dashboard_generator.py` | monitoring | Pulls live Notion Contacts + Companies data → aggregates by account → injects into Sales_Dashboard_Accounts.html via regex template injection | **ACTIVE (v4.2)** |
+| `webhooks/webhook_server.py` | webhooks | Apollo webhook receiver | **ACTIVE** |
+| `webhooks/verify_links.py` | webhooks | Contact-company link verifier | **ACTIVE** |
 
-Superseded scripts (still in CODE folder but replaced by daily_sync.py):
+Superseded scripts (still in archive/ but replaced by core/daily_sync.py):
 - `sync_companies.py`, `sync_contacts.py`, `apollo_sync_scheduler.py`, `initial_load_from_csv.py`
 
 ---
 
-## daily_sync.py — Sync Engine v3.0 (Company-Centric)
+## core/daily_sync.py — Sync Engine v4.0 (Company-Centric)
 
 ### Three Modes
 
@@ -167,14 +211,14 @@ Superseded scripts (still in CODE folder but replaced by daily_sync.py):
 - **Triple Dedup:** Apollo ID → Email → in-memory `seen_ids` set. No duplicates possible.
 - **Pre-loading:** Loads ALL existing Notion records into memory before sync to minimize API calls.
 - **Alphabetical Partitioning (full mode):** Splits queries A-Z + numbers because Apollo caps at 50,000 results per search.
-- **Seniority Normalization:** Uses `SENIORITY_NORMALIZE` dict from constants.py to unify "C-Suite"/"C suite"/"c-suite" variants.
+- **Seniority Normalization:** Uses `SENIORITY_NORMALIZE` dict from core/constants.py to unify "C-Suite"/"C suite"/"c-suite" variants.
 - **Safe Boolean Writing:** Only writes engagement checkboxes (Email Sent, Replied, etc.) if Apollo explicitly returns the field — prevents overwriting manual True with False.
 - **Rate Limiting:** 5x exponential backoff on 429/500 errors.
 - **Parallel Workers:** `MAX_WORKERS = 3` for Notion writes.
 - **Local Timestamp Filter (v4.2):** After Apollo fetch, a client-side filter drops any record whose `updated_at` is before the requested `since` datetime. Fixes issue where Apollo's date-only API filter was returning all 44,877 contacts on every incremental run, causing 4-5 hour runtimes instead of minutes.
 - **Contact Qualification Filter (v4.4):** After fetching contacts, applies two hard gates before sync: (1) `owner_id` must exist, (2) `emailer_campaign_ids` must be non-empty with at least one non-failed campaign. Contacts that fail either condition are skipped entirely. This ensures only real, owned, outreached contacts enter Notion.
-- **Contact Owner Sync (v4.4):** Maps Apollo `owner_id` to display names (Ibrahim/Ragheed/Soha) via `APOLLO_OWNER_MAP` in constants.py. Writes to `Contact Owner` select field in Notion.
-- **Company Ownership (v5.0):** After contact sync, runs `compute_company_ownership()` to derive Primary Company Owner (owner with most contacts, tie-break: most recent activity) and Supporting Owners (all other owners). Writes Primary Company Owner as select, Supporting Owners as rich_text.
+- **Contact Owner Sync (v4.4):** Maps Apollo `owner_id` to display names (Ibrahim/Ragheed/Soha) via `APOLLO_OWNER_MAP` in core/constants.py. Writes to `Contact Owner` field in Notion as **rich_text** (not select). The Notion schema shows it as select, but core/daily_sync.py writes it via `_rt()` (rich_text helper).
+- **Company Ownership (v5.1 — Apollo-First):** After contact sync, runs `compute_company_ownership(contacts, company_lookup, accounts=accounts)` with priority logic: **(1)** if the Apollo Account has `owner_id` → mapped via `APOLLO_OWNER_MAP` becomes Primary Company Owner and Supporting Owners is cleared (Apollo is authoritative); **(2)** otherwise falls back to v5.0 contact-based logic (owner with most contacts, tie-break: most recent activity → Primary; others → Supporting). Unknown `owner_id` values log a warning and drop to fallback. Writes Primary Company Owner as select, Supporting Owners as rich_text. See Decision #27.
 - **Company Metrics (v5.0):** `compute_company_metrics()` writes Active Contacts count, Emailed Contacts count, Engaged Contacts count, Last Engagement Date, and Sales OS Active checkbox per company.
 - **Company Stage (v5.0):** `compute_company_stage()` derives stage from contact signals: Meeting Booked → "Meeting", Replied/Opened → "Engaged", Email Sent → "Outreach", else → "Prospect". Respects priority — does NOT overwrite Meeting, Opportunity, Customer, or Churned stages.
 - **Apollo Signals (v4.3):** Contacts sync now pulls Intent Strength, Job Change Event/Date, and AI Decision from `typed_custom_fields`. Companies sync now pulls Headcount Growth (6/12/24 month) and AI Qualification Status/Detail from `typed_custom_fields`.
@@ -182,25 +226,32 @@ Superseded scripts (still in CODE folder but replaced by daily_sync.py):
 ### Commands
 
 ```bash
-python daily_sync.py --mode incremental --days 7    # last 7 days
-python daily_sync.py --mode backfill --days 365      # full year with checkpoint
-python daily_sync.py --mode full                     # everything (2-4 hours)
-python daily_sync.py                                 # defaults to incremental --hours 24
+python core/daily_sync.py --mode incremental --days 7    # last 7 days
+python core/daily_sync.py --mode backfill --days 365      # full year with checkpoint
+python core/daily_sync.py --mode full                     # everything (2-4 hours)
+python core/daily_sync.py                                 # defaults to incremental --hours 24
 ```
 
 ---
 
-## lead_score.py — Scoring Engine
+## scoring/lead_score.py — Scoring Engine
 
-Now writes both **Lead Score** (number 0-100) and **Lead Tier** (HOT/WARM/COLD select) in a single update.
+Now writes **Lead Score** (0-100), **Lead Tier** (HOT/WARM/COLD select), and **Sort Score** in a single update.
 
-### Formula (v1.1 — current calibrated weights)
+### Formula (v1.5 — current calibrated weights)
 
 ```
-Score = (Intent × 10%) + (Engagement × 10%) + (Company Size × 45%) + (Seniority × 35%)
+Score = (Intent × 10%) + (Engagement × 10%) + (Company Size × 35%) + (Seniority × 30%) + (Industry Fit × 15%)
+Sort Score = (Lead Score × 100) + Recency Bonus (0-100)
 ```
 
-**Why these weights?** Most contacts are cold Apollo data with no outreach history. Intent and Engagement are mostly empty, so giving them high weight would make scores meaninglessly low. Size and Seniority are available for nearly all records and provide the best signal right now.
+**v1.5 changes from v1.1:** Added Industry Fit (15%) — MUHIDE ICP alignment. Reduced Size 45%→35%, Seniority 35%→30%.
+
+**Sort Score purpose:** Breaks the 56% ceiling effect (HOT leads all at 100/100). Sort by `Sort Score DESC` in Notion HOT views — untouched leads (never contacted) surface first, recently contacted leads drop to bottom within the same score tier.
+
+**Industry Fit Score:** Defined in `ICP_INDUSTRY_SCORES` in scoring/constants.py. Financial Services/Banking/FinTech = 100, Retail/Entertainment = 15-20, Unknown = 30.
+
+**Why these weights?** Most contacts are cold Apollo data with no outreach history. Intent and Engagement are mostly empty, so giving them high weight would make scores meaninglessly low. Size, Seniority, and Industry are available for nearly all records and provide the best signal right now.
 
 ### Future v2.0 weights (activate ONLY when signals data exists)
 
@@ -212,12 +263,13 @@ Score = (Intent × 30%) + (Engagement × 25%) + (Signals × 25%) + (Size × 10%)
 
 ### Lead Classification
 
-| Tier | Score | Action |
-|------|-------|--------|
-| **HOT** | ≥ 80 | Call today — high-value decision makers |
-| **WARM-HIGH** | 60–79 | Follow up within 48 hours |
-| **WARM** | 50–59 | Nurture over 1 week |
-| **COLD** | < 50 | No action — monitor only |
+**NOTE:** The code implements exactly 3 tiers. WARM-HIGH was removed — the code uses HOT/WARM/COLD only.
+
+| Tier | Score | Task Type | Action | SLA |
+|------|-------|-----------|--------|-----|
+| **HOT** | ≥ 80 | Urgent Call | Call today — high-value decision makers | 24 hours |
+| **WARM** | ≥ 50 | Follow-up | Follow up via email | 48 hours |
+| **COLD** | < 50 | — | No action — monitor only | — |
 
 ### Expected Calibration Targets
 
@@ -228,23 +280,25 @@ Score = (Intent × 30%) + (Engagement × 25%) + (Signals × 25%) + (Size × 10%)
 ### Commands
 
 ```bash
-python lead_score.py                # score unscored contacts only
-python lead_score.py --force        # recalculate ALL scores
-python lead_score.py --dry-run      # calculate but don't write
+python scoring/lead_score.py                # score unscored contacts only
+python scoring/lead_score.py --force        # recalculate ALL scores
+python scoring/lead_score.py --dry-run      # calculate but don't write
 ```
 
 ---
 
-## auto_tasks.py — Action Engine v2.0 (Company-Centric)
+## automation/auto_tasks.py — Action Engine v2.0 (Company-Centric)
 
 Creates Notion tasks at the **company level** for Action Ready contacts. ONE task per company per tier, not one per contact.
 
 ### Priority Rules
 
-| Tier | Min Score | Priority | Action | Channel | SLA |
-|------|-----------|----------|--------|---------|-----|
-| **HOT** | ≥ 80 | Critical | CALL | Phone | 24 hours |
-| **WARM** | ≥ 50 | High | FOLLOW-UP | Email | 48 hours |
+| Tier | Min Score | Priority | Task Type | Action | Channel | SLA |
+|------|-----------|----------|-----------|--------|---------|-----|
+| **HOT** | ≥ 80 | Critical | **Urgent Call** | CALL | Phone | 24 hours |
+| **WARM** | ≥ 50 | High | **Follow-up** | FOLLOW-UP | Email | 48 hours |
+
+**IMPORTANT:** HOT uses task_type = "Urgent Call" and WARM uses "Follow-up". These MUST be different so company-level dedup does not block HOT tasks when a WARM task already exists for the same company. (Fixed in C-03.)
 
 ### Company-Centric Rules (v5.0)
 
@@ -261,15 +315,15 @@ Before creating a task, checks the Tasks DB for any existing open task (Status �
 ### Commands
 
 ```bash
-python auto_tasks.py                    # create tasks for all Action Ready contacts
-python auto_tasks.py --dry-run          # show what would be created
-python auto_tasks.py --limit 20         # limit to first N contacts (testing)
-python auto_tasks.py --mark-overdue     # only check and log overdue tasks
+python automation/auto_tasks.py                    # create tasks for all Action Ready contacts
+python automation/auto_tasks.py --dry-run          # show what would be created
+python automation/auto_tasks.py --limit 20         # limit to first N contacts (testing)
+python automation/auto_tasks.py --mark-overdue     # only check and log overdue tasks
 ```
 
 ---
 
-## action_ready_updater.py — Action Ready Evaluator
+## scoring/action_ready_updater.py — Action Ready Evaluator
 
 Evaluates and writes the `Action Ready` checkbox for all scored contacts. A contact is Action Ready ONLY if ALL 5 conditions are met:
 
@@ -282,13 +336,13 @@ Evaluates and writes the `Action Ready` checkbox for all scored contacts. A cont
 ### Commands
 
 ```bash
-python action_ready_updater.py              # update all scored contacts
-python action_ready_updater.py --dry-run    # show what would change
+python scoring/action_ready_updater.py              # update all scored contacts
+python scoring/action_ready_updater.py --dry-run    # show what would change
 ```
 
 ---
 
-## health_check.py — Pipeline Health Validator
+## monitoring/health_check.py — Pipeline Health Validator
 
 Runs after the pipeline to validate results by checking stats JSON files.
 
@@ -303,13 +357,13 @@ Runs after the pipeline to validate results by checking stats JSON files.
 ### Commands
 
 ```bash
-python health_check.py              # run all checks
-python health_check.py --strict     # exit 1 on any warning (not just critical)
+python monitoring/health_check.py              # run all checks
+python monitoring/health_check.py --strict     # exit 1 on any warning (not just critical)
 ```
 
 ---
 
-## job_postings_enricher.py — Intent Proxy (v4.0)
+## enrichment/job_postings_enricher.py — Intent Proxy (v4.0)
 
 Uses Apollo's Job Postings API as a proxy for Intent Score. Companies that are actively hiring in relevant roles = higher buying intent.
 
@@ -324,16 +378,16 @@ Writes `Job Postings Intent` to Companies DB, then propagates to linked Contacts
 ### Commands
 
 ```bash
-python job_postings_enricher.py                    # enrich all HOT/WARM companies
-python job_postings_enricher.py --dry-run          # preview without writing
-python job_postings_enricher.py --limit 20         # limit to first N companies
-python job_postings_enricher.py --tier HOT         # only HOT companies
-python job_postings_enricher.py --no-cache         # ignore 7-day cache
+python enrichment/job_postings_enricher.py                    # enrich all HOT/WARM companies
+python enrichment/job_postings_enricher.py --dry-run          # preview without writing
+python enrichment/job_postings_enricher.py --limit 20         # limit to first N companies
+python enrichment/job_postings_enricher.py --tier HOT         # only HOT companies
+python enrichment/job_postings_enricher.py --no-cache         # ignore 7-day cache
 ```
 
 ---
 
-## auto_sequence.py — Auto Sequence Enrollment (v4.0)
+## automation/auto_sequence.py — Auto Sequence Enrollment (v4.0)
 
 Automatically enrolls Action Ready contacts into Apollo Sequences based on Lead Tier + Role category. Round-robins between senders.
 
@@ -355,16 +409,16 @@ Alternates between `ragheed` and `ibrahim` email accounts (2 accounts each: join
 ### Commands
 
 ```bash
-python auto_sequence.py                     # enroll all eligible contacts
-python auto_sequence.py --dry-run           # preview without enrolling
-python auto_sequence.py --limit 10          # limit to first N
-python auto_sequence.py --tier HOT          # only HOT contacts
-python auto_sequence.py --sender ragheed    # force specific sender
+python automation/auto_sequence.py                     # enroll all eligible contacts
+python automation/auto_sequence.py --dry-run           # preview without enrolling
+python automation/auto_sequence.py --limit 10          # limit to first N
+python automation/auto_sequence.py --tier HOT          # only HOT contacts
+python automation/auto_sequence.py --sender ragheed    # force specific sender
 ```
 
 ---
 
-## analytics_tracker.py — Analytics & Engagement Sync (v4.0)
+## enrichment/analytics_tracker.py — Analytics & Engagement Sync (v4.0)
 
 Pulls Apollo Analytics data and syncs engagement signals back to Notion contacts. Closes the feedback loop by bringing real engagement data into the CRM.
 
@@ -376,18 +430,18 @@ Pulls Apollo Analytics data and syncs engagement signals back to Notion contacts
 ### Commands
 
 ```bash
-python analytics_tracker.py                    # full sync + report
-python analytics_tracker.py --dry-run          # preview without writing
-python analytics_tracker.py --days 7           # last N days
-python analytics_tracker.py --export           # save report to file
-python analytics_tracker.py --skip-sync        # report only, no Notion writes
+python enrichment/analytics_tracker.py                    # full sync + report
+python enrichment/analytics_tracker.py --dry-run          # preview without writing
+python enrichment/analytics_tracker.py --days 7           # last N days
+python enrichment/analytics_tracker.py --export           # save report to file
+python enrichment/analytics_tracker.py --skip-sync        # report only, no Notion writes
 ```
 
 ---
 
-## score_calibrator.py — Self-Learning Weights (v4.0)
+## scoring/score_calibrator.py — Self-Learning Weights (v4.0)
 
-Analyzes actual engagement outcomes and recommends weight adjustments for lead_score.py. The feedback loop: Score → Action → Outcome → Calibrate → Better Score.
+Analyzes actual engagement outcomes and recommends weight adjustments for scoring/lead_score.py. The feedback loop: Score → Action → Outcome → Calibrate → Better Score.
 
 ### Safety Rails
 
@@ -400,17 +454,17 @@ Analyzes actual engagement outcomes and recommends weight adjustments for lead_s
 ### Commands
 
 ```bash
-python score_calibrator.py                  # analyze + recommend (no changes)
-python score_calibrator.py --apply          # apply recommended weights
-python score_calibrator.py --days 90        # analyze last 90 days
-python score_calibrator.py --export         # save analysis to file
+python scoring/score_calibrator.py                  # analyze + recommend (no changes)
+python scoring/score_calibrator.py --apply          # apply recommended weights
+python scoring/score_calibrator.py --days 90        # analyze last 90 days
+python scoring/score_calibrator.py --export         # save analysis to file
 ```
 
 **IMPORTANT:** Weekly pipeline runs calibrator in review-only mode (no --apply). Manual review required before applying.
 
 ---
 
-## morning_brief.py — Daily Intelligence Report (v4.0)
+## monitoring/morning_brief.py — Daily Intelligence Report (v4.0)
 
 Generates a daily morning brief with everything a sales rep needs to know.
 
@@ -425,18 +479,24 @@ Generates a daily morning brief with everything a sales rep needs to know.
 ### Commands
 
 ```bash
-python morning_brief.py                 # generate today's brief (stdout)
-python morning_brief.py --output file   # save to markdown file
-python morning_brief.py --days 1        # look back N days for activity
+python monitoring/morning_brief.py                 # generate today's brief (stdout)
+python monitoring/morning_brief.py --output file   # save to markdown file
+python monitoring/morning_brief.py --days 1        # look back N days for activity
 ```
 
 ---
 
-## constants.py — Unified Constants
+## core/constants.py — Unified Constants
 
-Single source of truth for all field names, score thresholds, SLA hours, and seniority normalization. Changing a field name here changes it across all scripts that import from constants.
+Single source of truth for all field names, score thresholds, SLA hours, and seniority normalization. Changing a field name here changes it across all scripts that import from core/constants.
 
 Key exports: `FIELD_*` constants, `SCORE_HOT`/`SCORE_WARM`, `SLA_*_HOURS`, `SENIORITY_NORMALIZE`, `OUTREACH_BLOCKED`, `COMPANY_STAGE_*` values, `TEAM_MEMBERS` set, `APOLLO_OWNER_MAP`
+
+**Intent helpers (v6.1 — Decision #28):** `has_real_intent(record) → (bool, [reasons])`, `company_has_real_intent(contacts) → (bool, [reasons])`, `EMAIL_OPEN_COUNT_INTENT_THRESHOLD = 2`, `INTENT_REASON_*` labels, `FIELD_INTERNAL_FORWARD_DETECTED`, `FIELD_REPEATED_ENGAGEMENT_DETECTED`, `FIELD_HAS_INTENT_SIGNAL`.
+
+**Stage conflict guards (v6.1 — Decision #29):** `STAGE_PRIORITY` lattice (Prospect=1 → Archived=8), `STAGE_TERMINAL = {Customer, Churned, Archived}`, `is_stage_regression(current, new) → bool`. Unknown current stage is treated as priority 0 (never blocks forward progress).
+
+**Freshness guard (v6.1 — Decision #29):** `FRESHNESS_MAX_AGE_HOURS = 26`, `FRESHNESS_STATS_FILES = (enrichment/last_analytics_stats.json, automation/last_outcome_stats.json, meetings/last_meeting_tracker_stats.json)`, `check_pipeline_freshness(base_dir, max_age_hours) → {fresh, checked, oldest_age_hours, max_age_hours}`. Used by `data_governor` as Step 0 of `run()` — downgrades enforce→dry-run on stale signals.
 
 ---
 
@@ -448,7 +508,7 @@ Key fields: Name, Domain, Industry, Employee Count, Apollo Account ID (primary k
 
 ### Contacts Database
 
-Key fields: Name, Email, Title, Seniority, Lead Score (number 0-100), Lead Tier (HOT/WARM/COLD select), Action Ready (checkbox), Contact Owner (select: Ibrahim/Ragheed/Soha), Intent Score, Intent Strength, Outreach Status, Stage, Do Not Call, Email Sent/Opened/Bounced, Replied, Meeting Booked, Demoed, Last Contacted, Contact Responded, First Contact Attempt, Opportunity Created, Job Change Event, Job Change Date, AI Decision, Email Open Count, Emails Sent Count, Emails Replied Count, Apollo Contact ID (primary key), Company (relation to Companies)
+Key fields: Name, Email, Title, Seniority, Lead Score (number 0-100), Lead Tier (HOT/WARM/COLD select), Action Ready (checkbox), **Contact Owner** (**rich_text** — written by core/daily_sync.py as plain text: Ibrahim/Ragheed/Soha. NOTE: sync writes rich_text not select, verify Notion field type matches), Intent Score, Intent Strength, Outreach Status, Stage, Do Not Call, Email Sent/Opened/Bounced, Replied, Meeting Booked, Demoed, Last Contacted, Contact Responded, First Contact Attempt, Opportunity Created, Job Change Event, Job Change Date, AI Decision, Email Open Count, Emails Sent Count, Emails Replied Count, Apollo Contact ID (primary key), Company (relation to Companies)
 
 ### Tasks Database
 
@@ -463,6 +523,18 @@ Key fields: Opportunity Name (title), Stage (**status type**: Discovery/Proposal
 ### Meetings Database (v5.0 Company-Centric)
 
 Key fields: Meeting Title (title), Meeting Type (select), Scheduled Date, Duration, Outcome (select), Meeting Notes, Key Takeaways, Decision Made, Next Steps, Meeting Link, Number of Attendees, Meeting Organizer, Timezone, Primary Contact (relation), Company (relation), Opportunity (relation), Agenda, **Meeting Owner** (select: Ibrahim/Ragheed/Soha), **Participants** (rich_text), **Outcome Impact** (select: Stage Advance/No Change/Stage Regress), **Next Step Owner** (select: Ibrahim/Ragheed/Soha)
+
+### Lead Inbox Database (v2.0 Operator-First — NEW 2026-04-10)
+
+Live URL: https://www.notion.so/b9ae8e060ca64fc9a7f5d8706e229b59 | Data Source ID: `64aec610-22b2-4444-a8a5-80c238a86633`
+
+Single intake point for all non-Apollo leads. 12 fields: Name (title), Source (select: **6 values** — Manual/Referral/Import/Muqawil/Other/Apollo-reserved; Business Card is handled via Source=Manual + Notes prefix "من معرض/حدث:"), Company Name (rich_text), Email, Phone, Title (rich_text), **Status (status type)** with **fully customized options**: New/Review (In progress)/Qualified/Rejected/Duplicate/Moved (Complete group), Warm Signal (rich_text), Intake Owner (select: Ibrahim/Ragheed/Soha), Intake Date (date), Notes (rich_text), Rejection Reason (select: Not ICP/No Contact Info/Duplicate/Low Quality/Other). State machine: New → Review → Qualified/Rejected/Duplicate → Moved. **5 Arabic views active:** 🆕 جديد (Status=New), 🔍 قيد المراجعة (Status=Review), ✅ جاهز للنقل (Status=Qualified), 🗄️ مؤرشف (Status IN Moved/Rejected/Duplicate), 📋 كل السجلات (grouped by Status). **3 templates:** ➕ Manual, 🤝 Referral (with "من أحاله" body), 💳 Business Card (Source=Manual + Notes prefix). Validation checklist page "✅ 📥 Lead Inbox — Validation Checklist" with 12 tests attached in Notion.
+
+### ⭐ اليوم Page (v2.0 Operator-First — NEW 2026-04-10)
+
+Live URL: https://www.notion.so/33e69eddf30181548db3cbe78bfc7a71
+
+The single page the operator opens each morning. 6 sections: Header/System Status, 📞 اتصل اليوم (linked Tasks: Urgent Call, Due ≤ today), ✉️ تابع اليوم (linked Tasks: Follow-up, Due ≤ today), 💼 الصفقات (linked Opportunities: Stage not Closed), 📥 Inbox Summary (linked Lead Inbox: Status = New), 📝 ملاحظات اليوم (daily toggles). Linked database view blocks must be inserted manually in Notion UI (API cannot create linked view blocks); the page contains HTML comment placeholders with the exact spec for each view.
 
 ### Other Databases
 
@@ -492,41 +564,46 @@ Activities, Email Hub — used for execution workflow.
 
 ---
 
-## GitHub Actions Pipeline
+## GitHub Actions Pipeline (v3.1 — Safe Execution Order)
 
 **File:** `.github/workflows/daily_sync.yml`
 **Schedule:** Daily at 7:00 AM KSA (04:00 UTC)
+**Version:** 3.1 (Safe Execution Order — Decision #29)
 
 ### Why 2 Jobs?
 The pipeline was exceeding GitHub's 6-hour per-job limit. Splitting into 2 sequential jobs gives each its own 6-hour clock — total capacity: ~9 hours.
 
-### Job 1: `sync-and-score` — timeout 5h 50min
+### Safe Execution Order (Decision #29)
+All signal-writing scripts (analytics_tracker, outcome_tracker, meeting_tracker, opportunity_manager) must run **before** `lead_score` + `action_ready_updater` so scoring reads fresh engagement and stage data, not yesterday's values.
+
+### Job 1: `sync-and-score` — timeout 5h 50min (Sync → Signals → Score)
 1. Checkout repository
 2. Setup Python 3.11 with pip cache
 3. Install dependencies
-4. `daily_sync.py --mode incremental --hours 26` (sync)
-5. `job_postings_enricher.py --limit 50` (intent proxy, continue-on-error)
-6. `lead_score.py` (recalculate scores + write Lead Tier)
-7. `action_ready_updater.py` (evaluate Action Ready for scored contacts)
-8. Upload sync stats as artifact → passed to Job 2
+4. `python scripts/core/daily_sync.py --mode incremental --hours 26` (sync; `compute_company_stage` now guarded by `STAGE_TERMINAL` + `is_stage_regression`)
+5. `python scripts/enrichment/analytics_tracker.py --days 7` (**moved up** — writes `email_open_count`, Replied, Email Opened before scoring reads them, continue-on-error)
+6. `python scripts/automation/outcome_tracker.py --execute` (**moved up** — writes Contact Responded, Last Contacted, Meeting Booked, continue-on-error)
+7. `python scripts/meetings/meeting_tracker.py --days 7` (**moved up** — Company Stage → Meeting, guarded, continue-on-error)
+8. `python scripts/meetings/opportunity_manager.py` (**moved up** — Company Stage → Opportunity, now guarded by `STAGE_TERMINAL` + `is_stage_regression`, continue-on-error)
+9. `python scripts/enrichment/job_postings_enricher.py --limit 50` (intent proxy, continue-on-error)
+10. `python scripts/scoring/lead_score.py` (recalculate scores — now reads fresh signals from steps 5–8)
+11. `python scripts/scoring/action_ready_updater.py` (evaluate Action Ready)
+12. Upload sync stats as artifact → passed to Job 2 (expanded: analytics, outcome, meeting_tracker, opportunity_manager stats + logs all included so next-day freshness check works)
 
-### Job 2: `action-and-track` — timeout 3h (runs after Job 1)
+### Job 2: `action-and-track` — timeout 3h (Action → Sequence → Meet-AI → Health)
 1. Checkout + Python setup + Install dependencies
 2. Download sync stats from Job 1
-3. `auto_tasks.py` (create tasks for Action Ready contacts, continue-on-error)
-4. `auto_sequence.py --limit 50` (enroll contacts in sequences, continue-on-error)
-5. `meeting_tracker.py --days 7` (sync meetings, update contact stage)
-6. `meeting_analyzer.py --limit 10` (AI meeting intelligence, requires ANTHROPIC_API_KEY)
-7. `opportunity_manager.py` (meetings → opportunities + stale deal detection)
-8. `analytics_tracker.py --days 7` (sync engagement data, continue-on-error)
-9. `health_check.py` (validate pipeline run)
-10. `morning_brief.py --output file` (generate daily report, continue-on-error)
-11. `dashboard_generator.py` (regenerate Sales_Dashboard_Accounts.html from live Notion data, continue-on-error)
-12. Commit updated `Sales_Dashboard_Accounts.html` back to repo (auto-commit by github-actions bot)
-13. Upload all logs as artifacts (30-day retention), including `dashboard_generator.log` + `dashboard_stats.json`
-14. Notify on failure
+3. `python scripts/automation/auto_tasks.py` (create tasks for Action Ready contacts, continue-on-error)
+4. `python scripts/automation/auto_sequence.py --limit 50` (enroll contacts in sequences, continue-on-error)
+5. `python scripts/meetings/meeting_analyzer.py --limit 10` (AI meeting intelligence, non-blocking — does not feed scoring, requires ANTHROPIC_API_KEY)
+6. `python scripts/monitoring/health_check.py` (validate pipeline run)
+7. (Frozen Operator-First v2.0) `morning_brief`, `dashboard_generator`, dashboard commit — unchanged
+8. Upload all logs as artifacts (30-day retention)
+9. Notify on failure
 
-**Weekly Job (Sundays):** `score_calibrator.py --days 30 --export` — runs after Job 2, review-only, no auto-apply.
+**Moved from Job 2 → Job 1:** analytics_tracker, outcome_tracker, meeting_tracker, opportunity_manager. **Removed from Job 2** (no longer run twice). meeting_analyzer stays in Job 2 because it's AI-only and does not feed scoring.
+
+**Weekly Job (Sundays):** `python scripts/scoring/score_calibrator.py --days 30 --export` — runs after Job 2, review-only, no auto-apply.
 
 **Required Secrets:** `APOLLO_API_KEY`, `NOTION_API_KEY`, `NOTION_DATABASE_ID_CONTACTS`, `NOTION_DATABASE_ID_COMPANIES`, `NOTION_DATABASE_ID_TASKS`, `NOTION_DATABASE_ID_MEETINGS`, `NOTION_DATABASE_ID_OPPORTUNITIES`, `ANTHROPIC_API_KEY` (optional)
 
@@ -536,109 +613,50 @@ The pipeline was exceeding GitHub's 6-hour per-job limit. Splitting into 2 seque
 
 ---
 
-## Execution Plan (4 Phases)
-
-### Phase 1: ACTIVATE — COMPLETE ✓
-- [x] Full Sync running (all 60K+ records)
-- [x] Lead Score engine built (v1.1 weights)
-- [x] Lead Tier writing (HOT/WARM/COLD alongside score)
-- [x] Seniority normalization (constants.py + _normalize_seniority)
-- [x] Safe boolean writing (prevents overwriting manual data)
-- [x] daily_sync.py v2.1 (added Stage, Outreach Status, engagement booleans, Last Contacted, Departments)
-- [ ] Calibration — run `lead_score.py --force` to write Lead Tier for all contacts
-- [ ] Push code to GitHub, add `NOTION_DATABASE_ID_TASKS` secret, activate workflow
-- **Gate:** Calibration must pass before activating Actions
-
-### Phase 2: ACTION — CODE COMPLETE (pending first run)
-- [x] Built `constants.py` — unified field names & thresholds
-- [x] Built `auto_tasks.py` — SLA-based task creator (HOT=24h call, WARM=48h follow-up)
-- [x] Built `action_ready_updater.py` — 5-condition gating (score, DNC, outreach, stage, contact method)
-- [x] Built `health_check.py` — post-pipeline health validator
-- [x] Updated `daily_sync.yml` — 23-step pipeline with Action Engine + Health Check
-- [x] Built 12 Claude Skills for AI Sales OS operations (evaluated at 100% pass rate)
-- [ ] First run: `action_ready_updater.py` then `auto_tasks.py --dry-run` to validate
-- [ ] Create Notion task views for sales workflow
-- **Gate:** Tasks must generate correctly before Phase 3
-
-### Phase 3: ENRICH — COMPLETE ✓
-- [x] Job Postings signal (`job_postings_enricher.py` — active, 50/run limit)
-- [x] Auto Sequence enrollment (`auto_sequence.py` — HOT/WARM × 5 roles × 2 senders)
-- [x] Analytics tracking (`analytics_tracker.py` — engagement sync from Apollo)
-- [x] Score Calibrator (`score_calibrator.py` — weekly review-only mode)
-- [ ] Job Change detection (build from `people_match` + compare) — deferred to Phase 4
-- [ ] Lead Score v2.0 — HOLD until intent/engagement signals > 50% coverage
-
-### Phase 3.5: MEET — COMPLETE ✓ (March 2026)
-- [x] `meeting_tracker.py` — Notion-native meeting sync, dual mode (Notion + Google Calendar)
-- [x] `meeting_analyzer.py` — Claude AI meeting intelligence (requires ANTHROPIC_API_KEY in GitHub Secrets)
-- [x] `opportunity_manager.py` — Meeting → Opportunity pipeline + stale deal detection
-- [x] `doc_sync_checker.py` — Documentation drift validator
-- [x] GitHub Actions updated to 23-step pipeline (meeting tracker, analyzer, opportunity manager added)
-- [x] constants.py expanded with MEETINGS + OPPORTUNITIES field definitions
-- [ ] ANTHROPIC_API_KEY confirmed in GitHub Secrets — **must verify**
-- [ ] First real meeting logged in Meetings DB — **activate the loop**
-- **Architecture assessment:** `Meeting_Call_Intelligence_Architecture_Assessment.md`
-
-### Phase 3.7: COMPANY-CENTRIC — CODE COMPLETE (v5.0)
-- [x] `constants.py` — 50+ new Company-Centric field constants, Company Stage values, TEAM_MEMBERS set
-- [x] `daily_sync.py` v3.0 — compute_company_ownership(), compute_company_metrics(), compute_company_stage()
-- [x] `auto_tasks.py` v2.0 — ONE task per company per tier, Task Owner from Primary Company Owner
-- [x] `opportunity_manager.py` v2.0 — ONE opportunity per company, stakeholder tracking, Buying Committee
-- [x] `meeting_tracker.py` v2.0 — auto-link Company, propagate Company Stage → Meeting, Meeting Owner
-- [ ] Add new Notion properties via API (Phase 5 of migration plan)
-- [ ] First run: `daily_sync.py --mode incremental` → verify Company Ownership + Metrics + Stage populate
-- [ ] Validate: `auto_tasks.py --dry-run` → confirm company-level dedup
-- **Gate:** All v5.0 scripts must compile and new Notion fields must exist before first live run
-
-### Phase 4: OPTIMIZE
-- [ ] Odoo ERP integration (push qualified opportunities)
-- [ ] Revenue pipeline tracking
-- [ ] Advanced analytics
-- [ ] Full end-to-end automation
-
----
-
-## archive_unqualified.py — Contact Archiver (v4.4)
+## governance/archive_unqualified.py — Contact Archiver (v4.4)
 
 One-time (or periodic) script to archive Notion contacts that don't meet qualification criteria. Reads ALL contacts from Notion Contacts DB, checks for Contact Owner and Email Sent, and sets Stage = "Archived" for those that fail.
 
 ### Commands
 
 ```bash
-python archive_unqualified.py              # archive all unqualified contacts
-python archive_unqualified.py --dry-run    # show what would be archived (no changes)
-python archive_unqualified.py --limit 50   # limit to first N contacts
+python governance/archive_unqualified.py              # archive all unqualified contacts
+python governance/archive_unqualified.py --dry-run    # show what would be archived (no changes)
+python governance/archive_unqualified.py --limit 50   # limit to first N contacts
 ```
 
 **IMPORTANT:** Run `--dry-run` first to verify the count before archiving. This operation is reversible (you can un-archive by changing Stage back) but affects many records.
 
 ---
 
-## data_governor.py — Data Governor (v6.0)
+## governance/data_governor.py — Data Governor (v6.1)
 
-Enforces data governance rules on ALL existing Notion records. Companion to `ingestion_gate.py` — while the gate blocks bad data at entry, the governor cleans up what already exists.
+Enforces data governance rules on ALL existing Notion records. Companion to `governance/ingestion_gate.py` — while the gate blocks bad data at entry, the governor cleans up what already exists.
 
 ### What It Does
 
-1. Audits companies and contacts against ingestion gate criteria
-2. Archives records that fail (sets Stage = "Archived")
-3. Enforces Company-Contact linking (no orphan contacts)
-4. Enforces Owner assignment (no unowned companies)
-5. Generates a full data quality report
-6. Soft-delete only — never hard-deletes active records
+1. **Step 0 — Freshness Guard (v6.1):** calls `check_pipeline_freshness()` before any audit. If upstream signal stats (`analytics_tracker`, `outcome_tracker`, `meeting_tracker`) are older than 26h or missing, and enforce mode was requested, **auto-downgrades to dry-run** and logs `[Timing Guard] Refusing to archive on possibly-stale engagement data`. Prevents false-positive archival on days where the analytics pipeline failed.
+2. Builds per-company real-intent aggregation via `company_has_real_intent()` (Decision #28) — used by the Archive Guard below.
+3. Audits companies and contacts against ingestion gate criteria.
+4. **Archive Guard (v6.1):** any company/contact with real intent is spared archival even if it has soft failures (no_outreach, no_owner). Hard failures (no_company, no_email) still archive contacts.
+5. Archives records that fail (sets Stage = "Archived").
+6. Enforces Company-Contact linking (no orphan contacts).
+7. Enforces Owner assignment (no unowned companies).
+8. Generates a full data quality report including `companies_saved_by_intent` and `contacts_saved_by_intent` counters.
+9. Soft-delete only — never hard-deletes active records.
 
 ### Commands
 
 ```bash
-python data_governor.py --dry-run          # audit only, no changes
-python data_governor.py --enforce          # apply archival + enforcement
-python data_governor.py --report           # generate detailed quality report
-python data_governor.py --enforce --limit 100  # limit to first N records
+python governance/data_governor.py --dry-run          # audit only, no changes
+python governance/data_governor.py --enforce          # apply archival + enforcement
+python governance/data_governor.py --report           # generate detailed quality report
+python governance/data_governor.py --enforce --limit 100  # limit to first N records
 ```
 
 ---
 
-## ingestion_gate.py — Ingestion Gate (v6.0)
+## governance/ingestion_gate.py — Ingestion Gate (v6.0)
 
 Validates companies and contacts before they enter the system. Prevents junk data at source.
 
@@ -660,14 +678,17 @@ Validates companies and contacts before they enter the system. Prevents junk dat
 ### Commands
 
 ```bash
-python ingestion_gate.py --dry-run         # evaluate without writing
-python ingestion_gate.py --enforce         # apply gate decisions
-python ingestion_gate.py --report          # gate pass/fail summary
+python governance/ingestion_gate.py --dry-run           # evaluate without writing (audit mode)
+python governance/ingestion_gate.py --mode strict       # apply gate decisions (strict enforcement)
+python governance/ingestion_gate.py --enforce           # alias for --mode strict (same effect)
+python governance/ingestion_gate.py --mode review       # pass gate+low-data records for review
+python governance/ingestion_gate.py --report            # save detailed gate report to JSON
+python governance/ingestion_gate.py --limit 50          # limit to first N companies
 ```
 
 ---
 
-## muhide_strategic_analysis.py — MUHIDE Strategic Analysis Engine
+## enrichment/muhide_strategic_analysis.py — MUHIDE Strategic Analysis Engine
 
 AI-powered analysis of all companies in Notion against MUHIDE's B2B trade governance and financing value proposition. Uses Claude API to generate a strategic fit assessment for each company.
 
@@ -684,44 +705,169 @@ AI-powered analysis of all companies in Notion against MUHIDE's B2B trade govern
 ### Commands
 
 ```bash
-python muhide_strategic_analysis.py            # process all companies
-python muhide_strategic_analysis.py --dry-run  # preview without writing
-python muhide_strategic_analysis.py --limit 50 # process first N only
-python muhide_strategic_analysis.py --resume   # resume from checkpoint
+python enrichment/muhide_strategic_analysis.py            # process all companies
+python enrichment/muhide_strategic_analysis.py --dry-run  # preview without writing
+python enrichment/muhide_strategic_analysis.py --limit 50 # process first N only
+python enrichment/muhide_strategic_analysis.py --resume   # resume from checkpoint
 ```
 
 Uses `muhide_analysis_checkpoint.json` to resume after interruptions. Requires `ANTHROPIC_API_KEY`.
 
 ---
 
-## cleanup_overdue_tasks.py — Legacy Task Cleanup
+## automation/outcome_tracker.py — Task → Contact Outcome Loop (v1.0)
+
+Closes the feedback loop between completed Tasks and their linked Contacts. For every real completed task (not auto-closed bulk tasks), it updates the contact record to reflect what actually happened.
+
+### What It Does
+
+For each completed task:
+1. **Contact Responded** → set to `True`
+2. **Last Contacted** → set to the task's `Completed At` date (falls back to `last_edited_time`)
+3. **Meeting Booked** → set to `True` if `Call Outcome = "Meeting Scheduled"`
+
+### Key Design Decisions
+
+- **Auto-closed filter** — skips tasks whose `Outcome Notes` contains the string `"auto-closed"` (set by `automation/cleanup_overdue_tasks.py`). This prevents bulk-closed legacy tasks from polluting contact records.
+- **Idempotent** — skips contacts that already have `Contact Responded = True` AND `Last Contacted` set, unless `--force` is passed.
+- **`Call Outcome` field** — meeting detection uses the `Call Outcome` select field (not keyword heuristics). This requires the sales rep to fill in the outcome field when completing a task.
+- **Explicit env var failure** — requires NOTION_API_KEY, NOTION_DATABASE_ID_TASKS, NOTION_DATABASE_ID_CONTACTS. Will raise EnvironmentError immediately if any is missing. No hardcoded fallback IDs.
+- **Log rotation** — uses RotatingFileHandler (5 MB per file, 3 backups) rather than timestamped per-run files to prevent unbounded log accumulation.
+
+### Required Env Vars (all MANDATORY — no fallbacks)
+
+```
+NOTION_API_KEY
+NOTION_DATABASE_ID_TASKS
+NOTION_DATABASE_ID_CONTACTS
+```
+
+### Commands
+
+```bash
+python automation/outcome_tracker.py                              # dry-run (safe, no writes)
+python automation/outcome_tracker.py --execute                    # apply changes
+python automation/outcome_tracker.py --execute --force            # re-process already-updated contacts
+python automation/outcome_tracker.py --execute --limit 20         # test with first 20 tasks
+python automation/outcome_tracker.py --execute --include-auto-closed  # include bulk-closed tasks too
+```
+
+**IMPORTANT:** Always run dry-run first to confirm counts before `--execute`.
+
+---
+
+## automation/cleanup_overdue_tasks.py — Legacy Task Cleanup
 
 Bulk-completes overdue auto-created tasks from pre-v5.0 contact-level Action Engine. These tasks were never actioned and are superseded by the company-level task model (v5.0). Run once after migrating to v5.0.
 
 ### Commands
 
 ```bash
-python cleanup_overdue_tasks.py --dry-run  # preview only
-python cleanup_overdue_tasks.py            # execute cleanup
-python cleanup_overdue_tasks.py --limit 100  # limit batch size
+python automation/cleanup_overdue_tasks.py --dry-run  # preview only
+python automation/cleanup_overdue_tasks.py            # execute cleanup
+python automation/cleanup_overdue_tasks.py --limit 100  # limit batch size
 ```
 
 ---
 
-## audit_ownership.py — Ownership Audit
+## automation/lead_inbox_mover.py — Lead Inbox → CRM Mover (v0.2)
+
+Moves Qualified leads from the 📥 Lead Inbox into real Company + Contact records in the CRM. This is the bridge between Bootstrap Mode v0.1 (Lead Inbox only) and the main AI Sales OS pipeline.
+
+### Why v0.2 (not v0.1)
+
+v0.1 only flipped `Status = Qualified → Moved` without creating any CRM records — a cosmetic move that faked the upgrade gate. v0.2 actually creates Company and Contact records and writes back the CRM refs, so "Moved" becomes a real state.
+
+### Modes
+
+| Mode | Filter | Purpose |
+|------|--------|---------|
+| `forward` (default) | `Status = Qualified` | Process newly-qualified leads going forward |
+| `backfill` | `Status = Moved AND CRM Company Ref is empty` | Retroactively create CRM records for leads that were "fake-moved" by v0.1 |
+| `all` | Both above | Run forward + backfill in one pass |
+
+### Dedup Rules
+
+- **Company:** Domain (exact, case-insensitive, generic domains like gmail/yahoo excluded) → Name (exact match on `Company Name` title, with legal-suffix normalization) → create new
+- **Contact:** Email (exact match on Contacts DB `Email` field) → create new
+- **Lazy lookup:** No full preload (Contacts DB ≈ 45K). Queries run per-lead with a negative-miss cache to avoid re-querying known-missing keys in the same run.
+
+### Fields Written Back to Lead Inbox
+
+- `CRM Company Ref` (rich_text) — page ID of matched or created Company
+- `CRM Contact Ref` (rich_text) — page ID of matched or created Contact
+- `CRM Sync State` (select) — Created / Matched / Failed / Skipped
+- `CRM Synced At` (date)
+- `Status` → `Moved` (only on success in forward mode; backfill leaves Status untouched since it's already Moved)
+
+### Data Quality Guards
+
+- Invalid / pipe-separated multi-person emails (e.g. `a@x.com|b@x.com`) are stripped via regex. Original email is preserved in Notes with a `[v0.2: stripped invalid email 'X' — needs manual split]` tag. Lead falls back to phone if available.
+- Missing Name, missing (email AND phone), or missing Intake Owner → lead skipped with failure reason logged.
+
+### Required Env Vars (all mandatory — no fallbacks)
+
+```
+NOTION_API_KEY
+NOTION_DATABASE_ID_LEAD_INBOX
+NOTION_DATABASE_ID_COMPANIES
+NOTION_DATABASE_ID_CONTACTS
+```
+
+### Commands
+
+```bash
+python automation/lead_inbox_mover.py --mode forward               # dry-run forward
+python automation/lead_inbox_mover.py --mode forward --execute     # apply
+python automation/lead_inbox_mover.py --mode backfill --limit 30   # batched dry-run
+python automation/lead_inbox_mover.py --mode all --execute         # run both
+python automation/lead_inbox_mover.py --mode backfill --verbose    # full per-lead logs
+```
+
+**Runtime:** ~12 sec per lead (lazy dedup queries + Notion rate limit). For large backfills, batch via `--limit 30` to stay under bash call timeouts.
+
+### First Production Run — 2026-04-10 (Gate #1 Complete)
+
+All 119 leads that had been fake-moved by v0.1 were successfully backfilled via 4 batches of `--limit 30 --execute`:
+
+- Companies: **58 created** + **61 matched** (dedup saved us from creating 61 duplicates that already existed from Apollo sync)
+- Contacts: **112 created** + **7 matched**
+- Failed: **0**
+
+Upgrade Gate #1 ("20+ leads moved from Inbox to CRM") is now met **with real records**, not just cosmetic status flips.
+
+---
+
+## governance/fix_seniority.py — Seniority Normalization Migration (One-Time)
+
+One-time migration script to fix the `Seniority` field in Notion Contacts DB. Queries all contacts with `Seniority = "C suite"` and updates them to `"C-Suite"` to match the normalized value in `SENIORITY_NORMALIZE` (core/constants.py).
+
+### Commands
+
+```bash
+python governance/fix_seniority.py              # dry-run — shows what would change
+python governance/fix_seniority.py --execute    # apply the migration
+python governance/fix_seniority.py --execute --batch-size 25  # custom batch size (default: 50)
+```
+
+**Run once only.** After execution, verify with a Notion filter that no `"C suite"` records remain.
+
+---
+
+## governance/audit_ownership.py — Ownership Audit
 
 Audits ownership gaps across all 5 Notion databases (Contacts, Companies, Tasks, Meetings, Opportunities). Reports unowned or mis-assigned records. Useful for validating the v5.0 Company-Centric ownership model.
 
 ### Commands
 
 ```bash
-python audit_ownership.py          # full audit across all DBs
-python audit_ownership.py --fix    # auto-assign owners where possible
+python governance/audit_ownership.py          # full audit across all DBs
+python governance/audit_ownership.py --fix    # auto-assign owners where possible
 ```
 
 ---
 
-## file_sync/ — Tri-Directional Sync Engine
+## pipelines/file_sync/ — Tri-Directional Sync Engine
 
 A production-grade file synchronization module that keeps three systems in perfect sync: Local Filesystem ↔ Google Drive ↔ GitHub Repository.
 
@@ -748,7 +894,7 @@ Local ◄───────────────────────�
 | `backup_manager.py` | Creates pre-sync backups |
 | `scan_local/drive/github.py` | Source-specific scanners |
 
-See `💻 CODE/file_sync/00_START_HERE.md` for full setup and usage guide.
+See `pipelines/file_sync/00_START_HERE.md` for full setup and usage guide.
 
 ---
 
@@ -788,17 +934,45 @@ See `💻 CODE/file_sync/00_START_HERE.md` for full setup and usage guide.
 7. **v1.1 Weights First** — Size + Seniority weighted high because Intent + Engagement data is sparse.
 8. **80% COLD is Normal** — Cold Apollo data with no outreach = low scores expected. Not a bug.
 9. **Safe Boolean Writing** — Only write engagement checkboxes if Apollo explicitly returns the field. Prevents overwriting manually-set True with False.
-10. **Unified Constants** — All field names in constants.py. No hardcoded strings in individual scripts.
+10. **Unified Constants** — All field names in core/constants.py. No hardcoded strings in individual scripts.
 11. **Action Ready Gating** — 5-condition check before any task is created. Prevents tasks for DNC, bounced, churned, or contacts without contact methods.
 12. **2-Job Pipeline** — Split daily_sync.yml into Job 1 (Sync/Score, 5h 50min) and Job 2 (Action/Track, 3h) to bypass GitHub Actions' 6-hour per-job limit. Stats passed via artifacts.
 13. **Local Timestamp Filter** — Apollo's `contact_updated_at_range` API filter uses day-granularity and was returning all 44,877 contacts even on incremental runs. Fixed in `_fetch_with_date_filter()` with a post-fetch client-side filter using exact `updated_at >= since` comparison. Incremental runs now complete in minutes, not hours.
-14. **Apollo Signals in Sync (v4.3)** — Intent Strength, Job Change Event/Date, Headcount Growth (6/12/24M), and Apollo AI fields (AI Decision, AI Qualification Status/Detail) are now extracted directly from contact/account responses during daily_sync.py. No separate enrichment scripts needed — signals flow with the regular sync.
-15. **Apollo AI Custom Field IDs** — Apollo's AI generates typed_custom_fields with fixed IDs: Contact Decision (`6913a64c52c2780001146ce9`), Account ICP Analysis (`6913a64c52c2780001146cfd`), Account Research (`6913a64c52c2780001146d0e`), Account Qualification (`6913a64c52c2780001146d22`). IDs are stored in constants.py for maintainability.
-16. **Owner & Outreach Gating (v4.4)** — Contacts must have an Apollo `owner_id` AND at least one non-failed email campaign before being synced to Notion. This prevents unowned or untouched contacts from cluttering the CRM. Existing contacts that don't meet criteria are archived (Stage = "Archived") via `archive_unqualified.py`.
+14. **Apollo Signals in Sync (v4.3)** — Intent Strength, Job Change Event/Date, Headcount Growth (6/12/24M), and Apollo AI fields (AI Decision, AI Qualification Status/Detail) are now extracted directly from contact/account responses during core/daily_sync.py. No separate enrichment scripts needed — signals flow with the regular sync.
+15. **Apollo AI Custom Field IDs** — Apollo's AI generates typed_custom_fields with fixed IDs: Contact Decision (`6913a64c52c2780001146ce9`), Account ICP Analysis (`6913a64c52c2780001146cfd`), Account Research (`6913a64c52c2780001146d0e`), Account Qualification (`6913a64c52c2780001146d22`). IDs are stored in core/constants.py for maintainability.
+16. **Owner & Outreach Gating (v4.4)** — Contacts must have an Apollo `owner_id` AND at least one non-failed email campaign before being synced to Notion. This prevents unowned or untouched contacts from cluttering the CRM. Existing contacts that don't meet criteria are archived (Stage = "Archived") via `governance/archive_unqualified.py`.
 17. **Company Owners from Contacts (v4.4)** — Instead of relying on Apollo's Account `owner_id` (which is null for most accounts), Company Owners is derived automatically from Contact Owners. This creates a multi-select field showing all team members who own contacts at that company.
-18. **Company-Centric Operating Model (v5.0)** — Company = Primary Operating Entity. All automation operates at the company level: ONE task per company per tier (auto_tasks.py v2.0), ONE active opportunity per company (opportunity_manager.py v2.0). Primary Company Owner = owner with most contacts (tie-break: most recent activity). Company Stage state machine: Prospect → Outreach → Engaged → Meeting → Opportunity → Customer → Churned → Archived. Higher-priority stages are never overwritten by lower ones.
+18. **Company-Centric Operating Model (v5.0)** — Company = Primary Operating Entity. All automation operates at the company level: ONE task per company per tier (automation/auto_tasks.py v2.0), ONE active opportunity per company (meetings/opportunity_manager.py v2.0). Primary Company Owner = owner with most contacts (tie-break: most recent activity). Company Stage state machine: Prospect → Outreach → Engaged → Meeting → Opportunity → Customer → Churned → Archived. Higher-priority stages are never overwritten by lower ones.
 19. **Company-Level Task Dedup (v5.0)** — Tasks are deduplicated by Company + Task Type, not by Contact. All contacts at a company are listed in the task context. Task Owner cascades: Primary Company Owner → Contact Owner fallback.
-20. **Meeting-to-Company Auto-Linking (v5.0)** — meeting_tracker.py v2.0 auto-resolves Company from Contact's company relation when meetings lack a direct Company link. Propagates Company Stage → "Meeting" (respects priority). Assigns Meeting Owner from Primary Company Owner.
+20. **Meeting-to-Company Auto-Linking (v5.0)** — meetings/meeting_tracker.py v2.0 auto-resolves Company from Contact's company relation when meetings lack a direct Company link. Propagates Company Stage → "Meeting" (respects priority). Assigns Meeting Owner from Primary Company Owner.
+21. **HOT vs WARM Task Type Separation (v5.1 Fix)** — HOT uses task_type = "Urgent Call", WARM uses "Follow-up". These must be distinct because company-level dedup checks by task_type — if both used "Follow-up", a company with an open WARM task would be blocked from receiving a HOT urgent-call task, defeating the priority system.
+22. **Bulk Company Owner Preload (v5.1 Fix)** — automation/auto_tasks.py now preloads all company owner data in one query before the task-creation loop. Eliminates N+1 API pattern (was: 1 API call per company; now: 1 query for all companies).
+23. **No Hardcoded Notion IDs** — automation/outcome_tracker.py was updated to require env vars explicitly (NOTION_DATABASE_ID_TASKS, NOTION_DATABASE_ID_CONTACTS) rather than using hardcoded fallback IDs. Fails loudly if env vars are missing.
+24. **Rotating Log Files** — automation/outcome_tracker.py uses RotatingFileHandler (5 MB, 3 backups) instead of timestamped per-run log files to prevent unbounded accumulation.
+25. **Modular Architecture (v6.0)** — Restructured from flat `💻 CODE/Phase 3 - Sync/` to 8-module modular structure: core, scoring, automation, governance, enrichment, meetings, monitoring, webhooks. Each module groups related scripts by function domain, improving maintainability and testability.
+26. **AI Sales Actions Sync (2026-04-11)** — Apollo exposes the "AI Sales Actions" directive block (Segment/Fit/Priority/Urgency/Signal/Pain/Target Role/Action/Tone/Call Hook/Email) as a typed_custom_field on accounts, ID `69d979efebf741000dfbce23` (verified via `apollo_mixed_companies_search` on KAFD, stc). `scripts/core/daily_sync.py` now extracts this field in the account transform (same place as AI Qualification Status/Detail) and writes it as rich_text to the Companies DB `AI Sales Actions` property. Safe-write: only writes when non-empty, never blanks existing values. Downstream parser `scripts/core/ai_sales_actions_parser.py` + enricher `scripts/enrichment/ai_sales_actions_enricher.py` consume this field to populate sub-fields (AI Priority, AI Fit, AI Tone, AI Call Hook, etc.). Closes the gap where Notion showed 0 companies with AI Sales Actions populated despite the field being present in Apollo.
+27. **Apollo Account Owner Priority (v5.1 — 2026-04-11)** — Reverses Decision #17 for the specific case where the Apollo Account itself has an `owner_id`. New priority in `compute_company_ownership()`: **(1)** Apollo Account `owner_id` (mapped via `APOLLO_OWNER_MAP`) wins directly → becomes Primary Company Owner, Supporting Owners cleared (Apollo is authoritative). **(2)** Only if Apollo owner is missing or unmapped, fall back to v5.0 contact-based derivation (owner with most contacts, tie-break by most recent activity). Why: for accounts that Apollo has explicitly assigned, the human assignment is more authoritative than a statistical head-count of contact owners. Decision #17 still holds as the fallback path. Implementation passes `accounts` (raw Apollo batch) to `compute_company_ownership()` from all three mode runners (`run_incremental`, `run_backfill`, `run_full`); the function builds an `account_id → owner_id` map and iterates over the union of Apollo-owned and contact-owned accounts. Logging: `[Ownership] Using Apollo owner for company X` / `[Ownership] Fallback to contact-based ownership for company Y` / warning on unmapped Apollo `owner_id`. Final stats line reports `apollo=N, fallback=M, unmapped_apollo=U, skipped=S`. No schema changes. No impact on dedup, metrics, stage, contact sync, or downstream task ownership.
+28. **Real Intent Definition + Archive Guard (v6.1 — 2026-04-11)** — Broadened the intent signal beyond the old narrow `ENGAGEMENT_SIGNALS = {email_open, replied, meeting_booked, demoed}` set, which produced false negatives (single open = no signal). New definition centralized in `scripts/core/constants.py::has_real_intent(record)` and `company_has_real_intent(contacts)`: `intent = replied OR meeting_booked OR email_open_count >= 2 OR internal_forward_detected OR forward_count > 0 OR unique_openers_count >= 2 OR repeated_engagement_detected`. Returns `(bool, [reasons])` for logging. Accepts both snake_case (Apollo) and Title Case (Notion) keys. **Applied in:** (a) `governance/ingestion_gate.py::_check_engagement()` — renamed criterion to "Intent Signal"; (b) `governance/data_governor.py` — Archive Guard: any company/contact with real intent is spared from archival even if other soft failures exist (hard failures like no_company/no_email still archive contacts); (c) `core/daily_sync.py::compute_company_stage()` — contacts with real intent drive stage → Engaged; (d) `enrichment/analytics_tracker.py` — writes `Internal Forward Detected` and `Repeated Engagement Detected` booleans. Principle: *"repeated opens + internal circulation = meaningful commercial signal; not replying does not mean no interest."* Apollo limitation: no explicit "forwarded" field — `email_open_count >= 2` is the primary proxy, `unique_openers_count` / `forward_count` used when available.
+29. **Safe Execution Order + Conflict Guards (v6.1 — 2026-04-11)** — Pipeline ordering was previously making decisions before their data existed: `analytics_tracker` and `outcome_tracker` ran in Job 2 AFTER `lead_score` in Job 1, so every scoring pass read yesterday's engagement data. `data_governor` could archive companies whose fresh signals hadn't landed yet. `daily_sync.compute_company_stage` and `opportunity_manager.update_company_stage_to_opportunity` both wrote Company Stage unconditionally, regressing Customer/Churned stages. **Fixes:** (a) **Reordered `.github/workflows/daily_sync.yml`** — moved `analytics_tracker`, `outcome_tracker`, `meeting_tracker`, `opportunity_manager` from Job 2 into Job 1 BEFORE `lead_score` + `action_ready_updater`. New Job 1 order: daily_sync → analytics_tracker → outcome_tracker → meeting_tracker → opportunity_manager → job_postings_enricher → lead_score → action_ready_updater → upload stats. Job 2 is now: auto_tasks → auto_sequence → meeting_analyzer (AI, non-blocking) → health_check. (b) **Added `STAGE_PRIORITY` lattice + `STAGE_TERMINAL` + `is_stage_regression()` to `core/constants.py`** — priority: Prospect(1) → Outreach(2) → Engaged(3) → Meeting(4) → Opportunity(5) → Customer(6) → Churned(7) → Archived(8). Terminal = {Customer, Churned, Archived}. (c) **Stage Write Guards** — `daily_sync.compute_company_stage()` and `opportunity_manager.update_company_stage_to_opportunity()` now read current stage BEFORE writing, skip if terminal, skip if regression, skip no-ops. `meeting_tracker.update_company_stage_to_meeting()` already had a compatible guard — left untouched. Uniform logging: `[Conflict Guard] Skipping stage write for X: current 'Customer' is terminal` / `[Conflict Guard] Prevented stage regression for X: Meeting → Outreach`. Final stats line in `compute_company_stage`: `N updated, R regressions prevented, T terminal stages preserved`. (d) **Freshness Guard in `data_governor`** — added `check_pipeline_freshness()` + `FRESHNESS_STATS_FILES = (enrichment/last_analytics_stats.json, automation/last_outcome_stats.json, meetings/last_meeting_tracker_stats.json)` + `FRESHNESS_MAX_AGE_HOURS = 26` to `core/constants.py`. `DataGovernor.run()` checks freshness as Step 0. If stats are older than 26h (or missing), enforce mode auto-downgrades to dry-run and logs `[Timing Guard] Refusing to archive on possibly-stale engagement data`. (e) **Artifact upload in Job 1 expanded** to include analytics, outcome, meeting_tracker, and opportunity stats/logs so next day's freshness check has real data. **Single-writer rule** for Company Stage: four writers (daily_sync, meeting_tracker, opportunity_manager, data_governor), all now guarded by `STAGE_TERMINAL` + `is_stage_regression`. No schema changes. First post-deploy run will see stale freshness (by design — no prior stats files); from run 2 onward enforcement resumes normally.
+
+---
+
+## Module Architecture (v6.0 — EXECUTED)
+
+All 26 scripts now organized into 8 functional modules under `scripts/`:
+
+| Module | Scripts | Domain |
+|--------|---------|--------|
+| `scripts/core/` | daily_sync.py, constants.py, notion_helpers.py, doc_sync_checker.py | Engine |
+| `scripts/scoring/` | lead_score.py, score_calibrator.py, action_ready_updater.py | Intelligence |
+| `scripts/automation/` | auto_tasks.py, auto_sequence.py, outcome_tracker.py, cleanup_overdue_tasks.py, lead_inbox_mover.py | Execution |
+| `scripts/governance/` | ingestion_gate.py, data_governor.py, archive_unqualified.py, audit_ownership.py, fix_seniority.py | Quality |
+| `scripts/enrichment/` | job_postings_enricher.py, muhide_strategic_analysis.py, analytics_tracker.py | Signals |
+| `scripts/meetings/` | meeting_tracker.py, meeting_analyzer.py, opportunity_manager.py | Revenue |
+| `scripts/monitoring/` | health_check.py, dashboard_generator.py, morning_brief.py | Observability |
+| `scripts/webhooks/` | webhook_server.py, verify_links.py | Integration |
+
+**Status:** EXECUTED — v6.0 migration complete. All paths updated. GitHub Actions v3.0 deployed.
 
 ---
 
@@ -813,7 +987,7 @@ AI Sales OS has 12 specialized Claude Skills in `.claude/skills/`. These are pro
 | `notion-schema-manager` | Manage Notion database schema, properties, relations, and views |
 | `lead-scoring-analyst` | Analyze, calibrate, and improve lead scoring and classification |
 | `data-integrity-guardian` | Detect and fix data quality issues (duplicates, missing fields, conflicts) |
-| `action-engine-builder` | Build and operate the Action Engine (auto_tasks.py) and Action Ready logic |
+| `action-engine-builder` | Build and operate the Action Engine (automation/auto_tasks.py) and Action Ready logic |
 | `pipeline-health-monitor` | Monitor daily pipeline health, detect failures, alert on anomalies |
 | `meeting-intelligence-summarizer` | Turn meetings into structured CRM updates and follow-up tasks |
 | `revenue-loop-tracker` | Track conversion rates, score-to-revenue correlation, feedback loops |
@@ -825,26 +999,111 @@ AI Sales OS has 12 specialized Claude Skills in `.claude/skills/`. These are pro
 
 ---
 
+## Feature Registry — Status Classification
+
+Every feature classified by its actual implementation status.
+
+| Feature | Script | Notion Field | Pipeline Step | Status |
+|---------|--------|-------------|---------------|--------|
+| Apollo → Notion Sync | scripts/core/daily_sync.py v4.0 | All fields | Job1 Step 1 | ✅ Active |
+| Lead Scoring v1.5 | scripts/scoring/lead_score.py | Lead Score, Lead Tier, Sort Score | Job1 Step 3 | ✅ Active |
+| Action Ready Eval | scripts/scoring/action_ready_updater.py | Action Ready checkbox | Job1 Step 4 | ✅ Active |
+| HOT Task (Urgent Call) | scripts/automation/auto_tasks.py | Task Type = "Urgent Call" | Job2 Step 1 | ✅ Active (Fixed C-03) |
+| WARM Task (Follow-up) | scripts/automation/auto_tasks.py | Task Type = "Follow-up" | Job2 Step 1 | ✅ Active |
+| Apollo Sequence Enrollment | scripts/automation/auto_sequence.py | Outreach Status = "In Sequence" | Job2 Step 2 | ✅ Active |
+| Meeting Sync | scripts/meetings/meeting_tracker.py | Meeting Booked, Company Stage | Job2 Step 3 | ✅ Active |
+| Meeting AI Analysis | scripts/meetings/meeting_analyzer.py | Key Takeaways, Next Steps | Job2 Step 4 | ✅ Active (needs ANTHROPIC_API_KEY) |
+| Meeting → Opportunity | scripts/meetings/opportunity_manager.py | Opportunity, Company Stage | Job2 Step 5 | ✅ Active |
+| Engagement Sync | scripts/enrichment/analytics_tracker.py | Replied, Email Opened | Job2 Step 6 | ✅ Active |
+| Outcome Loop | scripts/automation/outcome_tracker.py | Contact Responded, Last Contacted | Job2 Step 7 | ✅ Active |
+| Health Check | scripts/monitoring/health_check.py | — (stdout only) | Job2 Step 8 | ✅ Active |
+| Morning Brief | scripts/monitoring/morning_brief.py | — (file output) | Job2 Step 9 | ✅ Active |
+| Dashboard | scripts/monitoring/dashboard_generator.py | dashboards/Sales_Dashboard_Accounts.html | Job2 Step 10 | ✅ Active |
+| Ingestion Gate | scripts/governance/ingestion_gate.py | — (pre-sync filter) | Integrated in scripts/core/daily_sync.py | ✅ Active |
+| Data Governor | scripts/governance/data_governor.py | Stage = Archived | Manual run | ✅ Active |
+| Job Postings Intent | scripts/enrichment/job_postings_enricher.py | Job Postings Intent (Company) | Job1 Step 2 | ✅ Active |
+| MUHIDE Strategic Analysis | scripts/enrichment/muhide_strategic_analysis.py | MUHIDE Fit Score, Priority | Manual / scheduled | ✅ Active |
+| Score Calibration | scripts/scoring/score_calibrator.py | — (review only) | Weekly Sunday | ✅ Active (review-only) |
+| Company-Centric Ownership (v5.1 Apollo-First) | scripts/core/daily_sync.py | Primary Company Owner, Supporting Owners | Job1 | ✅ Active |
+| Company Stage Machine | scripts/core/daily_sync.py | Company Stage | Job1 | ✅ Active |
+| Outcome → Meeting Booked | scripts/automation/outcome_tracker.py | Meeting Booked | Job2 | ✅ Active |
+| muqawil_pipeline | pipelines/muqawil/ | — | Not in main workflow | ⚠️ Undocumented / Separate |
+| engineering-offices | pipelines/engineering_offices/ | — | Not in main workflow | ⚠️ Inactive (all zeros) |
+| Job Change Detection | — | Job Change Event/Date | NOT BUILT | 🔴 Planned (Phase 4) |
+| Odoo ERP Integration | — | — | NOT BUILT | 🔴 Planned (Phase 4) |
+| Lead Score v2.0 (intent-heavy) | — | — | NOT BUILT | 🔴 On hold (needs signal data) |
+| WARM-HIGH Tier | — | — | REMOVED — never existed in code | ❌ Phantom (removed from docs) |
+
+---
+
+## Execution Plan (4 Phases)
+
+### Phase 1: ACTIVATE — COMPLETE ✓
+- [x] Full Sync running (all 60K+ records)
+- [x] Lead Score engine built (v1.1 weights)
+- [x] Lead Tier writing (HOT/WARM/COLD alongside score)
+- [x] Seniority normalization (scripts/core/constants.py + _normalize_seniority)
+- [x] Safe boolean writing (prevents overwriting manual data)
+- [x] scripts/core/daily_sync.py v2.1 (added Stage, Outreach Status, engagement booleans, Last Contacted, Departments)
+- [ ] Calibration — run `python scripts/scoring/lead_score.py --force` to write Lead Tier for all contacts
+- [ ] Push code to GitHub, add `NOTION_DATABASE_ID_TASKS` secret, activate workflow
+- **Gate:** Calibration must pass before activating Actions
+
+### Phase 2: ACTION — CODE COMPLETE (pending first run)
+- [x] Built `scripts/core/constants.py` — unified field names & thresholds
+- [x] Built `scripts/automation/auto_tasks.py` — SLA-based task creator (HOT=24h call, WARM=48h follow-up)
+- [x] Built `scripts/scoring/action_ready_updater.py` — 5-condition gating (score, DNC, outreach, stage, contact method)
+- [x] Built `scripts/monitoring/health_check.py` — post-pipeline health validator
+- [x] Updated `.github/workflows/daily_sync.yml` — 21-step pipeline (2 frozen 2026-04-10 Operator-First v2.0: dashboard_generator, morning_brief) with Action Engine + Health Check
+- [x] Built 12 Claude Skills for AI Sales OS operations (evaluated at 100% pass rate)
+- [ ] First run: `python scripts/scoring/action_ready_updater.py` then `python scripts/automation/auto_tasks.py --dry-run` to validate
+- [ ] Create Notion task views for sales workflow
+- **Gate:** Tasks must generate correctly before Phase 3
+
+### Phase 3: ENRICH — COMPLETE ✓
+- [x] Job Postings signal (`scripts/enrichment/job_postings_enricher.py` — active, 50/run limit)
+- [x] Auto Sequence enrollment (`scripts/automation/auto_sequence.py` — HOT/WARM × 5 roles × 2 senders)
+- [x] Analytics tracking (`scripts/enrichment/analytics_tracker.py` — engagement sync from Apollo)
+- [x] Score Calibrator (`scripts/scoring/score_calibrator.py` — weekly review-only mode)
+- [ ] Job Change detection (build from `people_match` + compare) — deferred to Phase 4
+- [ ] Lead Score v2.0 — HOLD until intent/engagement signals > 50% coverage
+
+### Phase 3.5: MEET — COMPLETE ✓ (March 2026)
+- [x] `scripts/meetings/meeting_tracker.py` — Notion-native meeting sync, dual mode (Notion + Google Calendar)
+- [x] `scripts/meetings/meeting_analyzer.py` — Claude AI meeting intelligence (requires ANTHROPIC_API_KEY in GitHub Secrets)
+- [x] `scripts/meetings/opportunity_manager.py` — Meeting → Opportunity pipeline + stale deal detection
+- [x] `scripts/core/doc_sync_checker.py` — Documentation drift validator
+- [x] GitHub Actions updated to 21-step pipeline (2 frozen 2026-04-10 Operator-First v2.0: dashboard_generator, morning_brief) (meeting tracker, analyzer, opportunity manager added)
+- [x] scripts/core/constants.py expanded with MEETINGS + OPPORTUNITIES field definitions
+- [ ] ANTHROPIC_API_KEY confirmed in GitHub Secrets — **must verify**
+- [ ] First real meeting logged in Meetings DB — **activate the loop**
+- **Architecture assessment:** `Meeting_Call_Intelligence_Architecture_Assessment.md`
+
+### Phase 3.7: COMPANY-CENTRIC — CODE COMPLETE (v5.0)
+- [x] `scripts/core/constants.py` — 50+ new Company-Centric field constants, Company Stage values, TEAM_MEMBERS set
+- [x] `scripts/core/daily_sync.py` **v4.0** — compute_company_ownership(), compute_company_metrics(), compute_company_stage()
+- [x] `scripts/core/daily_sync.py` **v5.1 (2026-04-11)** — `compute_company_ownership()` now accepts `accounts` and prioritizes Apollo Account `owner_id` over contact-based derivation (see Decision #27)
+- [x] `scripts/automation/auto_tasks.py` v2.0 — ONE task per company per tier, Task Owner from Primary Company Owner
+- [x] `scripts/meetings/opportunity_manager.py` v2.0 — ONE opportunity per company, stakeholder tracking, Buying Committee
+- [x] `scripts/meetings/meeting_tracker.py` v2.0 — auto-link Company, propagate Company Stage → Meeting, Meeting Owner
+- [ ] Add new Notion properties via API (Phase 5 of migration plan)
+- [ ] First run: `python scripts/core/daily_sync.py --mode incremental` → verify Company Ownership + Metrics + Stage populate
+- [ ] Validate: `python scripts/automation/auto_tasks.py --dry-run` → confirm company-level dedup
+- **Gate:** All v5.0 scripts must compile and new Notion fields must exist before first live run
+
+### Phase 4: OPTIMIZE
+- [ ] Odoo ERP integration (push qualified opportunities)
+- [ ] Revenue pipeline tracking
+- [ ] Advanced analytics
+- [ ] Full end-to-end automation
+
+---
+
 ## Documentation Sync Protocol — MANDATORY
 
 **Every time any script is added, modified, or the pipeline changes, Claude MUST immediately update:**
 
 | What Changed | Files to Update |
 |---|---|
-| New script added | CLAUDE.md (Active Scripts table + Folder Structure) · SYSTEM_OVERVIEW.md · QUICK_START.md |
-| Pipeline steps changed | CLAUDE.md (architecture line + GitHub Actions section) · SYSTEM_OVERVIEW.md · QUICK_START.md · Notion Command Center · Notion Autonomous Loop Dashboard |
-| New Phase or Phase status change | CLAUDE.md (Execution Plan) · SYSTEM_OVERVIEW.md (Execution Plan table) · Notion Command Center |
-| New env variable required | `.env.example` · QUICK_START.md Prerequisites section |
-| New key document created | SYSTEM_OVERVIEW.md Key Documents table |
-
-**Validation command (run after any development session):**
-```bash
-python doc_sync_checker.py --strict --fix-hints
-```
-
-This script (`doc_sync_checker.py`) checks script count, pipeline step count, env variables, and phase alignment against the actual codebase. Any drift is flagged before it compounds.
-
-**The rule:** Never finish a development session without running doc_sync_checker.py. If it finds drift, fix it before moving on.
-
----
-
+| New script added | CLAUDE.md (Active Scripts table + Folder Structure) · docs/start_here/SYSTEM_OVERVIEW.md · docs/start_here/QUICK_START.md |
+| Pipeline steps changed | CLAUDE.md (architecture line + GitHub Actions section) · docs/start_here/SYST

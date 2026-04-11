@@ -10,7 +10,22 @@
       "Bash(ls -la \"💻 CODE/Phase 3 - Sync/\"*.log \"💻 CODE/Phase 3 - Sync/logs/\"*.log)",
       "Bash(grep Contacts:.*/ '💻 CODE/Phase 3 - Sync/initial_load.log')",
       "Bash(python lead_score.py)",
-      "Bash(cmd //c \"for /L %i in \\(1,1,30\\) do @echo Run %i... && python lead_score.py && timeout /t 5\")"
-    ]
-  }
-}
+      "Bash(cmd //c \"for /L %i in \\(1,1,30\\) do @echo Run %i... && python lead_score.py && timeout /t 5\")",
+      "Bash(python auto_tasks.py --dry-run)",
+      "Bash(python lead_score.py --force)",
+      "Bash(python action_ready_updater.py)",
+      "Bash(python data_governor.py --enforce)",
+      "Bash(python -m pip install aiohttp beautifulsoup4 lxml openpyxl pandas)",
+      "Bash(python muqawil_scraper.py --test 3)",
+      "Bash(python muqawil_scraper.py)",
+      "Bash(python run_all.py --phases 3,4,5)",
+      "Bash(cmd //c \"RUN_AI_SALES_OS_muqawil_pipeline.bat\")",
+      "Bash(ls:*)",
+      "Bash(cmd:*)",
+      "Bash(C:/Users/PC/AppData/Local/Python/bin/python.exe:*)",
+      "Bash(python 03_apollo_matcher.py)",
+      "Bash(python scripts/core/daily_sync.py --mode full)",
+      "Read(//c/Users/PC/AppData/Local/Temp/claude/C--Users-PC-Documents-AI-Sales-OS/abaf875c-d672-4d33-b935-a69c491121fa/tasks/**)",
+      "Bash(python scripts/governance/fix_seniority.py --execute)",
+      "Bash(python scripts/enrichment/muhide_strategic_analysis.py)",
+      "Bash

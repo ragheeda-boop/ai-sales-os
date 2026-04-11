@@ -1,4 +1,4 @@
-name: "🔄 Apollo → Notion Daily Pipeline v2.0"
+name: "🔄 Apollo → Notion Daily Pipeline v3.0"
 
 on:
   # Daily at 7 AM KSA (UTC+3 = 04:00 UTC)
@@ -48,10 +48,14 @@ permissions:
 
 jobs:
   # ═══════════════════════════════════════════════════════════════════════════
-  # JOB 1: Sync → Enrich → Score (heavy — up to 5h)
+  # JOB 1: Sync → Signals → Score (heavy — up to 5h)
+  # Order rationale: all signal-writing scripts (analytics_tracker,
+  # outcome_tracker, meeting_tracker, opportunity_manager) must run BEFORE
+  # lead_score + action_ready_updater so that scoring reads fresh engagement
+  # data. See Decision #28 (Safe Execution Order).
   # ═══════════════════════════════════════════════════════════════════════════
   sync-and-score:
-    name: "🔄 Sync → Enrich → Score → Action Ready"
+    name: "🔄 Sync → Signals → Score → Action Ready"
     runs-on: ubuntu-latest
     timeout-minutes: 350  # ~5h 50min safety margin before GitHub's 6h wall
 
@@ -78,46 +82,92 @@ jobs:
 
       # ─── 3. Install Dependencies ──────────────────────────────────────────
       - name: "📦 Install Dependencies"
-        working-directory: "💻 CODE/Phase 3 - Sync"
+        working-directory: scripts
         run: pip install -r requirements.txt
 
-      # ─── 4. Run Sync (daily_sync.py v2.1) ─────────────────────────────────
+      # ─── 4. Run Sync (daily_sync.py v4.0) ─────────────────────────────────
       - name: "🚀 Run Sync"
-        working-directory: "💻 CODE/Phase 3 - Sync"
+        working-directory: scripts
         run: |
           MODE="${{ github.event.inputs.sync_mode || 'incremental' }}"
           echo "🔄 Sync mode: $MODE"
           case $MODE in
-            incremental)    python daily_sync.py --mode incremental --hours 26 --gate strict ;;
-            backfill_week)  python daily_sync.py --mode backfill --days 7 ;;
-            backfill_month) python daily_sync.py --mode backfill --days 30 ;;
-            full)           python daily_sync.py --mode full ;;
+            incremental)    python core/daily_sync.py --mode incremental --hours 26 --gate strict ;;
+            backfill_week)  python core/daily_sync.py --mode backfill --days 7 ;;
+            backfill_month) python core/daily_sync.py --mode backfill --days 30 ;;
+            full)           python core/daily_sync.py --mode full ;;
           esac
 
-      # ─── 5. Job Postings Enricher ─────────────────────────────────────────
+      # ─── 5. Analytics Tracker (engagement sync — MUST run before scoring) ─
+      # Pulls Apollo Analytics → Notion: email_open_count, replied, opened.
+      # Lead Score reads these fields; scoring before analytics = stale scores.
+      - name: "📊 Analytics Tracker (pre-score)"
+        working-directory: scripts
+        continue-on-error: true
+        run: |
+          echo "📊 Syncing analytics and engagement (pre-score)..."
+          python enrichment/analytics_tracker.py --days 7
+
+      # ─── 6. Outcome Tracker (closes Task → Contact loop — pre-score) ──────
+      # Writes Contact Responded, Last Contacted, Meeting Booked from completed
+      # tasks. Moved ahead of scoring so the recency + meeting-booked signals
+      # feed into the next score pass.
+      - name: "✅ Outcome Tracker (pre-score)"
+        working-directory: scripts
+        continue-on-error: true
+        run: |
+          echo "✅ Closing Task → Contact outcome loop (pre-score)..."
+          python automation/outcome_tracker.py --execute
+
+      # ─── 7. Meeting Tracker (pre-score stage propagation) ─────────────────
+      # Sets Company Stage → Meeting for companies with confirmed meetings.
+      # Must run before opportunity_manager and before lead_score so that
+      # stage-sensitive logic downstream sees the correct state.
+      - name: "📅 Meeting Tracker (pre-score)"
+        working-directory: scripts
+        continue-on-error: true
+        run: |
+          echo "📅 Processing meetings from Notion (pre-score)..."
+          python meetings/meeting_tracker.py --days 7
+
+      # ─── 8. Opportunity Manager (pre-score stage propagation) ─────────────
+      # Creates/advances opportunities from positive meetings. Writes Company
+      # Stage → Opportunity (guarded by STAGE_TERMINAL + is_stage_regression).
+      # Must run before scoring so the opportunity stage is reflected when
+      # the governor + scoring pass run later in the pipeline.
+      - name: "💰 Opportunity Manager (pre-score)"
+        working-directory: scripts
+        continue-on-error: true
+        run: |
+          echo "💰 Processing opportunities from meetings (pre-score)..."
+          python meetings/opportunity_manager.py
+
+      # ─── 9. Job Postings Enricher ─────────────────────────────────────────
       - name: "🏗️ Job Postings Enricher"
         if: ${{ github.event.inputs.run_lead_score != 'no' }}
-        working-directory: "💻 CODE/Phase 3 - Sync"
+        working-directory: scripts
         continue-on-error: true
         run: |
           echo "🏗️ Enriching companies with job postings intent..."
-          python job_postings_enricher.py --limit 50
+          python enrichment/job_postings_enricher.py --limit 50
 
-      # ─── 6. Run Lead Score ────────────────────────────────────────────────
+      # ─── 10. Run Lead Score ───────────────────────────────────────────────
+      # Reads: email_open_count, replied, email_opened, meeting_booked,
+      # last_contacted — ALL of which were refreshed in steps 5–8 above.
       - name: "🎯 Run Lead Score"
         if: ${{ github.event.inputs.run_lead_score != 'no' }}
-        working-directory: "💻 CODE/Phase 3 - Sync"
+        working-directory: scripts
         run: |
-          echo "🎯 Running Lead Score..."
-          python lead_score.py
+          echo "🎯 Running Lead Score (reads fresh signals from steps 5–8)..."
+          python scoring/lead_score.py
 
-      # ─── 7. Update Action Ready ───────────────────────────────────────────
+      # ─── 11. Update Action Ready ──────────────────────────────────────────
       - name: "✅ Update Action Ready"
         if: ${{ github.event.inputs.run_lead_score != 'no' }}
-        working-directory: "💻 CODE/Phase 3 - Sync"
+        working-directory: scripts
         run: |
           echo "✅ Updating Action Ready flags..."
-          python action_ready_updater.py
+          python scoring/action_ready_updater.py
 
       # ─── Pass sync stats to Job 2 ─────────────────────────────────────────
       - name: "📤 Upload Sync Stats"
@@ -126,20 +176,31 @@ jobs:
         with:
           name: sync-stats-${{ github.run_number }}
           path: |
-            💻 CODE/Phase 3 - Sync/last_sync_stats.json
-            💻 CODE/Phase 3 - Sync/daily_sync.log
-            💻 CODE/Phase 3 - Sync/lead_score.log
-            💻 CODE/Phase 3 - Sync/action_ready.log
-            💻 CODE/Phase 3 - Sync/last_job_postings_stats.json
-            💻 CODE/Phase 3 - Sync/job_postings.log
+            scripts/core/last_sync_stats.json
+            scripts/core/daily_sync.log
+            scripts/scoring/lead_score.log
+            scripts/scoring/action_ready.log
+            scripts/enrichment/last_job_postings_stats.json
+            scripts/enrichment/job_postings.log
+            scripts/enrichment/last_analytics_stats.json
+            scripts/enrichment/analytics_tracker.log
+            scripts/automation/last_outcome_stats.json
+            scripts/automation/outcome_tracker.log
+            scripts/meetings/last_meeting_tracker_stats.json
+            scripts/meetings/meeting_tracker.log
+            scripts/meetings/last_opportunity_stats.json
+            scripts/meetings/opportunity_manager.log
           retention-days: 1
           if-no-files-found: ignore
 
   # ═══════════════════════════════════════════════════════════════════════════
-  # JOB 2: Action → Sequence → Meet → Track → Brief (light — under 2h)
+  # JOB 2: Action → Sequence → Meet-AI → Health (light — under 2h)
+  # All signal writes (analytics, outcome, meeting, opportunity) moved to
+  # Job 1 so scoring runs on fresh data. Job 2 now only handles downstream
+  # actions and non-blocking AI enrichment.
   # ═══════════════════════════════════════════════════════════════════════════
   action-and-track:
-    name: "⚡ Action → Sequence → Meet → Track → Brief"
+    name: "⚡ Action → Sequence → Meet-AI → Health"
     runs-on: ubuntu-latest
     needs: sync-and-score
     timeout-minutes: 180  # 3h max
@@ -167,7 +228,7 @@ jobs:
 
       # ─── 3. Install Dependencies ──────────────────────────────────────────
       - name: "📦 Install Dependencies"
-        working-directory: "💻 CODE/Phase 3 - Sync"
+        working-directory: scripts
         run: pip install -r requirements.txt
 
       # ─── 4. Download Sync Stats from Job 1 ───────────────────────────────
@@ -175,144 +236,135 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: sync-stats-${{ github.run_number }}
-          path: "💻 CODE/Phase 3 - Sync/"
+          path: scripts/
         continue-on-error: true
 
       # ─── 5. Run Action Engine ─────────────────────────────────────────────
       - name: "⚡ Run Action Engine"
         if: ${{ github.event.inputs.run_action_engine != 'no' }}
-        working-directory: "💻 CODE/Phase 3 - Sync"
+        working-directory: scripts
         continue-on-error: true
         run: |
           echo "⚡ Running Action Engine..."
-          python auto_tasks.py
+          python automation/auto_tasks.py
 
       # ─── 6. Auto Sequence Enrollment ──────────────────────────────────────
       - name: "📧 Auto Sequence Enrollment"
         if: ${{ github.event.inputs.run_sequences != 'no' }}
-        working-directory: "💻 CODE/Phase 3 - Sync"
+        working-directory: scripts
         continue-on-error: true
         run: |
           echo "📧 Enrolling contacts in sequences..."
-          python auto_sequence.py --limit 50
+          python automation/auto_sequence.py --limit 50
 
-      # ─── 7. Meeting Tracker ───────────────────────────────────────────────
-      - name: "📅 Meeting Tracker"
-        working-directory: "💻 CODE/Phase 3 - Sync"
-        continue-on-error: true
-        run: |
-          echo "📅 Processing meetings from Notion..."
-          python meeting_tracker.py --days 7
+      # NOTE: Meeting Tracker, Opportunity Manager, Analytics Tracker, and
+      # Outcome Tracker previously lived here (Job 2 steps 7, 9, 10, 11).
+      # They were moved to Job 1 (steps 5–8) so that scoring + action_ready
+      # + governance all run on fresh engagement + stage data. See
+      # Decision #28 (Safe Execution Order).
 
-      # ─── 8. Meeting Analyzer (AI) ─────────────────────────────────────────
+      # ─── 7. Meeting Analyzer (AI — non-blocking) ──────────────────────────
+      # AI enrichment only — does not write signals that scoring depends on.
+      # Safe to keep in Job 2.
       - name: "🧠 Meeting Analyzer"
         if: ${{ env.ANTHROPIC_API_KEY != '' }}
-        working-directory: "💻 CODE/Phase 3 - Sync"
+        working-directory: scripts
         continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           echo "🧠 Analyzing meetings with AI..."
-          python meeting_analyzer.py --limit 10
+          python meetings/meeting_analyzer.py --limit 10
 
-      # ─── 9. Opportunity Manager ───────────────────────────────────────────
-      - name: "💰 Opportunity Manager"
-        working-directory: "💻 CODE/Phase 3 - Sync"
-        continue-on-error: true
-        run: |
-          echo "💰 Processing opportunities from meetings..."
-          python opportunity_manager.py
-
-      # ─── 10. Analytics Tracker ────────────────────────────────────────────
-      - name: "📊 Analytics Tracker"
-        working-directory: "💻 CODE/Phase 3 - Sync"
-        continue-on-error: true
-        run: |
-          echo "📊 Syncing analytics and engagement..."
-          python analytics_tracker.py --days 7
-
-      # ─── 11. Health Check ─────────────────────────────────────────────────
+      # ─── 8. Health Check ──────────────────────────────────────────────────
       - name: "🏥 Health Check"
-        working-directory: "💻 CODE/Phase 3 - Sync"
+        working-directory: scripts
         run: |
           echo "🏥 Running health check..."
-          python health_check.py
+          python monitoring/health_check.py
 
-      # ─── 12. Morning Brief ────────────────────────────────────────────────
-      - name: "☀️ Morning Brief"
-        working-directory: "💻 CODE/Phase 3 - Sync"
-        continue-on-error: true
-        run: |
-          echo "☀️ Generating morning brief..."
-          python morning_brief.py --output file
+      # ─── 13. Morning Brief ────────────────────────────────────────────────
+      # ❄️ FROZEN 2026-04-10 — Operator-First v2.0 (restore: uncomment block below)
+      # - name: "☀️ Morning Brief"
+      #   working-directory: scripts
+      #   continue-on-error: true
+      #   run: |
+      #     echo "☀️ Generating morning brief..."
+      #     python monitoring/morning_brief.py --output file
 
-      # ─── 13. Sales Dashboard Generator ───────────────────────────────────
-      - name: "📈 Sales Dashboard Generator"
-        working-directory: "💻 CODE/Phase 3 - Sync"
-        continue-on-error: true
-        run: |
-          echo "📈 Regenerating Sales Dashboard from live Notion data..."
-          python dashboard_generator.py --output "../../Sales_Dashboard_Accounts.html"
+      # ─── 14. Sales Dashboard Generator ───────────────────────────────────
+      # ❄️ FROZEN 2026-04-10 — Operator-First v2.0 (restore: uncomment block below)
+      # NOTE on restore: update output path to ../dashboards/active/Sales_Dashboard_Accounts.html
+      # - name: "📈 Sales Dashboard Generator"
+      #   working-directory: scripts
+      #   continue-on-error: true
+      #   run: |
+      #     echo "📈 Regenerating Sales Dashboard from live Notion data..."
+      #     python monitoring/dashboard_generator.py --output "../dashboards/active/Sales_Dashboard_Accounts.html"
 
-      # ─── 14. Commit Updated Dashboard ────────────────────────────────────
-      - name: "💾 Commit Updated Dashboard"
-        continue-on-error: true
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add Sales_Dashboard_Accounts.html
-          git diff --staged --quiet || git commit -m "📈 Auto-update Sales Dashboard [$(date '+%Y-%m-%d')]"
-          git push
+      # ─── 15. Commit Updated Dashboard ────────────────────────────────────
+      # ❄️ FROZEN 2026-04-10 — Operator-First v2.0 (restore: uncomment block below)
+      # NOTE on restore: update `git add` path to dashboards/active/Sales_Dashboard_Accounts.html
+      # - name: "💾 Commit Updated Dashboard"
+      #   continue-on-error: true
+      #   run: |
+      #     git config --local user.email "github-actions[bot]@users.noreply.github.com"
+      #     git config --local user.name "github-actions[bot]"
+      #     git add dashboards/active/Sales_Dashboard_Accounts.html
+      #     git diff --staged --quiet || git commit -m "📈 Auto-update Sales Dashboard [$(date '+%Y-%m-%d')]"
+      #     git push
 
-      # ─── 15. Upload All Logs ──────────────────────────────────────────────
+      # ─── 16. Upload All Logs ──────────────────────────────────────────────
       - name: "📋 Upload Logs"
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pipeline-logs-${{ github.run_number }}
           path: |
-            💻 CODE/Phase 3 - Sync/daily_sync.log
-            💻 CODE/Phase 3 - Sync/lead_score.log
-            💻 CODE/Phase 3 - Sync/action_ready.log
-            💻 CODE/Phase 3 - Sync/auto_tasks.log
-            💻 CODE/Phase 3 - Sync/auto_sequence.log
-            💻 CODE/Phase 3 - Sync/job_postings.log
-            💻 CODE/Phase 3 - Sync/analytics_tracker.log
-            💻 CODE/Phase 3 - Sync/meeting_tracker.log
-            💻 CODE/Phase 3 - Sync/meeting_analyzer.log
-            💻 CODE/Phase 3 - Sync/opportunity_manager.log
-            💻 CODE/Phase 3 - Sync/morning_brief.log
-            💻 CODE/Phase 3 - Sync/health_check.log
-            💻 CODE/Phase 3 - Sync/dashboard_generator.log
-            💻 CODE/Phase 3 - Sync/last_sync_stats.json
-            💻 CODE/Phase 3 - Sync/last_action_stats.json
-            💻 CODE/Phase 3 - Sync/last_sequence_stats.json
-            💻 CODE/Phase 3 - Sync/last_job_postings_stats.json
-            💻 CODE/Phase 3 - Sync/last_analytics_stats.json
-            💻 CODE/Phase 3 - Sync/last_meeting_tracker_stats.json
-            💻 CODE/Phase 3 - Sync/last_analyzer_stats.json
-            💻 CODE/Phase 3 - Sync/last_opportunity_stats.json
-            💻 CODE/Phase 3 - Sync/dashboard_stats.json
-            💻 CODE/Phase 3 - Sync/morning_brief_*.md
+            scripts/**/daily_sync.log
+            scripts/**/lead_score.log
+            scripts/**/action_ready.log
+            scripts/**/auto_tasks.log
+            scripts/**/auto_sequence.log
+            scripts/**/job_postings.log
+            scripts/**/analytics_tracker.log
+            scripts/**/outcome_tracker*.log
+            scripts/**/last_outcome_stats.json
+            scripts/**/meeting_tracker.log
+            scripts/**/meeting_analyzer.log
+            scripts/**/opportunity_manager.log
+            scripts/**/morning_brief.log
+            scripts/**/health_check.log
+            scripts/**/dashboard_generator.log
+            scripts/**/last_sync_stats.json
+            scripts/**/last_action_stats.json
+            scripts/**/last_sequence_stats.json
+            scripts/**/last_job_postings_stats.json
+            scripts/**/last_analytics_stats.json
+            scripts/**/last_meeting_tracker_stats.json
+            scripts/**/last_analyzer_stats.json
+            scripts/**/last_opportunity_stats.json
+            scripts/**/dashboard_stats.json
+            scripts/**/morning_brief_*.md
           retention-days: 30
 
-      # ─── 16. Notify on Failure ────────────────────────────────────────────
+      # ─── 17. Notify on Failure ────────────────────────────────────────────
       - name: "❌ Notify on Failure"
         if: failure()
         run: |
           echo "::error::Pipeline failed! Check logs for details."
           echo "=== Last 30 lines of sync log ==="
-          tail -30 "💻 CODE/Phase 3 - Sync/daily_sync.log" 2>/dev/null || echo "No sync log"
+          tail -30 scripts/core/daily_sync.log 2>/dev/null || echo "No sync log"
           echo "=== Last 30 lines of score log ==="
-          tail -30 "💻 CODE/Phase 3 - Sync/lead_score.log" 2>/dev/null || echo "No score log"
+          tail -30 scripts/scoring/lead_score.log 2>/dev/null || echo "No score log"
           echo "=== Last 30 lines of action log ==="
-          tail -30 "💻 CODE/Phase 3 - Sync/auto_tasks.log" 2>/dev/null || echo "No action log"
+          tail -30 scripts/automation/auto_tasks.log 2>/dev/null || echo "No action log"
           echo "=== Last 30 lines of sequence log ==="
-          tail -30 "💻 CODE/Phase 3 - Sync/auto_sequence.log" 2>/dev/null || echo "No sequence log"
+          tail -30 scripts/automation/auto_sequence.log 2>/dev/null || echo "No sequence log"
           echo "=== Last 30 lines of meeting tracker log ==="
-          tail -30 "💻 CODE/Phase 3 - Sync/meeting_tracker.log" 2>/dev/null || echo "No meeting tracker log"
+          tail -30 scripts/meetings/meeting_tracker.log 2>/dev/null || echo "No meeting tracker log"
           echo "=== Last 30 lines of opportunity manager log ==="
-          tail -30 "💻 CODE/Phase 3 - Sync/opportunity_manager.log" 2>/dev/null || echo "No opportunity log"
+          tail -30 scripts/meetings/opportunity_manager.log 2>/dev/null || echo "No opportunity log"
 
   # ═══════════════════════════════════════════════════════════════════════════
   # WEEKLY: Score Calibration (Sundays only)
@@ -341,14 +393,22 @@ jobs:
           cache: 'pip'
 
       - name: "📦 Install Dependencies"
-        working-directory: "💻 CODE/Phase 3 - Sync"
+        working-directory: scripts
         run: pip install -r requirements.txt
 
       - name: "📐 Score Calibration (Review Only)"
-        working-directory: "💻 CODE/Phase 3 - Sync"
+        working-directory: scripts
         run: |
           echo "📐 Running weekly score calibration analysis..."
-          python score_calibrator.py --days 30 --export
+          python scoring/score_calibrator.py --days 30 --export
 
       - name: "📋 Upload Calibration Report"
-        
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: calibration-${{ github.run_number }}
+          path: |
+            scripts/scoring/score_calibrator.log
+            scripts/scoring/calibration_analysis_*.json
+            scripts/scoring/calibration_history.json
+          retention-days: 90

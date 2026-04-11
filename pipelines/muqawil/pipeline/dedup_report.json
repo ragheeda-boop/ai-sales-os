@@ -1,0 +1,10 @@
+{
+  "run_at": "2026-04-10T13:11:39.949809",
+  "raw_count": 44750,
+  "unique_count": 43414,
+  "removed_dupes": 1336,
+  "has_email": 43414,
+  "has_phone": 2667,
+  "ready_for_outreach": 43414,
+  "avg_completeness": 80.5
+}

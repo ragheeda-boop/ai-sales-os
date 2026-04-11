@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════
-# AI Sales OS v4.0 — .gitignore
+# AI Sales OS v6.0 — .gitignore (Modular Architecture)
 # ═══════════════════════════════════════════════════════════
 
 # ─── Credentials & Secrets ─────────────────────────────────
@@ -24,7 +24,7 @@ build/
 venv/
 env/
 
-# ─── Logs ──────────────────────────────────────────────────
+# ─── Logs & Runtime Stats ─────────────────────────────────
 *.log
 logs/
 last_sync_stats.json
@@ -32,8 +32,15 @@ last_action_stats.json
 last_job_postings_stats.json
 last_sequence_stats.json
 last_analytics_stats.json
+last_meeting_tracker_stats.json
+last_analyzer_stats.json
+last_opportunity_stats.json
+last_outcome_stats.json
+dashboard_stats.json
 backfill_checkpoint.json
 calibration_history.json
+muhide_analysis_checkpoint.json
+muhide_analysis_stats.json
 morning_brief_*.md
 
 # ─── OS Files ──────────────────────────────────────────────
@@ -45,12 +52,15 @@ desktop.ini
 # ─── IDE ───────────────────────────────────────────────────
 .vscode/
 .idea/
+.claude/worktrees/
 *.swp
 *.swo
 
 # ─── Temp files ────────────────────────────────────────────
 test_write.txt
 *.tmp
+.tmp.drivedownload/
+.tmp.driveupload/
 
 # ─── Skills & Generated Output ────────────────────────────
 packaged-skills/
@@ -59,3 +69,13 @@ docx_unpack/
 node_modules/
 *.skill
 Skills_Eval_Review.html
+
+# ─── Large Data Files (not for git) ───────────────────────
+muqawil_output/
+muqawil_pipeline/
+pipelines/muqawil/pipeline/cleaned_contractors*.json
+pipelines/muqawil/output/data_raw.json
+data/snapshots/notion_contacts.json
+data/snapshots/notion_companies.json
+*.xlsx.lock
+.~lock.*#
