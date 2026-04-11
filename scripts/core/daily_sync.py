@@ -120,6 +120,11 @@ class SyncStats:
         self.failed_companies = 0
         self.earliest_updated_at: Optional[str] = None
         self.latest_updated_at: Optional[str] = None
+        # Run metadata — set by main() before save() is called
+        self.mode: Optional[str] = None
+        self.started_at: Optional[str] = None
+        self.completed_at: Optional[str] = None
+        self.duration_seconds: Optional[float] = None
 
     def track_updated_at(self, updated_at: Optional[str]):
         """Track earliest and latest updated_at timestamps."""
@@ -143,6 +148,43 @@ class SyncStats:
             "────────────────────────────────────────────────────────",
         ]
         return "\n".join(lines)
+
+    def to_dict(self) -> Dict:
+        """Serializable dict for last_sync_stats.json export."""
+        return {
+            "mode":                    self.mode,
+            "started_at":              self.started_at,
+            "completed_at":            self.completed_at,
+            "duration_seconds":        self.duration_seconds,
+            "apollo_fetched_contacts": self.apollo_fetched_contacts,
+            "apollo_fetched_accounts": self.apollo_fetched_accounts,
+            "notion_created_contacts": self.notion_created_contacts,
+            "notion_updated_contacts": self.notion_updated_contacts,
+            "notion_created_companies": self.notion_created_companies,
+            "notion_updated_companies": self.notion_updated_companies,
+            "duplicates_prevented":    self.duplicates_prevented,
+            "failed_contacts":         self.failed_contacts,
+            "failed_companies":        self.failed_companies,
+            "skipped_unchanged":       self.skipped_unchanged,
+            "earliest_updated_at":     self.earliest_updated_at,
+            "latest_updated_at":       self.latest_updated_at,
+        }
+
+    def save(self) -> str:
+        """Persist stats to scripts/core/last_sync_stats.json.
+
+        Called from main() after every run. The file is consumed by
+        monitoring/health_check.py and uploaded by the GitHub Actions
+        workflow for Job 2 visibility. Writing lives next to this script
+        so the path is stable regardless of CWD.
+        """
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "last_sync_stats.json")
+        tmp = path + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(self.to_dict(), f, indent=2, default=str)
+        os.replace(tmp, path)
+        logger.info(f"Stats → {path}")
+        return path
 
 
 # ─── Apollo Helpers ──────────────────────────────────────────────────────────
@@ -1582,6 +1624,8 @@ Examples:
         sys.exit(1)
 
     stats = SyncStats()
+    stats.mode = args.mode
+    stats.started_at = datetime.now(timezone.utc).isoformat()
     start_time = time.time()
 
     logger.info("=" * 80)
@@ -1603,12 +1647,14 @@ Examples:
         sys.exit(1)
     finally:
         elapsed = time.time() - start_time
+        stats.duration_seconds = round(elapsed, 2)
+        stats.completed_at = datetime.now(timezone.utc).isoformat()
         logger.info("=" * 80)
         logger.info(f"Sync finished in {elapsed/60:.1f} min")
         try:
             stats.save()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Could not write last_sync_stats.json: {e}")
         logger.info("=" * 80)
 
 

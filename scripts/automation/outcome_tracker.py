@@ -297,9 +297,18 @@ def run(execute: bool, force: bool, limit: int | None, include_auto_closed: bool
         log.info("  ⚠️  DRY RUN — no writes. Add --execute to apply.")
     log.info("=" * 60)
 
-    with open("last_outcome_stats.json", "w") as f:
+    # Write stats file next to this script (scripts/automation/), not CWD.
+    # Bare relative path caused the file to land wherever the process was
+    # launched from, so the workflow upload step (expecting
+    # scripts/automation/last_outcome_stats.json) never found it — which in
+    # turn broke the v6.1 freshness guard in data_governor (Decision #29).
+    stats_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "last_outcome_stats.json",
+    )
+    with open(stats_path, "w") as f:
         json.dump(stats, f, indent=2)
-    log.info("Stats → last_outcome_stats.json")
+    log.info(f"Stats → {stats_path}")
 
     return stats
 
