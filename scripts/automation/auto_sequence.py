@@ -218,9 +218,20 @@ def get_next_sender(forced: Optional[str] = None) -> Tuple[str, Dict]:
 # ─── Apollo API ──────────────────────────────────────────────────────────────
 
 def apollo_request(method: str, url: str, max_retries: int = 5, **kwargs):
-    """Apollo API request with retry."""
+    """Apollo API request with retry.
+
+    Auth: Apollo deprecated api_key in body/query. X-Api-Key header is now required.
+    This helper injects the header defensively for every caller, matching the
+    pattern in core/daily_sync.py::apollo_headers().
+    """
     import requests
     kwargs.setdefault("timeout", 30)
+
+    # Inject X-Api-Key header (required by Apollo — body/query auth deprecated)
+    headers = kwargs.pop("headers", {}) or {}
+    headers.setdefault("X-Api-Key", APOLLO_API_KEY)
+    headers.setdefault("Content-Type", "application/json")
+    kwargs["headers"] = headers
 
     for attempt in range(max_retries):
         try:
@@ -264,7 +275,8 @@ def enroll_contact_in_sequence(
             "POST",
             f"{APOLLO_BASE_URL}/emailer_campaigns/{sequence_id}/add_contact_ids",
             json={
-                "api_key": APOLLO_API_KEY,
+                # api_key removed — Apollo deprecated body auth; X-Api-Key header
+                # is injected by apollo_request() above.
                 "contact_ids": [apollo_contact_id],
                 "emailer_campaign_id": sequence_id,
                 "send_email_from_email_account_id": email_account_id,
