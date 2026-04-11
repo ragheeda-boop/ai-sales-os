@@ -15,6 +15,7 @@ import json
 import logging
 import argparse
 from datetime import datetime
+from typing import Dict
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
 
@@ -37,18 +38,52 @@ THRESHOLDS = {
 }
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# scripts/ root — parent of monitoring/
+SCRIPTS_ROOT = os.path.dirname(SCRIPT_DIR)
+
+# Path drift fix (v6.0 modular reorg):
+# Before v6.0 all scripts lived in one flat directory and each wrote its
+# stats file next to itself, so health_check reading from SCRIPT_DIR worked.
+# After v6.0 each module writes into its own module directory, so this map
+# routes each stats filename to its canonical writer location. Kept in sync
+# with the `path:` entries in .github/workflows/daily_sync.yml (Upload Sync
+# Stats step).
+STATS_LOCATIONS: Dict[str, str] = {
+    "last_sync_stats.json":            "core",         # NOT YET WRITTEN — daily_sync.py has no stats export (known gap; see pipeline-health-monitor SKILL.md:50)
+    "last_action_stats.json":          "automation",   # auto_tasks.py:793
+    "last_sequence_stats.json":        "automation",   # auto_sequence.py:535
+    "last_outcome_stats.json":         "automation",   # outcome_tracker.py:300  (CAVEAT: writes to CWD via relative path — latent bug, tracked separately)
+    "last_analytics_stats.json":       "enrichment",   # analytics_tracker.py:662
+    "last_job_postings_stats.json":    "enrichment",   # job_postings_enricher.py:499
+    "last_meeting_tracker_stats.json": "meetings",     # meeting_tracker.py:908
+    "last_analyzer_stats.json":        "meetings",     # meeting_analyzer.py:558
+    "last_opportunity_stats.json":     "meetings",     # opportunity_manager.py:960
+}
+
+
+def _resolve_stats_path(filename: str) -> str:
+    """Resolve a stats filename to its canonical writer location.
+
+    Looks up STATS_LOCATIONS first; falls back to SCRIPT_DIR for backwards
+    compatibility with any unmapped files.
+    """
+    module = STATS_LOCATIONS.get(filename)
+    if module:
+        return os.path.join(SCRIPTS_ROOT, module, filename)
+    return os.path.join(SCRIPT_DIR, filename)
 
 
 def load_json(filename: str) -> dict:
     """Load a JSON stats file, return empty dict if not found."""
-    path = os.path.join(SCRIPT_DIR, filename)
+    path = _resolve_stats_path(filename)
     if not os.path.exists(path):
+        logger.debug(f"Stats file not found: {path}")
         return {}
     try:
         with open(path) as f:
             return json.load(f)
     except Exception as e:
-        logger.warning(f"Could not load {filename}: {e}")
+        logger.warning(f"Could not load {filename} from {path}: {e}")
         return {}
 
 
