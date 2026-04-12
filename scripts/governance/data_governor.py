@@ -57,7 +57,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("data_governor.log", encoding="utf-8"),
+        logging.FileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_governor.log"), encoding="utf-8"),
         logging.StreamHandler(sys.stdout),
     ],
 )
@@ -224,6 +224,13 @@ class DataGovernor:
             "replied": _get_bool(props, FIELD_REPLIED),
             "meeting_booked": _get_bool(props, FIELD_MEETING_BOOKED),
             "email_open_count": _get_number(props, FIELD_EMAIL_OPEN_COUNT) or 0,
+            # NOTE (P1-4, v6.3): These two fields do NOT exist in the Notion Contacts
+            # schema — they always return False here. This is intentional / acceptable:
+            # has_real_intent() already captures repeated-opens intent via
+            # email_open_count >= EMAIL_OPEN_COUNT_INTENT_THRESHOLD (2), which IS
+            # written by analytics_tracker.py. The optional fields would be additive
+            # signals; they can be added to the Notion schema in a future sprint if
+            # Apollo exposes forward/unique-opener data directly.
             "internal_forward_detected": _get_bool(props, FIELD_INTERNAL_FORWARD_DETECTED),
             "repeated_engagement_detected": _get_bool(props, FIELD_REPEATED_ENGAGEMENT_DETECTED),
         }

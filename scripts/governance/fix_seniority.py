@@ -40,7 +40,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler("fix_seniority.log"),
+        logging.FileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), "fix_seniority.log")),
     ],
 )
 log = logging.getLogger(__name__)

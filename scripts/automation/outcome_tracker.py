@@ -76,7 +76,7 @@ logging.basicConfig(
     handlers=[
         logging.StreamHandler(),
         RotatingFileHandler(
-            "outcome_tracker.log",
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "outcome_tracker.log"),
             maxBytes=5 * 1024 * 1024,  # 5 MB per file
             backupCount=3,              # keep .log, .log.1, .log.2, .log.3
             encoding="utf-8",

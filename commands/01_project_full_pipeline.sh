@@ -85,6 +85,27 @@ python enrichment/analytics_tracker.py --skip-sync
 # تصدير التقرير لملف
 python enrichment/analytics_tracker.py --export
 
+# تحليل الردود بالذكاء الاصطناعي (Reply Intelligence)
+python enrichment/reply_intelligence.py --dry-run
+
+# تحليل الردود — تنفيذ
+python enrichment/reply_intelligence.py
+
+# تحليل الردود — تحديد العدد
+python enrichment/reply_intelligence.py --limit 20
+
+# تحليل الردود — إعادة معالجة الكل
+python enrichment/reply_intelligence.py --force
+
+# تحليل الردود — تصدير لملف JSON
+python enrichment/reply_intelligence.py --export
+
+# إثراء حقول AI Sales Actions من Apollo
+python enrichment/ai_sales_actions_enricher.py --dry-run
+
+# إثراء AI Sales Actions — تنفيذ
+python enrichment/ai_sales_actions_enricher.py
+
 # ─────────────────────────────────────────────────────
 # 3. التسجيل (Scoring) — حساب النقاط والتصنيف
 # ─────────────────────────────────────────────────────

@@ -56,7 +56,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
 
 # File Handler
-file_handler = logging.FileHandler("logs/webhook_events.log")
+_webhook_log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+os.makedirs(_webhook_log_dir, exist_ok=True)
+file_handler = logging.FileHandler(os.path.join(_webhook_log_dir, "webhook_events.log"))
 file_handler.setLevel(LOG_LEVEL)
 
 # Console Handler

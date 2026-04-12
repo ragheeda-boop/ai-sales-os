@@ -53,13 +53,17 @@ APOLLO_API_KEY = os.getenv("APOLLO_API_KEY")
 APOLLO_BASE_URL = "https://api.apollo.io/api/v1"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# ── Module-level latch: set to False on first 404 from analytics endpoint ──
+# Prevents repeated failed calls when the endpoint is unavailable for this plan.
+_ANALYTICS_ENDPOINT_AVAILABLE = True
+
 # ─── Logging ─────────────────────────────────────────────────────────────────
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("analytics_tracker.log", encoding="utf-8"),
+        logging.FileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), "analytics_tracker.log"), encoding="utf-8"),
         logging.StreamHandler(sys.stdout),
     ],
 )
@@ -68,10 +72,34 @@ logger = logging.getLogger(__name__)
 
 # ─── Apollo Analytics API ────────────────────────────────────────────────────
 
+def _apollo_headers() -> Dict:
+    """
+    Standard Apollo API headers.
+    Uses X-Api-Key header (same pattern as daily_sync.py).
+    NOTE: Do NOT put api_key inside the JSON body — Apollo's analytics endpoint
+    requires header-based auth and ignores the body field.
+    """
+    return {
+        "Content-Type": "application/json",
+        "X-Api-Key": APOLLO_API_KEY,
+    }
+
+
 def apollo_request(method: str, url: str, max_retries: int = 5, **kwargs):
-    """Apollo API request with retry logic."""
+    """
+    Apollo API request with retry logic and correct header-based auth.
+
+    Retry policy:
+    - 429 → wait Retry-After, retry
+    - 5xx → exponential backoff, retry
+    - 4xx (except 429) → permanent client error, do NOT retry, raise immediately
+    """
     import requests
     kwargs.setdefault("timeout", 60)
+
+    # Merge auth headers into any caller-supplied headers
+    caller_headers = kwargs.pop("headers", {})
+    kwargs["headers"] = {**_apollo_headers(), **caller_headers}
 
     for attempt in range(max_retries):
         try:
@@ -86,17 +114,23 @@ def apollo_request(method: str, url: str, max_retries: int = 5, **kwargs):
 
         if resp.status_code == 429:
             wait = float(resp.headers.get("Retry-After", min(2 ** attempt, 30)))
+            logger.warning(f"Apollo rate limit — waiting {wait}s (attempt {attempt + 1})")
             time.sleep(wait)
             continue
 
         if resp.status_code >= 500:
-            time.sleep(min(2 ** attempt, 30))
+            wait = min(2 ** attempt, 30)
+            logger.warning(f"Apollo server error {resp.status_code} — retrying in {wait}s")
+            time.sleep(wait)
             continue
 
-        resp.raise_for_status()
+        # 4xx (other than 429) = permanent client error — don't retry
+        if resp.status_code >= 400:
+            resp.raise_for_status()
+
         return resp
 
-    raise Exception(f"Failed after {max_retries} retries")
+    raise Exception(f"Apollo request failed after {max_retries} retries: {method} {url}")
 
 
 def fetch_analytics_report(
@@ -104,17 +138,28 @@ def fetch_analytics_report(
     group_by: Optional[List[str]] = None,
     date_range: Optional[Dict] = None,
 ) -> Dict:
-    """Fetch analytics from Apollo."""
-    payload = {
-        "api_key": APOLLO_API_KEY,
-        "metrics": metrics,
-    }
+    """
+    Fetch analytics from Apollo /api/v1/analytics/sync_report.
+
+    Auth: X-Api-Key header (set by apollo_request via _apollo_headers).
+    Body: does NOT include api_key — header-only auth for this endpoint.
+
+    Graceful degradation:
+    - 404 → endpoint unavailable for this Apollo plan. Sets module-level latch
+      _ANALYTICS_ENDPOINT_AVAILABLE = False so subsequent calls skip immediately.
+      Logs WARNING (not ERROR) — this is a plan limitation, not a code failure.
+    - Other errors → logged as ERROR, returns {}.
+    """
+    global _ANALYTICS_ENDPOINT_AVAILABLE
+
+    if not _ANALYTICS_ENDPOINT_AVAILABLE:
+        return {}
+
+    # api_key goes in the header (via _apollo_headers), NOT in the body
+    payload: Dict = {"metrics": metrics}
     if group_by:
         payload["group_by"] = group_by
-    if date_range:
-        payload["date_range"] = date_range
-    else:
-        payload["date_range"] = {"modality": "last_30_days"}
+    payload["date_range"] = date_range if date_range else {"modality": "last_30_days"}
 
     try:
         resp = apollo_request(
@@ -124,7 +169,26 @@ def fetch_analytics_report(
         )
         return resp.json()
     except Exception as e:
-        logger.error(f"Analytics API error: {e}")
+        import requests as _req
+        if isinstance(e, _req.exceptions.HTTPError) and e.response is not None:
+            status = e.response.status_code
+            if status == 404:
+                _ANALYTICS_ENDPOINT_AVAILABLE = False
+                logger.warning(
+                    "[Analytics] Apollo analytics endpoint returned 404. "
+                    "This endpoint may not be available on your current Apollo plan. "
+                    "Engagement sync will use contact-search fallback only. "
+                    "Analytics report sections will be empty this run."
+                )
+                return {}
+            if status == 401 or status == 403:
+                _ANALYTICS_ENDPOINT_AVAILABLE = False
+                logger.warning(
+                    f"[Analytics] Apollo analytics endpoint returned {status} (auth/permission). "
+                    "Check APOLLO_API_KEY has analytics access. Skipping analytics for this run."
+                )
+                return {}
+        logger.error(f"[Analytics] Apollo analytics API error: {e}")
         return {}
 
 
@@ -270,7 +334,16 @@ def sync_engagement_to_notion(dry_run: bool = False) -> Dict:
             break
         cursor = data.get("next_cursor")
 
-    logger.info(f"Found {len(contacts_to_check)} contacts with outreach activity to check")
+    if contacts_to_check:
+        logger.info(f"Found {len(contacts_to_check)} contacts with outreach activity to check")
+    else:
+        logger.info(
+            "Found 0 contacts with outreach activity to check. "
+            "This is expected if: (a) Notion was recently reset and contacts haven't been "
+            "outreached yet, or (b) no contacts have Outreach Status = "
+            "'In Sequence' / 'Sent' / 'Opened'. "
+            "Engagement sync will be skipped — no Notion writes needed."
+        )
     stats["checked"] = len(contacts_to_check)
 
     # For each contact, check if engagement has changed
@@ -286,7 +359,6 @@ def sync_engagement_to_notion(dry_run: bool = False) -> Dict:
                     "POST",
                     f"{APOLLO_BASE_URL}/contacts/search",
                     json={
-                        "api_key": APOLLO_API_KEY,
                         "id": [contact["apollo_id"]],
                         "per_page": 1,
                     },

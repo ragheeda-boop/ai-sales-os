@@ -113,6 +113,49 @@ FIELD_AI_EMAIL_PAIN = "AI Email Pain"          # rich_text
 FIELD_AI_EMAIL_VALUE = "AI Email Value"        # rich_text
 FIELD_AI_EMAIL_CTA = "AI Email CTA"            # rich_text
 
+# ─── Reply Intelligence Fields (Contacts DB) ─────────────────────────────────
+FIELD_AI_REPLY_STATUS = "AI Reply Status"              # select: Interested / Soft Interest / Neutral / Soft Rejection / Hard Rejection
+FIELD_AI_REPLY_REASON = "AI Reply Reason"              # select: 13 values (see below)
+FIELD_AI_CLOSE_PROBABILITY = "AI Close Probability"    # number (0-100)
+FIELD_AI_NEXT_ACTION = "AI Next Action"                # select: Call Now / Follow-up Email / Send Proposal / Re-engage Later / Change Stakeholder / No Action
+FIELD_AI_REPLY_CONFIDENCE = "AI Reply Confidence"      # select: High / Medium / Low
+FIELD_AI_REPLY_LAST_ANALYZED = "AI Reply Last Analyzed" # date (ISO 8601)
+
+# Reply Status canonical values
+AI_REPLY_STATUS_INTERESTED = "Interested"
+AI_REPLY_STATUS_SOFT_INTEREST = "Soft Interest"
+AI_REPLY_STATUS_NEUTRAL = "Neutral"
+AI_REPLY_STATUS_SOFT_REJECTION = "Soft Rejection"
+AI_REPLY_STATUS_HARD_REJECTION = "Hard Rejection"
+
+# Reply Reason canonical values (13 values — positive, neutral, and negative reasons)
+AI_REPLY_REASON_MEETING_REQUEST = "Meeting Request"
+AI_REPLY_REASON_PRICING_ASK = "Pricing Ask"
+AI_REPLY_REASON_INFO_REQUEST = "Info Request"
+AI_REPLY_REASON_DELEGATION = "Delegation"
+AI_REPLY_REASON_TIMING = "Timing"
+AI_REPLY_REASON_BUDGET = "Budget"
+AI_REPLY_REASON_NO_NEED = "No Need"
+AI_REPLY_REASON_ALREADY_HAS_SOLUTION = "Already Has Solution"
+AI_REPLY_REASON_TRUST_RISK = "Trust / Risk"
+AI_REPLY_REASON_COMPLEXITY = "Complexity"
+AI_REPLY_REASON_UNKNOWN = "Unknown"
+AI_REPLY_REASON_GENERIC_REJECTION = "Generic Rejection"
+AI_REPLY_REASON_EXPLICIT_REJECTION = "Explicit Rejection"
+
+# Reply Next Action canonical values (NO Archive — this layer never archives)
+AI_REPLY_NEXT_CALL_NOW = "Call Now"
+AI_REPLY_NEXT_FOLLOW_UP_EMAIL = "Follow-up Email"
+AI_REPLY_NEXT_SEND_PROPOSAL = "Send Proposal"
+AI_REPLY_NEXT_RE_ENGAGE_LATER = "Re-engage Later"
+AI_REPLY_NEXT_CHANGE_STAKEHOLDER = "Change Stakeholder"
+AI_REPLY_NEXT_NO_ACTION = "No Action"
+
+# Reply Confidence canonical values
+AI_REPLY_CONFIDENCE_HIGH = "High"
+AI_REPLY_CONFIDENCE_MEDIUM = "Medium"
+AI_REPLY_CONFIDENCE_LOW = "Low"
+
 # AI Action Type canonical values
 AI_ACTION_CALL = "Call"
 AI_ACTION_EMAIL = "Email"

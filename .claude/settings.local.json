@@ -28,4 +28,8 @@
       "Read(//c/Users/PC/AppData/Local/Temp/claude/C--Users-PC-Documents-AI-Sales-OS/abaf875c-d672-4d33-b935-a69c491121fa/tasks/**)",
       "Bash(python scripts/governance/fix_seniority.py --execute)",
       "Bash(python scripts/enrichment/muhide_strategic_analysis.py)",
-      "Bash
+      "Bash(python scripts/automation/lead_inbox_mover.py --verbose)",
+      "Bash(timeout 120 python enrichment/ai_sales_actions_enricher.py --limit 5)"
+    ]
+  }
+}

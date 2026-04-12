@@ -50,7 +50,7 @@ from core.constants import (
     FIELD_LEAD_SCORE, FIELD_LEAD_TIER, FIELD_SORT_SCORE,
     FIELD_INTENT_SCORE_PRIMARY, FIELD_INTENT_SCORE_SECONDARY,
     FIELD_SENIORITY, FIELD_OUTREACH_STATUS,
-    FIELD_REPLY_STATUS, FIELD_QUALIFICATION_STATUS,
+    FIELD_REPLY_STATUS, FIELD_AI_REPLY_STATUS, FIELD_QUALIFICATION_STATUS,
     FIELD_EMAIL_SENT, FIELD_EMAIL_OPENED, FIELD_REPLIED,
     FIELD_MEETING_BOOKED, FIELD_DEMOED, FIELD_EMPLOYEES,
     FIELD_INDUSTRY, FIELD_LAST_CONTACTED,
@@ -72,7 +72,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("lead_score.log", encoding="utf-8"),
+        logging.FileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), "lead_score.log"), encoding="utf-8"),
         logging.StreamHandler(sys.stdout),
     ],
 )
@@ -162,7 +162,17 @@ def engagement_score(contact: Dict) -> float:
     }
     score += outreach_scores.get(outreach, 0)
 
-    # Reply status
+    # AI Reply Status — written by reply_intelligence.py (P1-2 fix, v6.3)
+    # Values: Interested / Soft Interest / Neutral / Soft Rejection / Hard Rejection
+    ai_reply = (contact.get("ai_reply_status") or "").lower()
+    if ai_reply == "interested":
+        score += 20
+    elif ai_reply == "soft interest":
+        score += 10
+    elif ai_reply == "neutral":
+        score += 5
+
+    # Reply Status (legacy Apollo field — rarely populated, kept for backward compat)
     reply = (contact.get("reply_status") or "").lower()
     if reply == "positive":
         score += 20
@@ -347,6 +357,7 @@ def fetch_contacts_for_scoring(force: bool = False) -> List[Dict]:
                 "seniority": get_select(FIELD_SENIORITY),
                 "outreach_status": get_select(FIELD_OUTREACH_STATUS),
                 "reply_status": get_select(FIELD_REPLY_STATUS),
+                "ai_reply_status": get_select(FIELD_AI_REPLY_STATUS),
                 "qualification_status": get_select(FIELD_QUALIFICATION_STATUS),
                 "email_sent": get_checkbox(FIELD_EMAIL_SENT),
                 "email_opened": get_checkbox(FIELD_EMAIL_OPENED),

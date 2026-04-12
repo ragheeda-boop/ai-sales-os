@@ -71,11 +71,20 @@ node_modules/
 Skills_Eval_Review.html
 
 # ─── Large Data Files (not for git) ───────────────────────
-muqawil_output/
-muqawil_pipeline/
-pipelines/muqawil/pipeline/cleaned_contractors*.json
+pipelines/muqawil/output/cleaned_contractors*.json
 pipelines/muqawil/output/data_raw.json
+pipelines/muqawil/output/errors.log
+pipelines/muqawil/output/muqawil_contractors.csv
+pipelines/muqawil/output/muqawil_contractors.xlsx
+pipelines/muqawil/output/checkpoint.json
+pipelines/muqawil/output/dedup_report.json
+pipelines/muqawil/output_test/
+pipelines/muqawil/pipeline/cleaned_contractors*.json
+data/logs/
 data/snapshots/notion_contacts.json
 data/snapshots/notion_companies.json
 *.xlsx.lock
 .~lock.*#
+# ─── Per-module runtime stats (not for git) ────────────────
+last_reply_intelligence_stats.json
+last_full_reset_stats.json

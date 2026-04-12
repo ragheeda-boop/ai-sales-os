@@ -36,6 +36,7 @@ python core/daily_sync.py --mode incremental --hours 26
 6. Sequences → python automation/auto_sequence.py --limit 50
 7. Meetings  → python meetings/meeting_tracker.py --days 7
 8. Outcomes  → python automation/outcome_tracker.py --execute
-9. Health    → python monitoring/health_check.py
-10. Brief    → python monitoring/morning_brief.py --output file
+9. Reply AI  → python enrichment/reply_intelligence.py --dry-run
+10. Health   → python monitoring/health_check.py
+11. Brief    → python monitoring/morning_brief.py --output file
 ```

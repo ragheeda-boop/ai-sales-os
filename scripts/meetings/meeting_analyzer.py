@@ -79,7 +79,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("meeting_analyzer.log", encoding="utf-8"),
+        logging.FileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), "meeting_analyzer.log"), encoding="utf-8"),
         logging.StreamHandler(sys.stdout),
     ],
 )

@@ -95,7 +95,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("daily_sync.log", encoding="utf-8"),
+        logging.FileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), "daily_sync.log"), encoding="utf-8"),
         logging.StreamHandler(sys.stdout),
     ],
 )
@@ -891,6 +891,29 @@ def format_contact_from_api(contact: Dict, company_page_id: Optional[str] = None
     if ai_decision and isinstance(ai_decision, str) and ai_decision.strip():
         props["AI Decision"] = _rt(ai_decision.strip())
 
+    # ── Qualification Status — derived from outreach signals (P1-1, v6.3) ────────
+    # Nothing else writes this field; lead_score.py reads it for +15 pts.
+    # Hierarchy: DNC/Bounced/Bad Data → Not Qualified
+    #            Replied OR Meeting Booked → Qualified
+    #            Active campaign(s) → In Progress
+    #            (all other cases: do not write — leave field blank)
+    _out_status = str(contact.get("outreach_status") or "").strip().lower()
+    _is_replied = bool(contact.get("replied") or contact.get("contact_replied"))
+    _is_booked  = bool(contact.get("meeting_booked"))
+    _campaigns  = [c for c in (contact.get("emailer_campaign_ids") or []) if c]
+
+    if _out_status in ("do not contact", "bounced", "bad data"):
+        _qual_status = "Not Qualified"
+    elif _is_replied or _is_booked:
+        _qual_status = "Qualified"
+    elif _campaigns:
+        _qual_status = "In Progress"
+    else:
+        _qual_status = None
+
+    if _qual_status:
+        props["Qualification Status"] = {"select": {"name": _qual_status}}
+
     # Phone numbers
     for phone_obj in (contact.get("phone_numbers") or []):
         ptype = (phone_obj.get("type") or "").lower()
@@ -1256,10 +1279,76 @@ def compute_company_metrics(contacts: List[Dict], company_lookup: Dict):
     logger.info(f"  Company Metrics computed: {updated} companies")
 
 
+def _preload_company_stages() -> Dict[str, str]:
+    """
+    Bulk-load current Company Stage for every company in Notion.
+
+    Returns: { page_id: stage_name }
+
+    Why: compute_company_stage() needs the current stage of each company to
+    enforce the regression/terminal guard. Doing a per-company GET inside the
+    loop causes N individual API calls (the classic N+1 problem) which — after
+    a large full sync — triggers sustained 429 rate-limiting and turns a
+    5-minute step into a multi-hour apparent hang.
+
+    This single paginated scan replaces all of those individual GETs with one
+    Notion DB query (~155 requests for 15k companies) and stores the result
+    in memory for O(1) lookup in the loop.
+    """
+    stage_map: Dict[str, str] = {}
+    has_more = True
+    start_cursor: Optional[str] = None
+    pages_scanned = 0
+    t0 = time.time()
+
+    logger.info("[Stage] Preloading current company stages from Notion ...")
+
+    while has_more:
+        body: Dict = {"page_size": 100}
+        if start_cursor:
+            body["start_cursor"] = start_cursor
+
+        try:
+            resp = notion_request(
+                "POST",
+                f"{NOTION_BASE_URL}/databases/{NOTION_DATABASE_ID_COMPANIES}/query",
+                json=body,
+            )
+        except Exception as e:
+            logger.warning(f"[Stage] Stage preload query failed: {e} — skipping preload, will treat all stages as empty")
+            return stage_map
+
+        data = resp.json()
+        for page in data.get("results", []):
+            if page.get("archived"):
+                continue
+            pid = page["id"]
+            sel = page.get("properties", {}).get(FIELD_COMPANY_STAGE, {}).get("select")
+            stage_map[pid] = sel.get("name", "") if sel else ""
+
+        pages_scanned += len(data.get("results", []))
+        has_more = data.get("has_more", False)
+        start_cursor = data.get("next_cursor")
+
+        if pages_scanned % 2000 == 0 and pages_scanned:
+            logger.info(f"[Stage] Preload progress: {pages_scanned} companies scanned ...")
+
+    elapsed = round(time.time() - t0, 1)
+    logger.info(
+        f"[Stage] Preload complete: {len(stage_map)} company stages loaded in {elapsed}s"
+    )
+    return stage_map
+
+
 def compute_company_stage(contacts: List[Dict], company_lookup: Dict):
     """Derive Company Stage from contact-level signals.
 
-    v5.1 Stage logic (2026-04-11) — broadened intent detection:
+    v5.2 (2026-04-12) — eliminated N+1 GET hang:
+    - Preloads ALL current company stages in one bulk scan before the write loop.
+    - Progress logged every 200 companies.
+    - All guard logic (terminal / regression / no-op) unchanged.
+
+    Stage derivation logic (v5.1):
     - Has contacts with Meeting Booked → "Meeting"
     - Has contacts with real intent (Replied OR Email Open Count >= 2 OR
       internal forwarding / repeated engagement) → "Engaged"
@@ -1269,19 +1358,14 @@ def compute_company_stage(contacts: List[Dict], company_lookup: Dict):
     NOTE: Does NOT overwrite stages set by meeting_tracker or opportunity_manager
     (Meeting, Opportunity, Customer, Churned). Those are higher-priority stages.
     This function only sets: Prospect, Outreach, Engaged.
-
-    A single email open is intentionally NOT treated as engagement. Repeated
-    opens (>=2), internal circulation, or replies are required to move a
-    company out of Outreach. See constants.has_real_intent().
     """
+    import time as _time
     from constants import has_real_intent as _has_real_intent
+    from constants import is_stage_regression, STAGE_TERMINAL
 
-    # Higher-priority stages that this function must NOT overwrite
-    HIGH_PRIORITY_STAGES = {
-        COMPANY_STAGE_MEETING, COMPANY_STAGE_OPPORTUNITY,
-        COMPANY_STAGE_CUSTOMER, COMPANY_STAGE_CHURNED,
-    }
+    t0 = _time.time()
 
+    # ── Phase 1: Build signal map from contacts (in-memory, fast) ───────────
     company_signals: Dict[str, Dict] = {}
 
     for c in contacts:
@@ -1302,98 +1386,106 @@ def compute_company_stage(contacts: List[Dict], company_lookup: Dict):
         if c.get("meeting_booked"):
             s["has_meeting"] = True
 
-        # Broadened intent check — replied OR repeated opens OR internal forwarding
         intent_hit, reasons = _has_real_intent(c)
         if intent_hit:
             s["has_intent"] = True
             s["intent_reasons"].extend(reasons)
 
-        # All contacts that pass filter have email sent
         s["has_email"] = True
 
     if not company_signals:
+        logger.info("[Stage] No company signals found — skipping stage computation")
         return
 
-    # Import lazily to avoid circular imports; constants is already in scope
-    # through the top-of-file `from constants import *` equivalents.
-    from constants import is_stage_regression, STAGE_TERMINAL
+    logger.info(
+        f"[Stage] Signal map built: {len(company_signals)} companies have contact signals"
+    )
 
+    # ── Phase 2: Bulk-preload current stages (ONE paginated scan, not N GETs) ─
+    current_stages: Dict[str, str] = _preload_company_stages()
+
+    # ── Phase 3: Write loop — all guard checks use in-memory lookup ──────────
     updated = 0
     skipped_regression = 0
     skipped_terminal = 0
+    skipped_noop = 0
+    skipped_no_page = 0
+    processed = 0
+
+    logger.info(f"[Stage] Starting write loop for {len(company_signals)} candidates ...")
+
     for account_id, s in company_signals.items():
+        processed += 1
+
         page_id = company_lookup.get(f"aid:{account_id}")
         if not page_id:
+            skipped_no_page += 1
             continue
 
-        # Determine stage from signals
+        # Determine new stage from signals
         if s["has_meeting"]:
             new_stage = COMPANY_STAGE_MEETING
         elif s["has_intent"]:
             new_stage = COMPANY_STAGE_ENGAGED
             reasons = list(dict.fromkeys(s["intent_reasons"]))
             logger.info(
-                f"[Stage] Company {account_id} candidate Engaged "
-                f"due to real intent ({', '.join(reasons)})"
+                f"[Stage] {account_id} → Engaged "
+                f"(intent signals: {', '.join(reasons)})"
             )
         elif s["has_email"]:
             new_stage = COMPANY_STAGE_OUTREACH
         else:
             new_stage = COMPANY_STAGE_PROSPECT
 
-        # ── Stage Regression Guard (2026-04-11) ─────────────────────────
-        # Read the current Notion stage BEFORE writing. Skip the write if:
-        #   (a) the current stage is terminal (Customer / Churned / Archived)
-        #   (b) the new stage would be a regression (lower priority)
-        # This replaces the previous "write unconditionally and hope
-        # downstream scripts fix it" pattern, which had a race window.
-        current_stage = ""
-        try:
-            resp = notion_request("GET", f"{NOTION_BASE_URL}/pages/{page_id}")
-            cur_props = resp.json().get("properties", {})
-            cur_sel = cur_props.get(FIELD_COMPANY_STAGE, {}).get("select")
-            if cur_sel:
-                current_stage = cur_sel.get("name", "") or ""
-        except Exception as e:
-            logger.warning(
-                f"[Conflict Guard] Could not read current stage for {account_id}: {e} — "
-                f"proceeding with write to avoid a stuck pipeline"
-            )
+        # ── Conflict Guard — uses preloaded in-memory stage (no GET call) ──
+        current_stage = current_stages.get(page_id, "")
 
         if current_stage in STAGE_TERMINAL:
             logger.info(
-                f"[Conflict Guard] Skipping stage write for {account_id}: "
-                f"current stage '{current_stage}' is terminal"
+                f"[Conflict Guard] Skipping {account_id}: "
+                f"stage '{current_stage}' is terminal"
             )
             skipped_terminal += 1
             continue
 
         if is_stage_regression(current_stage, new_stage):
             logger.info(
-                f"[Conflict Guard] Prevented stage regression for {account_id}: "
-                f"{current_stage} → {new_stage} (ignored)"
+                f"[Conflict Guard] Regression blocked for {account_id}: "
+                f"{current_stage} → {new_stage}"
             )
             skipped_regression += 1
             continue
 
         if current_stage == new_stage:
-            # No-op write; skip to save an API call.
+            skipped_noop += 1
             continue
 
-        props = {
-            FIELD_COMPANY_STAGE: {"select": {"name": new_stage}},
-        }
-
+        # ── Write ────────────────────────────────────────────────────────
+        props = {FIELD_COMPANY_STAGE: {"select": {"name": new_stage}}}
         try:
             update_page(page_id, props)
             updated += 1
         except Exception as e:
-            logger.error(f"Error updating stage for account {account_id}: {e}")
+            logger.error(f"[Stage] Error writing stage for {account_id}: {e}")
 
+        # Progress heartbeat every 200 companies
+        if processed % 200 == 0:
+            elapsed = round(_time.time() - t0, 1)
+            logger.info(
+                f"[Stage] Progress: {processed}/{len(company_signals)} processed | "
+                f"updated={updated} terminal={skipped_terminal} "
+                f"regression={skipped_regression} noop={skipped_noop} | "
+                f"elapsed={elapsed}s"
+            )
+
+    elapsed_total = round(_time.time() - t0, 1)
     logger.info(
         f"  Company Stage computed: {updated} updated, "
         f"{skipped_regression} regressions prevented, "
-        f"{skipped_terminal} terminal stages preserved"
+        f"{skipped_terminal} terminal stages preserved, "
+        f"{skipped_noop} no-ops skipped, "
+        f"{skipped_no_page} no page_id, "
+        f"total elapsed={elapsed_total}s"
     )
 
 

@@ -49,7 +49,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler("muhide_analysis.log", mode="w"),
+        logging.FileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), "muhide_analysis.log"), mode="w"),
     ],
 )
 logger = logging.getLogger(__name__)
@@ -1002,7 +1002,7 @@ def main():
     logger.info("=" * 70)
 
     # Save stats JSON
-    stats_file = "muhide_analysis_stats.json"
+    stats_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "muhide_analysis_stats.json")
     stats["analysis_time_sec"] = round(analysis_time, 1)
     stats["write_time_sec"] = round(write_time, 1)
     stats["total_time_sec"] = round(total_time, 1)

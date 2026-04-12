@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Sales OS v6.2 — System Mind Map</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --orange: #F57C1E;
+  --orange-dark: #CD6A1D;
+  --orange-light: rgba(245,124,30,0.08);
+  --orange-glow: rgba(245,124,30,0.15);
+  --black: #151214;
+  --charcoal: #403D38;
+  --gray: #6B7280;
+  --light: #FAFAFA;
+  --white: #FFFFFF;
+  --beige: #CCC6BA;
+  --red-orange: #CD4E1B;
+  --green: #10B981;
+  --green-light: rgba(16,185,129,0.1);
+  --yellow: #F59E0B;
+  --yellow-light: rgba(245,158,11,0.1);
+  --red: #EF4444;
+  --red-light: rgba(239,68,68,0.1);
+  --blue: #3B82F6;
+  --blue-light: rgba(59,130,246,0.08);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--white);
+  color: var(--black);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.5;
+}
+
+/* Subtle bg pattern */
+body::before {
+  content: '';
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background:
+    radial-gradient(ellipse at 15% 30%, rgba(245,124,30,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 70%, rgba(245,124,30,0.02) 0%, transparent 40%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ─── HEADER ─── */
+.header {
+  text-align: center; padding: 48px 24px 24px;
+  position: relative; z-index: 1;
+  border-bottom: 1px solid rgba(245,124,30,0.15);
+}
+.header .brand { font-size: 0.8em; color: var(--orange); font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
+.header h1 { font-size: 2.8em; font-weight: 900; color: var(--black); letter-spacing: -1.5px; }
+.header h1 span { color: var(--orange); }
+.header .subtitle { color: var(--gray); font-size: 1em; margin-top: 6px; font-weight: 400; }
+.header .badges { display: flex; justify-content: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 14px; border-radius: 20px; font-size: 0.75em; font-weight: 600; }
+.badge.version { background: var(--orange); color: #fff; }
+.badge.date { background: var(--light); color: var(--charcoal); border: 1px solid #E5E7EB; }
+.badge.scripts { background: var(--black); color: #fff; }
+
+/* ─── CONTAINER ─── */
+.container { max-width: 1320px; margin: 0 auto; padding: 0 20px 60px; position: relative; z-index: 1; }
+
+/* ─── ARCHITECTURE FLOW ─── */
+.arch-section { margin: 36px 0; }
+.arch-flow {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; flex-wrap: wrap; margin: 16px 0;
+}
+.arch-node {
+  background: var(--white); border: 2px solid #E5E7EB; border-radius: 14px;
+  padding: 18px 24px; text-align: center; min-width: 150px;
+  transition: all 0.3s; cursor: default; position: relative;
+}
+.arch-node:hover { border-color: var(--orange); transform: translateY(-3px); box-shadow: 0 8px 24px var(--orange-glow); }
+.arch-node .icon { font-size: 2em; margin-bottom: 4px; }
+.arch-node .label { font-size: 0.85em; font-weight: 700; color: var(--black); }
+.arch-node .sub { font-size: 0.7em; color: var(--gray); margin-top: 2px; }
+.arch-arrow { font-size: 1.6em; color: var(--orange); padding: 0 10px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+/* ─── STATS GRID ─── */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 14px; margin: 28px 0;
+}
+.stat-card {
+  background: var(--white); border: 1.5px solid #E5E7EB; border-radius: 14px;
+  padding: 20px 16px; text-align: center; transition: all 0.3s; cursor: default;
+}
+.stat-card:hover { border-color: var(--orange); box-shadow: 0 6px 20px var(--orange-glow); transform: translateY(-2px); }
+.stat-card .icon { font-size: 1.5em; margin-bottom: 6px; }
+.stat-card .value { font-size: 2em; font-weight: 800; color: var(--orange); line-height: 1; }
+.stat-card .label { font-size: 0.72em; color: var(--gray); margin-top: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ─── SECTION TITLES ─── */
+.section-title {
+  font-size: 1.4em; font-weight: 800; color: var(--black);
+  margin: 40px 0 20px; padding-bottom: 10px;
+  border-bottom: 2px solid #E5E7EB; display: flex; align-items: center; gap: 10px;
+}
+.section-title .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── MODULE CARDS ─── */
+.modules-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px; margin: 20px 0;
+}
+.module-card {
+  background: var(--white); border: 1.5px solid #E5E7EB; border-radius: 14px;
+  padding: 22px; transition: all 0.3s; position: relative; overflow: hidden;
+}
+.module-card:hover { border-color: var(--orange); box-shadow: 0 6px 24px var(--orange-glow); }
+.module-card::before {
+  content: ''; position: absolute; top: 0; right: 0; width: 4px; height: 100%;
+  border-radius: 0 14px 14px 0;
+}
+.module-card.core::before { background: var(--orange); }
+.module-card.scoring::before { background: var(--blue); }
+.module-card.automation::before { background: var(--green); }
+.module-card.governance::before { background: var(--red); }
+.module-card.enrichment::before { background: var(--yellow); }
+.module-card.meetings::before { background: #8B5CF6; }
+.module-card.monitoring::before { background: #06B6D4; }
+.module-card.webhooks::before { background: var(--beige); }
+
+.module-card .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.module-card .card-icon { font-size: 1.5em; }
+.module-card .card-title { font-size: 1em; font-weight: 700; color: var(--black); }
+.module-card .card-count { font-size: 0.7em; font-weight: 600; color: var(--gray); background: var(--light); padding: 2px 8px; border-radius: 10px; margin-right: auto; }
+
+.script-list { list-style: none; }
+.script-list li {
+  font-size: 0.78em; color: var(--charcoal); padding: 5px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.04); display: flex; align-items: center; gap: 6px;
+}
+.script-list li:last-child { border-bottom: none; }
+.script-list .fname { font-weight: 600; color: var(--black); font-family: 'SF Mono', 'Consolas', monospace; font-size: 0.95em; }
+.script-list .fdesc { color: var(--gray); }
+.script-list .fbadge {
+  font-size: 0.65em; font-weight: 600; padding: 1px 6px; border-radius: 6px;
+  margin-right: 4px; white-space: nowrap;
+}
+.fbadge.active { background: var(--green-light); color: var(--green); }
+.fbadge.admin { background: var(--red-light); color: var(--red); }
+.fbadge.onetime { background: var(--yellow-light); color: var(--yellow); }
+
+/* ─── PIPELINE FLOW ─── */
+.pipeline-container { margin: 24px 0; }
+.pipeline-job {
+  background: var(--white); border: 1.5px solid #E5E7EB; border-radius: 14px;
+  padding: 24px; margin-bottom: 16px; transition: all 0.3s;
+}
+.pipeline-job:hover { border-color: var(--orange); box-shadow: 0 4px 16px var(--orange-glow); }
+.job-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.job-badge { background: var(--orange); color: #fff; padding: 4px 12px; border-radius: 8px; font-size: 0.75em; font-weight: 700; }
+.job-title { font-weight: 700; font-size: 1.05em; }
+.job-timeout { font-size: 0.75em; color: var(--gray); margin-right: auto; }
+
+.pipeline-steps { list-style: none; counter-reset: step; }
+.pipeline-steps li {
+  counter-increment: step; display: flex; align-items: flex-start; gap: 12px;
+  padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.04); font-size: 0.82em;
+}
+.pipeline-steps li:last-child { border-bottom: none; }
+.pipeline-steps li::before {
+  content: counter(step); background: var(--light); color: var(--orange);
+  font-weight: 700; font-size: 0.8em; min-width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+  border: 1.5px solid var(--orange); flex-shrink: 0;
+}
+.step-script { font-family: 'SF Mono','Consolas',monospace; font-weight: 600; color: var(--black); font-size: 0.95em; }
+.step-desc { color: var(--gray); }
+
+/* ─── NOTION SCHEMA ─── */
+.schema-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px; margin: 20px 0;
+}
+.schema-card {
+  background: var(--white); border: 1.5px solid #E5E7EB; border-radius: 14px;
+  padding: 18px; transition: all 0.3s;
+}
+.schema-card:hover { border-color: var(--orange); box-shadow: 0 4px 16px var(--orange-glow); }
+.schema-card .db-name { font-weight: 700; font-size: 0.95em; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.schema-card .db-fields { font-size: 0.72em; color: var(--gray); line-height: 1.7; }
+.schema-card .db-key { color: var(--orange); font-weight: 600; }
+
+/* ─── PHASE PROGRESS ─── */
+.phases-timeline { margin: 24px 0; }
+.phase-row {
+  display: flex; align-items: center; gap: 14px; padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.phase-row:last-child { border-bottom: none; }
+.phase-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; border: 2px solid; }
+.phase-dot.done { background: var(--green); border-color: var(--green); }
+.phase-dot.planned { background: var(--white); border-color: var(--gray); }
+.phase-name { font-weight: 700; font-size: 0.9em; min-width: 180px; }
+.phase-detail { font-size: 0.8em; color: var(--gray); }
+.phase-status { font-size: 0.7em; font-weight: 600; padding: 2px 10px; border-radius: 8px; margin-right: auto; }
+.phase-status.done { background: var(--green-light); color: var(--green); }
+.phase-status.planned { background: var(--light); color: var(--gray); }
+
+/* ─── SCORING SECTION ─── */
+.scoring-visual { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 20px 0; }
+.tier-card {
+  border-radius: 14px; padding: 20px; text-align: center;
+  border: 1.5px solid #E5E7EB; transition: all 0.3s;
+}
+.tier-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+.tier-card.hot { border-color: var(--red); }
+.tier-card.warm { border-color: var(--yellow); }
+.tier-card.cold { border-color: var(--blue); }
+.tier-card .tier-label { font-weight: 800; font-size: 1.1em; }
+.tier-card.hot .tier-label { color: var(--red); }
+.tier-card.warm .tier-label { color: var(--yellow); }
+.tier-card.cold .tier-label { color: var(--blue); }
+.tier-card .tier-range { font-size: 0.8em; color: var(--gray); margin: 4px 0; }
+.tier-card .tier-action { font-size: 0.75em; font-weight: 600; color: var(--charcoal); }
+.tier-card .tier-sla { font-size: 0.7em; color: var(--gray); margin-top: 4px; }
+
+/* ─── FORMULA ─── */
+.formula-box {
+  background: var(--black); color: #fff; border-radius: 14px; padding: 24px;
+  font-family: 'SF Mono','Consolas',monospace; margin: 20px 0; position: relative; overflow: hidden;
+}
+.formula-box::before { content: ''; position: absolute; top: 0; right: 0; width: 80px; height: 80px; background: var(--orange); opacity: 0.1; border-radius: 0 14px 0 80px; }
+.formula-box .formula-title { color: var(--orange); font-weight: 700; margin-bottom: 10px; font-family: 'Inter', sans-serif; font-size: 0.85em; }
+.formula-box code { font-size: 0.85em; line-height: 2; color: #E5E7EB; }
+.formula-box code .hl { color: var(--orange); font-weight: 700; }
+
+/* ─── DECISIONS ─── */
+.decisions-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px; margin: 20px 0;
+}
+.decision-card {
+  background: var(--white); border: 1.5px solid #E5E7EB; border-radius: 12px;
+  padding: 16px; transition: all 0.3s;
+}
+.decision-card:hover { border-color: var(--orange); }
+.decision-card .d-num { font-size: 0.7em; color: var(--orange); font-weight: 700; }
+.decision-card .d-title { font-weight: 600; font-size: 0.85em; margin: 2px 0; color: var(--black); }
+.decision-card .d-desc { font-size: 0.72em; color: var(--gray); }
+
+/* ─── LOOP VISUAL ─── */
+.loop-container { display: flex; justify-content: center; margin: 28px 0; }
+.loop-ring {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0;
+  max-width: 700px;
+}
+.loop-step {
+  background: var(--white); border: 1.5px solid #E5E7EB; border-radius: 12px;
+  padding: 12px 16px; text-align: center; min-width: 100px; transition: all 0.3s;
+}
+.loop-step:hover { border-color: var(--orange); transform: scale(1.05); }
+.loop-step .ls-icon { font-size: 1.3em; }
+.loop-step .ls-label { font-size: 0.72em; font-weight: 600; color: var(--black); margin-top: 2px; }
+.loop-arrow { color: var(--orange); font-size: 1.2em; display: flex; align-items: center; padding: 0 4px; }
+
+/* ─── FOOTER ─── */
+.footer {
+  text-align: center; padding: 32px 20px; margin-top: 40px;
+  border-top: 1px solid rgba(245,124,30,0.15); color: var(--gray); font-size: 0.8em;
+}
+.footer .brand-footer { color: var(--orange); font-weight: 700; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header h1 { font-size: 2em; }
+  .modules-grid { grid-template-columns: 1fr; }
+  .scoring-visual { grid-template-columns: 1fr; }
+  .schema-grid { grid-template-columns: 1fr; }
+  .decisions-grid { grid-template-columns: 1fr; }
+  .arch-flow { gap: 8px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media print {
+  body::before { display: none; }
+  .module-card:hover, .stat-card:hover, .schema-card:hover { transform: none; box-shadow: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<div class="header">
+  <div class="brand">MUHIDE</div>
+  <h1>AI Sales <span>OS</span></h1>
+  <div class="subtitle">Autonomous Sales Operating System — System Architecture Mind Map</div>
+  <div class="badges">
+    <span class="badge version">v6.2</span>
+    <span class="badge scripts">27 Scripts &middot; 8 Modules</span>
+    <span class="badge date">April 2026</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════ ARCHITECTURE FLOW ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:var(--orange)"></span> System Architecture</div>
+
+<div class="arch-flow">
+  <div class="arch-node">
+    <div class="icon">🔭</div>
+    <div class="label">Apollo.io</div>
+    <div class="sub">45K+ Contacts &middot; 15K+ Companies</div>
+  </div>
+  <div class="arch-arrow">&#x25C0;</div>
+  <div class="arch-node">
+    <div class="icon">&#x2699;&#xFE0F;</div>
+    <div class="label">Python Engine</div>
+    <div class="sub">8 Modules &middot; 27 Scripts</div>
+  </div>
+  <div class="arch-arrow">&#x25C0;</div>
+  <div class="arch-node">
+    <div class="icon">&#x1F4CA;</div>
+    <div class="label">Notion CRM</div>
+    <div class="sub">7 Databases &middot; Company-Centric</div>
+  </div>
+  <div class="arch-arrow">&#x25C0;</div>
+  <div class="arch-node">
+    <div class="icon">&#x1F504;</div>
+    <div class="label">GitHub Actions</div>
+    <div class="sub">Daily 7AM KSA &middot; 2-Job Pipeline</div>
+  </div>
+</div>
+
+<div style="text-align:center;font-size:0.8em;color:var(--gray);margin-top:-8px;margin-bottom:24px;">
+  <strong style="color:var(--orange);">Design Principle:</strong> No middleware. No n8n, no Make, no Zapier. Pure Python + GitHub Actions = full control, zero cost.
+</div>
+
+<!-- ═══════════════ AUTONOMOUS LOOP ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:var(--green)"></span> Autonomous Sales Loop</div>
+
+<div class="loop-container">
+  <div class="loop-ring">
+    <div class="loop-step"><div class="ls-icon">&#x1F3AF;</div><div class="ls-label">Score</div></div>
+    <div class="loop-arrow">&#x25C0;</div>
+    <div class="loop-step"><div class="ls-icon">&#x2705;</div><div class="ls-label">Task</div></div>
+    <div class="loop-arrow">&#x25C0;</div>
+    <div class="loop-step"><div class="ls-icon">&#x1F4E7;</div><div class="ls-label">Sequence</div></div>
+    <div class="loop-arrow">&#x25C0;</div>
+    <div class="loop-step"><div class="ls-icon">&#x1F4C8;</div><div class="ls-label">Track</div></div>
+    <div class="loop-arrow">&#x25C0;</div>
+    <div class="loop-step"><div class="ls-icon">&#x1F91D;</div><div class="ls-label">Meet</div></div>
+    <div class="loop-arrow">&#x25C0;</div>
+    <div class="loop-step"><div class="ls-icon">&#x1F4A1;</div><div class="ls-label">Opportunity</div></div>
+    <div class="loop-arrow">&#x25C0;</div>
+    <div class="loop-step"><div class="ls-icon">&#x1F50D;</div><div class="ls-label">Calibrate</div></div>
+    <div class="loop-arrow">&#x21BA;</div>
+  </div>
+</div>
+
+<!-- ═══════════════ KEY STATS ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:var(--blue)"></span> Key Numbers</div>
+
+<div class="stats-grid">
+  <div class="stat-card"><div class="icon">&#x1F465;</div><div class="value">45,086</div><div class="label">Contacts</div></div>
+  <div class="stat-card"><div class="icon">&#x1F3E2;</div><div class="value">15,407</div><div class="label">Companies</div></div>
+  <div class="stat-card"><div class="icon">&#x1F4BB;</div><div class="value">27</div><div class="label">Scripts</div></div>
+  <div class="stat-card"><div class="icon">&#x1F4E6;</div><div class="value">8</div><div class="label">Modules</div></div>
+  <div class="stat-card"><div class="icon">&#x1F4BE;</div><div class="value">7</div><div class="label">Notion DBs</div></div>
+  <div class="stat-card"><div class="icon">&#x1F916;</div><div class="value">12</div><div class="label">Claude Skills</div></div>
+  <div class="stat-card"><div class="icon">&#x1F4B0;</div><div class="value">$0</div><div class="label">Infra Cost</div></div>
+  <div class="stat-card"><div class="icon">&#x23F0;</div><div class="value">7AM</div><div class="label">Daily KSA</div></div>
+</div>
+
+<!-- ═══════════════ 8 MODULES ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:var(--orange)"></span> Module Architecture (27 Production Scripts)</div>
+
+<div class="modules-grid">
+
+  <!-- CORE -->
+  <div class="module-card core">
+    <div class="card-header">
+      <span class="card-icon">&#x2699;&#xFE0F;</span>
+      <span class="card-title">core/</span>
+      <span class="card-count">5 scripts</span>
+    </div>
+    <ul class="script-list">
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">daily_sync.py</span> <span class="fdesc">v5.1 &mdash; Apollo &rarr; Notion sync engine</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">constants.py</span> <span class="fdesc">Unified field names &amp; thresholds</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">notion_helpers.py</span> <span class="fdesc">Shared Notion API utilities</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">doc_sync_checker.py</span> <span class="fdesc">Documentation drift validator</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">ai_sales_actions_parser.py</span> <span class="fdesc">Apollo AI Sales Actions parser</span></li>
+    </ul>
+  </div>
+
+  <!-- SCORING -->
+  <div class="module-card scoring">
+    <div class="card-header">
+      <span class="card-icon">&#x1F3AF;</span>
+      <span class="card-title">scoring/</span>
+      <span class="card-count">4 scripts</span>
+    </div>
+    <ul class="script-list">
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">lead_score.py</span> <span class="fdesc">v1.5 &mdash; Score + Tier + Sort Score</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">score_calibrator.py</span> <span class="fdesc">Self-learning weight calibration</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">action_ready_updater.py</span> <span class="fdesc">5-condition Action Ready gate</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">ai_decision_engine.py</span> <span class="fdesc">AI-powered lead prioritization</span></li>
+    </ul>
+  </div>
+
+  <!-- AUTOMATION -->
+  <div class="module-card automation">
+    <div class="card-header">
+      <span class="card-icon">&#x26A1;</span>
+      <span class="card-title">automation/</span>
+      <span class="card-count">8 scripts</span>
+    </div>
+    <ul class="script-list">
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">auto_tasks.py</span> <span class="fdesc">v2.0 &mdash; Company-centric task engine</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">auto_sequence.py</span> <span class="fdesc">Apollo sequence enrollment</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">outcome_tracker.py</span> <span class="fdesc">Task &rarr; Contact outcome loop</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">lead_inbox_mover.py</span> <span class="fdesc">v0.2 &mdash; Lead Inbox &rarr; CRM</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">ai_action_executor.py</span> <span class="fdesc">AI-driven HOT lead outreach</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">ai_sequence_generator.py</span> <span class="fdesc">Personalized email sequences via AI</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">call_script_builder.py</span> <span class="fdesc">Context-aware call scripts</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">cleanup_overdue_tasks.py</span> <span class="fdesc">Legacy pre-v5.0 task cleanup</span></li>
+    </ul>
+  </div>
+
+  <!-- GOVERNANCE -->
+  <div class="module-card governance">
+    <div class="card-header">
+      <span class="card-icon">&#x1F6E1;&#xFE0F;</span>
+      <span class="card-title">governance/</span>
+      <span class="card-count">6 scripts</span>
+    </div>
+    <ul class="script-list">
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">ingestion_gate.py</span> <span class="fdesc">v6.0 &mdash; Pre-entry validation</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">data_governor.py</span> <span class="fdesc">v6.1 &mdash; Audit + archive + freshness guard</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">archive_unqualified.py</span> <span class="fdesc">Archive contacts without owner/email</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">audit_ownership.py</span> <span class="fdesc">Ownership gaps across 5 DBs</span></li>
+      <li><span class="fbadge onetime">ONE-TIME</span><span class="fname">fix_seniority.py</span> <span class="fdesc">&quot;C suite&quot; &rarr; &quot;C-Suite&quot; migration</span></li>
+      <li><span class="fbadge admin">DANGER</span><span class="fname">full_reset_notion.py</span> <span class="fdesc">Full Notion DB wipe (dev only)</span></li>
+    </ul>
+  </div>
+
+  <!-- ENRICHMENT -->
+  <div class="module-card enrichment">
+    <div class="card-header">
+      <span class="card-icon">&#x1F50D;</span>
+      <span class="card-title">enrichment/</span>
+      <span class="card-count">5 scripts</span>
+    </div>
+    <ul class="script-list">
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">job_postings_enricher.py</span> <span class="fdesc">Intent proxy from job postings</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">analytics_tracker.py</span> <span class="fdesc">Apollo engagement &rarr; Notion sync</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">muhide_strategic_analysis.py</span> <span class="fdesc">AI company-vs-ICP scoring</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">ai_sales_actions_enricher.py</span> <span class="fdesc">Apollo AI Sales Actions sub-fields</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">reply_intelligence.py</span> <span class="fdesc">AI reply classification (6 fields)</span></li>
+    </ul>
+  </div>
+
+  <!-- MEETINGS -->
+  <div class="module-card meetings">
+    <div class="card-header">
+      <span class="card-icon">&#x1F91D;</span>
+      <span class="card-title">meetings/</span>
+      <span class="card-count">3 scripts</span>
+    </div>
+    <ul class="script-list">
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">meeting_tracker.py</span> <span class="fdesc">v2.0 &mdash; Company-centric meeting sync</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">meeting_analyzer.py</span> <span class="fdesc">Claude AI meeting intelligence</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">opportunity_manager.py</span> <span class="fdesc">v2.0 &mdash; Meetings &rarr; Opportunities</span></li>
+    </ul>
+  </div>
+
+  <!-- MONITORING -->
+  <div class="module-card monitoring">
+    <div class="card-header">
+      <span class="card-icon">&#x1F4CA;</span>
+      <span class="card-title">monitoring/</span>
+      <span class="card-count">3 scripts</span>
+    </div>
+    <ul class="script-list">
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">health_check.py</span> <span class="fdesc">Post-pipeline health validator</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">morning_brief.py</span> <span class="fdesc">Daily intelligence report</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">dashboard_generator.py</span> <span class="fdesc">Live Sales Dashboard HTML</span></li>
+    </ul>
+  </div>
+
+  <!-- WEBHOOKS -->
+  <div class="module-card webhooks">
+    <div class="card-header">
+      <span class="card-icon">&#x1F517;</span>
+      <span class="card-title">webhooks/</span>
+      <span class="card-count">2 scripts</span>
+    </div>
+    <ul class="script-list">
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">webhook_server.py</span> <span class="fdesc">Apollo webhook receiver</span></li>
+      <li><span class="fbadge active">ACTIVE</span><span class="fname">verify_links.py</span> <span class="fdesc">Contact-company link verifier</span></li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- ═══════════════ PIPELINE v3.1 ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:var(--green)"></span> GitHub Actions Pipeline v3.1 &mdash; Safe Execution Order</div>
+
+<div style="text-align:center;font-size:0.8em;color:var(--gray);margin-bottom:16px;">
+  Daily at <strong>7:00 AM KSA</strong> (04:00 UTC) &middot; 2-job architecture &middot; Stats passed via artifacts
+</div>
+
+<div class="pipeline-container">
+  <div class="pipeline-job">
+    <div class="job-header">
+      <span class="job-badge">JOB 1</span>
+      <span class="job-title">Sync &rarr; Signals &rarr; Score</span>
+      <span class="job-timeout">timeout: 5h 50min</span>
+    </div>
+    <ol class="pipeline-steps">
+      <li><span class="step-script">daily_sync.py</span> <span class="step-desc">&mdash; Apollo &rarr; Notion (incremental 26h)</span></li>
+      <li><span class="step-script">analytics_tracker.py</span> <span class="step-desc">&mdash; Engagement sync (signals before scoring)</span></li>
+      <li><span class="step-script">outcome_tracker.py</span> <span class="step-desc">&mdash; Task &rarr; Contact outcome loop</span></li>
+      <li><span class="step-script">meeting_tracker.py</span> <span class="step-desc">&mdash; Meeting sync + Company Stage</span></li>
+      <li><span class="step-script">opportunity_manager.py</span> <span class="step-desc">&mdash; Meetings &rarr; Opportunities + Stage</span></li>
+      <li><span class="step-script">job_postings_enricher.py</span> <span class="step-desc">&mdash; Intent proxy (top 50)</span></li>
+      <li><span class="step-script">lead_score.py</span> <span class="step-desc">&mdash; Score + Tier (reads fresh signals 2-5)</span></li>
+      <li><span class="step-script">action_ready_updater.py</span> <span class="step-desc">&mdash; 5-condition Action Ready eval</span></li>
+    </ol>
+  </div>
+
+  <div class="pipeline-job">
+    <div class="job-header">
+      <span class="job-badge">JOB 2</span>
+      <span class="job-title">Action &amp; Track</span>
+      <span class="job-timeout">timeout: 3h</span>
+    </div>
+    <ol class="pipeline-steps">
+      <li><span class="step-script">auto_tasks.py</span> <span class="step-desc">&mdash; Create SLA-based company tasks</span></li>
+      <li><span class="step-script">auto_sequence.py</span> <span class="step-desc">&mdash; Enroll in Apollo sequences (top 50)</span></li>
+      <li><span class="step-script">meeting_analyzer.py</span> <span class="step-desc">&mdash; AI meeting intelligence (non-blocking)</span></li>
+      <li><span class="step-script">health_check.py</span> <span class="step-desc">&mdash; Validate pipeline run</span></li>
+      <li><span class="step-script">morning_brief.py</span> <span class="step-desc">&mdash; Daily intelligence report</span></li>
+      <li><span class="step-script">dashboard_generator.py</span> <span class="step-desc">&mdash; Regenerate live dashboard</span></li>
+    </ol>
+  </div>
+</div>
+
+<div style="text-align:center;font-size:0.78em;color:var(--gray);margin-top:-8px;">
+  <strong>Weekly (Sundays):</strong> score_calibrator.py &mdash; review-only, no auto-apply
+</div>
+
+<!-- ═══════════════ SCORING ENGINE ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:var(--blue)"></span> Lead Scoring v1.5</div>
+
+<div class="formula-box">
+  <div class="formula-title">SCORING FORMULA</div>
+  <code>
+    Score = (<span class="hl">Intent &times; 10%</span>) + (<span class="hl">Engagement &times; 10%</span>) + (<span class="hl">Company Size &times; 35%</span>) + (<span class="hl">Seniority &times; 30%</span>) + (<span class="hl">Industry Fit &times; 15%</span>)<br>
+    Sort Score = (Lead Score &times; 100) + Recency Bonus (0-100)
+  </code>
+</div>
+
+<div class="scoring-visual">
+  <div class="tier-card hot">
+    <div class="tier-label">HOT</div>
+    <div class="tier-range">Score &ge; 80</div>
+    <div class="tier-action">Urgent Call &mdash; Call Today</div>
+    <div class="tier-sla">SLA: 24 hours</div>
+  </div>
+  <div class="tier-card warm">
+    <div class="tier-label">WARM</div>
+    <div class="tier-range">Score &ge; 50</div>
+    <div class="tier-action">Follow-up Email</div>
+    <div class="tier-sla">SLA: 48 hours</div>
+  </div>
+  <div class="tier-card cold">
+    <div class="tier-label">COLD</div>
+    <div class="tier-range">Score &lt; 50</div>
+    <div class="tier-action">Monitor Only</div>
+    <div class="tier-sla">No action required</div>
+  </div>
+</div>
+
+<!-- ═══════════════ NOTION SCHEMA ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:#8B5CF6"></span> Notion CRM &mdash; 7 Databases</div>
+
+<div class="schema-grid">
+  <div class="schema-card">
+    <div class="db-name">&#x1F3E2; Companies</div>
+    <div class="db-fields">
+      <span class="db-key">PK:</span> Apollo Account ID &middot; <span class="db-key">Stage:</span> Prospect &rarr; Customer &middot;
+      Primary/Supporting Owners &middot; Active/Emailed/Engaged Contacts &middot; Company Health &middot;
+      MUHIDE Fit Score &middot; AI Sales Actions &middot; Headcount Growth
+    </div>
+  </div>
+  <div class="schema-card">
+    <div class="db-name">&#x1F464; Contacts</div>
+    <div class="db-fields">
+      <span class="db-key">PK:</span> Apollo Contact ID &middot; Lead Score 0-100 &middot; Lead Tier HOT/WARM/COLD &middot;
+      Action Ready &middot; Contact Owner &middot; Outreach Status &middot; Stage &middot;
+      AI Reply Status/Reason/Probability/Action/Confidence
+    </div>
+  </div>
+  <div class="schema-card">
+    <div class="db-name">&#x2705; Tasks</div>
+    <div class="db-fields">
+      <span class="db-key">Status:</span> status type (Not Started / In Progress / Completed) &middot;
+      Task Type &middot; Priority &middot; Task Owner &middot; Owner Source &middot;
+      Company Stage at Creation &middot; <span class="db-key">Dedup:</span> 1 per company per task type
+    </div>
+  </div>
+  <div class="schema-card">
+    <div class="db-name">&#x1F4BC; Opportunities</div>
+    <div class="db-fields">
+      <span class="db-key">Stage:</span> status type (Discovery &rarr; Closed) &middot; Deal Value &middot; ARR &middot;
+      Probability &middot; Stakeholder Contacts &middot; Buying Committee Size &middot;
+      Revenue Priority Tier 1/2/3 &middot; <span class="db-key">Rule:</span> 1 active per company
+    </div>
+  </div>
+  <div class="schema-card">
+    <div class="db-name">&#x1F91D; Meetings</div>
+    <div class="db-fields">
+      Meeting Type &middot; Scheduled Date &middot; Outcome &middot;
+      Meeting Owner &middot; Participants &middot; Outcome Impact &middot;
+      Key Takeaways &middot; Next Steps &middot; Next Step Owner
+    </div>
+  </div>
+  <div class="schema-card">
+    <div class="db-name">&#x1F4E5; Lead Inbox</div>
+    <div class="db-fields">
+      <span class="db-key">Status:</span> New &rarr; Review &rarr; Qualified/Rejected &rarr; Moved &middot;
+      Source (6 values) &middot; Intake Owner &middot; CRM Company/Contact Ref &middot;
+      CRM Sync State &middot; 5 Arabic views
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ COMPANY-CENTRIC MODEL ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:var(--orange)"></span> Company-Centric Operating Model (v5.0)</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin:20px 0;">
+  <div class="decision-card">
+    <div class="d-num">PRINCIPLE</div>
+    <div class="d-title">Company = Primary Entity</div>
+    <div class="d-desc">ONE task per company per tier. ONE active opportunity per company. All automation operates at the company level.</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">OWNERSHIP</div>
+    <div class="d-title">Apollo-First Priority (v5.1)</div>
+    <div class="d-desc">Apollo Account owner_id wins directly. Fallback: owner with most contacts (tie-break: most recent activity).</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">STATE MACHINE</div>
+    <div class="d-title">Company Stage</div>
+    <div class="d-desc">Prospect &rarr; Outreach &rarr; Engaged &rarr; Meeting &rarr; Opportunity &rarr; Customer &rarr; Churned &rarr; Archived. Terminal stages never overwritten.</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">GUARD</div>
+    <div class="d-title">Stage Conflict Prevention</div>
+    <div class="d-desc">STAGE_PRIORITY lattice + STAGE_TERMINAL set. 4 writers (sync, meeting, opportunity, governor) all guarded.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ KEY DECISIONS ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:var(--charcoal)"></span> Key Architecture Decisions</div>
+
+<div class="decisions-grid">
+  <div class="decision-card">
+    <div class="d-num">#1</div>
+    <div class="d-title">No Middleware</div>
+    <div class="d-desc">Pure Python + GitHub Actions. Zero dependencies on n8n/Make/Zapier.</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">#3</div>
+    <div class="d-title">Triple Dedup</div>
+    <div class="d-desc">Apollo ID &rarr; Email &rarr; seen_ids set. No duplicates possible.</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">#13</div>
+    <div class="d-title">Local Timestamp Filter</div>
+    <div class="d-desc">Client-side filter after Apollo fetch. Incremental runs: minutes not hours.</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">#18</div>
+    <div class="d-title">Company-Centric v5.0</div>
+    <div class="d-desc">Company = primary entity for all automation, tasks, and opportunities.</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">#28</div>
+    <div class="d-title">Real Intent Definition</div>
+    <div class="d-desc">replied OR meeting_booked OR email_open_count &ge; 2. Archive Guard protects intent signals.</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">#29</div>
+    <div class="d-title">Safe Execution Order</div>
+    <div class="d-desc">Signal writers before scoring. Freshness guard prevents archival on stale data.</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">#30</div>
+    <div class="d-title">Script-Relative Logs</div>
+    <div class="d-desc">All logs write to their module subdir. No scattered root logs.</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">#27</div>
+    <div class="d-title">Apollo Account Owner Priority</div>
+    <div class="d-desc">Apollo Account owner_id overrides contact-based derivation when present.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ EXECUTION PHASES ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:var(--green)"></span> Execution Phases</div>
+
+<div class="phases-timeline">
+  <div class="phase-row">
+    <div class="phase-dot done"></div>
+    <div class="phase-name">Phase 1: ACTIVATE</div>
+    <div class="phase-detail">Full sync, scoring v1.1, seniority normalization</div>
+    <div class="phase-status done">COMPLETE</div>
+  </div>
+  <div class="phase-row">
+    <div class="phase-dot done"></div>
+    <div class="phase-name">Phase 2: ACTION</div>
+    <div class="phase-detail">Action Engine, Action Ready evaluator, health check</div>
+    <div class="phase-status done">COMPLETE</div>
+  </div>
+  <div class="phase-row">
+    <div class="phase-dot done"></div>
+    <div class="phase-name">Phase 3: ENRICH</div>
+    <div class="phase-detail">Job postings, sequences, analytics, score calibration</div>
+    <div class="phase-status done">COMPLETE</div>
+  </div>
+  <div class="phase-row">
+    <div class="phase-dot done"></div>
+    <div class="phase-name">Phase 3.5: MEET</div>
+    <div class="phase-detail">Meeting tracker, AI analyzer, opportunity manager</div>
+    <div class="phase-status done">COMPLETE</div>
+  </div>
+  <div class="phase-row">
+    <div class="phase-dot done"></div>
+    <div class="phase-name">Phase 3.7: COMPANY-CENTRIC</div>
+    <div class="phase-detail">v5.0 &mdash; Company as primary entity, ownership, stage machine</div>
+    <div class="phase-status done">COMPLETE</div>
+  </div>
+  <div class="phase-row">
+    <div class="phase-dot done"></div>
+    <div class="phase-name">Phase 3.8: MODULAR</div>
+    <div class="phase-detail">v6.0 &rarr; v6.2 &mdash; 8-module architecture + safe execution + governance guards</div>
+    <div class="phase-status done">COMPLETE</div>
+  </div>
+  <div class="phase-row">
+    <div class="phase-dot planned"></div>
+    <div class="phase-name">Phase 4: OPTIMIZE</div>
+    <div class="phase-detail">Odoo ERP integration, revenue pipeline tracking, advanced analytics</div>
+    <div class="phase-status planned">PLANNED</div>
+  </div>
+</div>
+
+<!-- ═══════════════ GOVERNANCE & SAFETY ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:var(--red)"></span> Data Governance &amp; Safety Rails</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin:20px 0;">
+  <div class="decision-card">
+    <div class="d-num">INGESTION GATE v6.0</div>
+    <div class="d-title">Pre-Entry Validation</div>
+    <div class="d-desc">Companies: &ge;2 of 5 ICP criteria. Contacts: all 4 gates (company link, email, role, owner).</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">DATA GOVERNOR v6.1</div>
+    <div class="d-title">Audit + Archive + Guard</div>
+    <div class="d-desc">Freshness guard (26h max). Archive Guard spares records with real intent. Soft-delete only.</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">CONTACT FILTER</div>
+    <div class="d-title">Owner + Outreach Gating</div>
+    <div class="d-desc">Contacts must have Apollo owner_id AND &ge;1 non-failed email campaign before Notion sync.</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">SAFE BOOLEANS</div>
+    <div class="d-title">Never Overwrite Manual Data</div>
+    <div class="d-desc">Engagement checkboxes only written if Apollo explicitly returns the field. Prevents True &rarr; False.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ ADDITIONAL PIPELINES ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:var(--beige)"></span> Additional Pipelines</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin:20px 0;">
+  <div class="decision-card">
+    <div class="d-num">MUQAWIL</div>
+    <div class="d-title">Contractors Pipeline</div>
+    <div class="d-desc">14,089 records &middot; 80.7% completeness &middot; Web scraper &rarr; 21 processing scripts &rarr; JSON/CSV/XLSX output</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">FILE SYNC</div>
+    <div class="d-title">Tri-Directional Sync</div>
+    <div class="d-desc">Local &harr; Google Drive &harr; GitHub &middot; Unified manifest &middot; Conflict detection &middot; Pre-sync backups</div>
+  </div>
+  <div class="decision-card">
+    <div class="d-num">ENGINEERING</div>
+    <div class="d-title">Ministry Offices Pipeline</div>
+    <div class="d-desc">Engineering offices data pipeline &middot; Currently inactive (all zeros in last_activity_stats)</div>
+  </div>
+</div>
+
+<!-- ═══════════════ CLAUDE SKILLS ═══════════════ -->
+<div class="section-title"><span class="dot" style="background:#06B6D4"></span> 12 Claude Skills &mdash; 100% Pass Rate</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin:20px 0;">
+  <div class="decision-card"><div class="d-num">FOUNDATION</div><div class="d-title">shared-sales-os-rules</div><div class="d-desc">Shared truth layer for all skills</div></div>
+  <div class="decision-card"><div class="d-num">SYNC</div><div class="d-title">apollo-sync-operator</div><div class="d-desc">Sync pipeline operations</div></div>
+  <div class="decision-card"><div class="d-num">SCHEMA</div><div class="d-title">notion-schema-manager</div><div class="d-desc">Notion DB structure management</div></div>
+  <div class="decision-card"><div class="d-num">SCORING</div><div class="d-title">lead-scoring-analyst</div><div class="d-desc">Score analysis &amp; calibration</div></div>
+  <div class="decision-card"><div class="d-num">DATA</div><div class="d-title">data-integrity-guardian</div><div class="d-desc">Data quality &amp; dedup</div></div>
+  <div class="decision-card"><div class="d-num">TASKS</div><div class="d-title">action-engine-builder</div><div class="d-desc">Action Engine &amp; automation</div></div>
+  <div class="decision-card"><div class="d-num">HEALTH</div><div class="d-title">pipeline-health-monitor</div><div class="d-desc">Pipeline monitoring &amp; alerts</div></div>
+  <div class="decision-card"><div class="d-num">MEETINGS</div><div class="d-title">meeting-intelligence</div><div class="d-desc">Meeting &rarr; CRM intelligence</div></div>
+  <div class="decision-card"><div class="d-num">REVENUE</div><div class="d-title">revenue-loop-tracker</div><div class="d-desc">Score-to-revenue tracking</div></div>
+  <div class="decision-card"><div class="d-num">ICP</div><div class="d-title">apollo-icp-strategist</div><div class="d-desc">ICP &amp; market segmentation</div></div>
+  <div class="decision-card"><div class="d-num">OUTREACH</div><div class="d-title">apollo-sequence-builder</div><div class="d-desc">Email &amp; outreach sequences</div></div>
+  <div class="decision-card"><div class="d-num">EXEC</div><div class="d-title">exec-brief-writer</div><div class="d-desc">Executive reports &amp; briefs</div></div>
+</div>
+
+</div>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<div class="footer">
+  <span class="brand-footer">MUHIDE</span> &middot; AI Sales OS v6.2 &middot; April 2026<br>
+  <span style="font-size:0.9em;">27 Scripts &middot; 8 Modules &middot; 7 Databases &middot; 12 Skills &middot; Fully Autonomous</span>
+</div>
+
+</body>
+</html>

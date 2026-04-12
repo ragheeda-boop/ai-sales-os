@@ -31,7 +31,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("verify_links.log"),
+        logging.FileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), "verify_links.log")),
         logging.StreamHandler(sys.stdout)
     ]
 )
