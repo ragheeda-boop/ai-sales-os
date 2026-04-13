@@ -467,9 +467,17 @@ def score_company(company: dict, contacts: list) -> Optional[dict]:
     # Min 2 components required
     if populated_count < CPS_MIN_COMPONENTS:
         return {
-            "score": 0, "tier": PRIORITY_P3,
-            "reason": "Insufficient data for prioritization",
+            "company_id": company_id,
             "company_name": company_name,
+            "score": 0, "tier": PRIORITY_P3,
+            "best_contact_name": _get_text(contacts[0]["properties"], FIELD_FULL_NAME) if contacts else "Unknown",
+            "best_contact_id": contacts[0]["id"] if contacts else "",
+            "next_action": ACTION_WAIT,
+            "reason": "Insufficient data for prioritization",
+            "owner": _get_text(props, FIELD_PRIMARY_COMPANY_OWNER),
+            "sla": SLA_NONE,
+            "risk_flag": False,
+            "bcs": 0, "eng": 0, "fit": 0, "ais": 0, "mom": 0,
         }
 
     # Redistribute weights from empty components to populated ones
@@ -569,8 +577,14 @@ def build_update_payload(result: dict) -> dict:
         "rich_text": [{"text": {"content": result["reason"][:2000]}}]
     }
 
-    # Checkbox
-    props[FIELD_AI_RISK_FLAG] = {"checkbox": result.get("risk_flag", False)}
+    # AI Risk Flag as rich_text (Notion field type is rich_text)
+    risk_text = "Yes — AI Disqualified" if result.get("risk_flag", False) else ""
+    if risk_text:
+        props[FIELD_AI_RISK_FLAG] = {
+            "rich_text": [{"text": {"content": risk_text}}]
+        }
+    else:
+        props[FIELD_AI_RISK_FLAG] = {"rich_text": []}
 
     return props
 

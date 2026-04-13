@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-AI Sales OS — Action Engine v2.0 (Company-Centric)
+AI Sales OS — Action Engine v3.0 (CPS-Driven, Company-Centric)
 
-Creates tasks in Notion at the COMPANY level, not the Contact level.
-One task per company per tier. Assigns to Primary Company Owner.
+Creates tasks in Notion at the COMPANY level using CPS Priority Tier.
+Replaces Lead Tier (HOT/WARM/COLD) with Priority Tier (P1/P2/P3).
 
-v2.0 Changes (Company-Centric):
-- Groups contacts by company before task creation
-- Creates ONE task per company (using highest-scored contact as representative)
-- Deduplicates by Company + Task Type (not Contact)
-- Assigns Task Owner = Primary Company Owner
-- Tracks Owner Source for audit trail
+v3.0 Changes (CPS-Driven):
+- Task routing driven by Company Priority Score (CPS) Priority Tier
+- P1 → Urgent Call / Strategic Email (based on AI Action Type)
+- P2 → Follow-up / Scheduled Call (based on AI Action Type)
+- P3 → No task created
+- AI Call Hook + Priority Reason + CPS included in task description
+- Fallback to Lead Score-based rules when CPS not yet computed
 
 Usage:
     python auto_tasks.py                    # create tasks for all eligible companies
@@ -63,6 +64,12 @@ from core.constants import (
     AI_PRIORITY_P1, AI_PRIORITY_P2, AI_PRIORITY_P3,
     # Reply Intelligence downstream inputs (P1-C patch)
     FIELD_AI_CLOSE_PROBABILITY, FIELD_AI_NEXT_ACTION, FIELD_AI_REPLY_STATUS,
+    # CPS Decision Layer fields (v3.0)
+    FIELD_COMPANY_PRIORITY_SCORE, FIELD_PRIORITY_TIER, FIELD_BEST_CONTACT,
+    FIELD_NEXT_ACTION as CPS_FIELD_NEXT_ACTION, FIELD_PRIORITY_REASON,
+    FIELD_ACTION_OWNER, FIELD_ACTION_SLA,
+    PRIORITY_P1, PRIORITY_P2, PRIORITY_P3,
+    CPS_TIER_P1, CPS_TIER_P2,
 )
 
 # ── AI Priority → Task Priority map ──
@@ -92,13 +99,62 @@ logger = logging.getLogger(__name__)
 
 # ─── Priority Rules ──────────────────────────────────────────────────────────
 
-PRIORITY_RULES = [
+# ── CPS-Driven Priority Rules (v3.0) ──
+# P1 has two variants: Call (default) and Strategic Email (when AI Action Type = Email)
+# P2 has two variants: Follow-up (default) and Scheduled Call (when AI Action Type = Call)
+CPS_RULES = {
+    PRIORITY_P1: {
+        "default": {
+            "tier": PRIORITY_P1,
+            "priority": "Critical",
+            "task_type": "Urgent Call",
+            "action": "CALL",
+            "channel": "Phone",
+            "sla_hours": SLA_HOT_HOURS,
+            "title_template": "🔥 P1 CALL: {company} — {name}",
+            "expected_outcome": "Schedule a meeting or demo within 24 hours",
+        },
+        "Email": {
+            "tier": PRIORITY_P1,
+            "priority": "Critical",
+            "task_type": "Strategic Email",
+            "action": "EMAIL",
+            "channel": "Email",
+            "sla_hours": SLA_HOT_HOURS,
+            "title_template": "🔥 P1 STRATEGIC EMAIL: {company} — {name}",
+            "expected_outcome": "Send strategic email — aim for reply within 24 hours",
+        },
+    },
+    PRIORITY_P2: {
+        "default": {
+            "tier": PRIORITY_P2,
+            "priority": "High",
+            "task_type": "Follow-up",
+            "action": "FOLLOW-UP",
+            "channel": "Email",
+            "sla_hours": SLA_WARM_HIGH_HOURS,
+            "title_template": "P2 FOLLOW-UP: {company} — {name}",
+            "expected_outcome": "Get a reply or schedule a call within 48 hours",
+        },
+        "Call": {
+            "tier": PRIORITY_P2,
+            "priority": "High",
+            "task_type": "Scheduled Call",
+            "action": "CALL",
+            "channel": "Phone",
+            "sla_hours": SLA_WARM_HIGH_HOURS,
+            "title_template": "📞 P2 CALL: {company} — {name}",
+            "expected_outcome": "Call contact — schedule meeting within 48 hours",
+        },
+    },
+}
+
+# Legacy score-based rules (fallback when CPS not computed)
+LEGACY_RULES = [
     {
         "tier": TIER_HOT,
         "min_score": SCORE_HOT,
         "priority": "Critical",
-        # FIX C-03: "Urgent Call" is distinct from WARM's "Follow-up" so company-level
-        # dedup doesn't block HOT tasks when a WARM task already exists for the same company.
         "task_type": "Urgent Call",
         "action": "CALL",
         "channel": "Phone",
@@ -121,10 +177,21 @@ PRIORITY_RULES = [
 
 
 def get_rule(score: float) -> Optional[Dict]:
-    for rule in PRIORITY_RULES:
+    """Legacy fallback: score-based rule matching."""
+    for rule in LEGACY_RULES:
         if score >= rule["min_score"]:
             return rule
     return None
+
+
+def get_cps_rule(priority_tier: str, ai_action_type: str) -> Optional[Dict]:
+    """CPS-driven rule selection: Priority Tier + AI Action Type → task rule."""
+    tier_rules = CPS_RULES.get(priority_tier)
+    if not tier_rules:
+        return None  # P3 or unknown → no task
+    # Use AI Action Type variant if available, otherwise default
+    variant = ai_action_type if ai_action_type in tier_rules else "default"
+    return tier_rules[variant]
 
 
 # ─── Fetch Action Ready Contacts ─────────────────────────────────────────────
@@ -419,6 +486,81 @@ def preload_company_ai_fields(company_ids: Set[str]) -> Dict[str, Dict]:
     return ai_map
 
 
+def preload_company_cps(company_ids: Set[str]) -> Dict[str, Dict]:
+    """Preload CPS fields for all relevant companies.
+
+    Returns { company_page_id: {
+        "cps": float,
+        "priority_tier": str (P1/P2/P3/""),
+        "best_contact": str,
+        "next_action": str,
+        "priority_reason": str,
+        "action_owner": str,
+        "action_sla": str,
+    } }
+    """
+    cps_map: Dict[str, Dict] = {}
+    if not company_ids or not NOTION_DATABASE_ID_COMPANIES:
+        return cps_map
+
+    def _select_val(props: Dict, field: str) -> str:
+        sel = props.get(field, {}).get("select")
+        return sel.get("name") if sel else ""
+
+    def _rt_val(props: Dict, field: str) -> str:
+        rt = props.get(field, {}).get("rich_text") or []
+        return "".join(seg.get("plain_text", "") for seg in rt).strip()
+
+    def _num_val(props: Dict, field: str) -> float:
+        return props.get(field, {}).get("number") or 0.0
+
+    cursor = None
+    loaded = 0
+    logger.info("Preloading CPS fields from Companies DB...")
+
+    while True:
+        body = {"page_size": 100}
+        if cursor:
+            body["start_cursor"] = cursor
+        rate_limiter.wait()
+        try:
+            resp = notion_request(
+                "POST",
+                f"{NOTION_BASE_URL}/databases/{NOTION_DATABASE_ID_COMPANIES}/query",
+                json=body,
+            )
+            data = resp.json()
+        except Exception as e:
+            logger.error(f"Error preloading CPS fields: {e}")
+            break
+
+        for page in data.get("results", []):
+            pid = page["id"]
+            if pid not in company_ids:
+                continue
+            props = page.get("properties", {})
+            tier = _select_val(props, FIELD_PRIORITY_TIER)
+            if not tier:
+                continue  # CPS not computed yet for this company
+            cps_map[pid] = {
+                "cps": _num_val(props, FIELD_COMPANY_PRIORITY_SCORE),
+                "priority_tier": tier,
+                "best_contact": _rt_val(props, FIELD_BEST_CONTACT),
+                "next_action": _select_val(props, CPS_FIELD_NEXT_ACTION),
+                "priority_reason": _rt_val(props, FIELD_PRIORITY_REASON),
+                "action_owner": _select_val(props, FIELD_ACTION_OWNER),
+                "action_sla": _select_val(props, FIELD_ACTION_SLA),
+            }
+            loaded += 1
+
+        if not data.get("has_more"):
+            break
+        cursor = data.get("next_cursor")
+
+    logger.info(f"  Preloaded CPS for {loaded} companies")
+    return cps_map
+
+
 def fetch_company_primary_owner(company_page_id: str) -> Optional[str]:
     """Fetch Primary Company Owner from a Company page in Notion.
 
@@ -471,11 +613,12 @@ def create_company_task(
     rule: Dict,
     company_owner: Optional[str],
     ai_data: Optional[Dict] = None,
+    cps_data: Optional[Dict] = None,
 ) -> Optional[str]:
     """Create a single task for a company, linked to the best contact.
 
-    v2.0: Task is company-level. One task per company per tier.
-    Task Owner = Primary Company Owner (or Contact Owner fallback).
+    v3.0: CPS-driven. Task type from Priority Tier + AI Action Type.
+    Includes CPS, AI Call Hook, and Priority Reason in description.
     """
     if not NOTION_DATABASE_ID_TASKS:
         logger.error("NOTION_DATABASE_ID_TASKS not set!")
@@ -562,12 +705,26 @@ def create_company_task(
     if reply_desc_lines:
         ai_desc_block += "\n\n── Reply Intelligence ──\n" + "\n".join(reply_desc_lines)
 
+    # ── CPS context block (v3.0) ──
+    cps_desc_block = ""
+    if cps_data:
+        cps_lines = []
+        if cps_data.get("cps"):
+            cps_lines.append(f"CPS: {cps_data['cps']:.1f} ({cps_data.get('priority_tier', '')})")
+        if cps_data.get("priority_reason"):
+            cps_lines.append(f"Reason: {cps_data['priority_reason']}")
+        if cps_data.get("next_action"):
+            cps_lines.append(f"CPS Action: {cps_data['next_action']}")
+        if cps_lines:
+            cps_desc_block = "\n\n── Decision Layer (CPS v7.0) ──\n" + "\n".join(cps_lines)
+
     description_body = (
         f"Company-level task for {company_name}. "
         f"{len(all_contacts)} contact(s) qualify. "
         f"Best contact: {best_contact['name']} (Score: {best_contact['score']:.0f}, "
         f"Tier: {best_contact['tier'] or rule['tier']}). "
         f"Action: {rule['action']} via {rule['channel']}."
+        f"{cps_desc_block}"
         f"{ai_desc_block}"
     )[:1990]
 
@@ -719,29 +876,91 @@ def main():
     logger.info("Step 4: Checking existing open tasks (company-level dedup)...")
     open_company_tasks = get_companies_with_open_tasks()
 
-    # Step 4b: Preload ALL company owners in ONE query (FIX L-01: eliminates N+1)
-    logger.info("Step 4b: Preloading company owners (single-pass bulk fetch)...")
+    # Step 4b: Preload ALL company data in ONE PASS (owners + AI + CPS)
+    logger.info("Step 4b: Preloading company data (single-pass: owners + AI + CPS)...")
     all_company_ids = {cid for cid in company_groups.keys() if cid != "NO_COMPANY"}
     company_owner_cache: Dict[str, Optional[str]] = {}
     company_ai_cache: Dict[str, Dict] = {}
-    if not args.dry_run and all_company_ids:
-        company_owner_cache = preload_company_owners(all_company_ids)
-        logger.info(f"  Owner cache: {sum(1 for v in company_owner_cache.values() if v)} assigned, "
-                    f"{sum(1 for v in company_owner_cache.values() if not v)} unassigned")
-        # Step 4c: Preload parsed AI Sales Actions fields
-        company_ai_cache = preload_company_ai_fields(all_company_ids)
+    company_cps_cache: Dict[str, Dict] = {}
 
-    # Step 5: Create ONE task per company
-    logger.info("Step 5: Creating company-level tasks...")
+    if all_company_ids:
+        # Targeted preload: fetch only the companies we need (by page ID)
+        # Much faster than scanning all 16K companies
+        import requests as _requests
+        loaded = 0
+        for company_id in all_company_ids:
+            rate_limiter.wait()
+            try:
+                resp = notion_request("GET", f"{NOTION_BASE_URL}/pages/{company_id}")
+                page = resp.json()
+            except Exception as e:
+                logger.warning(f"Could not fetch company {company_id}: {e}")
+                continue
+
+            if True:
+                pid = page["id"]
+                props = page.get("properties", {})
+                loaded += 1
+
+                # ── Owner ──
+                owner_sel = props.get(FIELD_PRIMARY_COMPANY_OWNER, {}).get("select")
+                company_owner_cache[pid] = owner_sel.get("name") if owner_sel else None
+
+                # ── AI Sales Actions ──
+                def _select_val(field: str) -> str:
+                    sel = props.get(field, {}).get("select")
+                    return sel.get("name") if sel else ""
+
+                def _rt_val(field: str) -> str:
+                    rt = props.get(field, {}).get("rich_text") or []
+                    return "".join(seg.get("plain_text", "") for seg in rt).strip()
+
+                ai_entry = {
+                    "ai_action_type": _select_val(FIELD_AI_ACTION_TYPE),
+                    "ai_priority": _select_val(FIELD_AI_PRIORITY),
+                    "ai_urgency": _select_val(FIELD_AI_URGENCY),
+                    "ai_signal": _rt_val(FIELD_AI_SIGNAL),
+                    "ai_pain": _rt_val(FIELD_AI_PAIN_SUMMARY),
+                    "ai_target_role": _rt_val(FIELD_AI_TARGET_ROLE),
+                    "ai_call_hook": _rt_val(FIELD_AI_CALL_HOOK),
+                }
+                if any(ai_entry.values()):
+                    company_ai_cache[pid] = ai_entry
+
+                # ── CPS ──
+                tier = _select_val(FIELD_PRIORITY_TIER)
+                if tier:
+                    cps_val = props.get(FIELD_COMPANY_PRIORITY_SCORE, {}).get("number") or 0.0
+                    company_cps_cache[pid] = {
+                        "cps": cps_val,
+                        "priority_tier": tier,
+                        "best_contact": _rt_val(FIELD_BEST_CONTACT),
+                        "next_action": _select_val(CPS_FIELD_NEXT_ACTION),
+                        "priority_reason": _rt_val(FIELD_PRIORITY_REASON),
+                        "action_owner": _select_val(FIELD_ACTION_OWNER),
+                        "action_sla": _select_val(FIELD_ACTION_SLA),
+                    }
+
+        owners_assigned = sum(1 for v in company_owner_cache.values() if v)
+        logger.info(f"  Loaded {loaded} companies (targeted fetch)")
+        logger.info(f"  Owners: {owners_assigned} assigned | AI: {len(company_ai_cache)} | CPS: {len(company_cps_cache)}")
+
+    # Step 5: Create ONE task per company (CPS-driven v3.0)
+    logger.info("Step 5: Creating company-level tasks (CPS-driven v3.0)...")
     stats = {
         "companies_processed": 0,
         "tasks_created": 0,
         "skipped_open_task": 0,
         "skipped_no_company": 0,
+        "skipped_p3_no_task": 0,
         "skipped_ai_action_none": 0,
+        "cps_driven": 0,
+        "legacy_fallback": 0,
         "ai_overrides_applied": 0,
         "errors": 0,
         "contacts_covered": 0,
+        "p1_tasks": 0,
+        "p2_tasks": 0,
     }
 
     companies_processed = 0
@@ -751,7 +970,36 @@ def main():
 
         # Best contact = highest score in this company (already sorted)
         best = company_contacts[0]
-        rule = get_rule(best["score"])
+
+        # Skip contacts with no company link
+        if company_id == "NO_COMPANY":
+            stats["skipped_no_company"] += len(company_contacts)
+            continue
+
+        # ── CPS-driven rule selection (v3.0) ──
+        cps_data = company_cps_cache.get(company_id)
+        ai_data = company_ai_cache.get(company_id)
+        ai_action_type = (ai_data.get("ai_action_type") or "").strip() if ai_data else ""
+        rule = None
+        rule_source = "legacy"
+
+        if cps_data and cps_data.get("priority_tier"):
+            priority_tier = cps_data["priority_tier"]
+            if priority_tier == PRIORITY_P3:
+                stats["skipped_p3_no_task"] += 1
+                continue  # P3 → no task
+            rule = get_cps_rule(priority_tier, ai_action_type)
+            if rule:
+                rule_source = "cps"
+                stats["cps_driven"] += 1
+
+        # Fallback to legacy score-based rules if no CPS
+        if not rule:
+            rule = get_rule(best["score"])
+            if rule:
+                rule_source = "legacy"
+                stats["legacy_fallback"] += 1
+
         if not rule:
             continue
 
@@ -762,26 +1010,10 @@ def main():
                 stats["skipped_open_task"] += 1
                 continue
 
-        # Skip contacts with no company link
-        if company_id == "NO_COMPANY":
-            stats["skipped_no_company"] += len(company_contacts)
-            continue
-
         # ── AI Sales Actions gating ──
-        # If Apollo's AI has explicitly set Action Type = None for this company,
-        # respect that and skip task creation entirely. Non-Call actions (Email /
-        # Sequence) are routed through auto_sequence.py — not the call-task engine —
-        # so auto_tasks only creates tasks when: (a) no AI data, OR (b) AI says Call.
-        ai_data = company_ai_cache.get(company_id)
         if ai_data:
             ai_action = (ai_data.get("ai_action_type") or "").strip()
             if ai_action == AI_ACTION_NONE:
-                stats["skipped_ai_action_none"] += 1
-                continue
-            # Email/Sequence → auto_sequence handles it. auto_tasks only fires on Call
-            # or when no AI direction is given (fall back to score-tier rule).
-            if ai_action in (AI_ACTION_EMAIL, AI_ACTION_SEQUENCE) and rule["tier"] != TIER_HOT:
-                # HOT score still gets a call task regardless (high-urgency override)
                 stats["skipped_ai_action_none"] += 1
                 continue
             if ai_data.get("ai_priority"):
@@ -791,30 +1023,40 @@ def main():
         stats["companies_processed"] += 1
         stats["contacts_covered"] += len(company_contacts)
 
-        # Resolve Primary Company Owner from preloaded cache (FIX L-01: O(1) lookup, not N API calls)
-        company_owner = company_owner_cache.get(company_id) if not args.dry_run else None
+        # Track P1/P2 counts
+        if cps_data and cps_data.get("priority_tier") == PRIORITY_P1:
+            stats["p1_tasks"] += 1
+        elif cps_data and cps_data.get("priority_tier") == PRIORITY_P2:
+            stats["p2_tasks"] += 1
+
+        # Resolve Primary Company Owner from preloaded cache
+        company_owner = company_owner_cache.get(company_id)
 
         if args.dry_run:
             company_name = best["company_name"] or "Unknown"
             title = rule["title_template"].format(name=best["name"], company=company_name)
+            cps_str = f" CPS={cps_data['cps']:.1f}" if cps_data else ""
             logger.info(
                 f"  [DRY RUN] Would create: {title} | "
-                f"Score: {best['score']:.0f} | Priority: {rule['priority']} | "
-                f"Contacts at company: {len(company_contacts)}"
+                f"Score: {best['score']:.0f}{cps_str} | Priority: {rule['priority']} | "
+                f"Type: {rule['task_type']} ({rule_source}) | "
+                f"Contacts: {len(company_contacts)}"
             )
             stats["tasks_created"] += 1
             continue
 
         page_id = create_company_task(
             company_id, best, company_contacts, rule, company_owner,
-            ai_data=company_ai_cache.get(company_id),
+            ai_data=ai_data,
+            cps_data=cps_data,
         )
         if page_id:
             stats["tasks_created"] += 1
+            tier_label = cps_data["priority_tier"] if cps_data else rule["tier"]
             logger.info(
                 f"  Task created: {best['company_name'] or 'Unknown'} | "
                 f"Best: {best['name']} ({best['score']:.0f}) | "
-                f"{rule['tier']} | {len(company_contacts)} contacts"
+                f"{tier_label} {rule['task_type']} | {len(company_contacts)} contacts"
             )
         else:
             stats["errors"] += 1
@@ -822,13 +1064,18 @@ def main():
     elapsed = time.time() - start_time
 
     logger.info("=" * 70)
-    logger.info(f"ACTION ENGINE v2.0 COMPLETE (Company-Centric)")
+    logger.info(f"ACTION ENGINE v3.0 COMPLETE (CPS-Driven, Company-Centric)")
     logger.info(f"  Companies processed:   {stats['companies_processed']}")
     logger.info(f"  Tasks created:         {stats['tasks_created']}")
+    logger.info(f"    P1 tasks:            {stats['p1_tasks']}")
+    logger.info(f"    P2 tasks:            {stats['p2_tasks']}")
+    logger.info(f"  CPS-driven:            {stats['cps_driven']}")
+    logger.info(f"  Legacy fallback:       {stats['legacy_fallback']}")
     logger.info(f"  Contacts covered:      {stats['contacts_covered']}")
     logger.info(f"  Skipped (open task):   {stats['skipped_open_task']}")
     logger.info(f"  Skipped (no company):  {stats['skipped_no_company']}")
-    logger.info(f"  Skipped (AI=None/Email/Seq): {stats['skipped_ai_action_none']}")
+    logger.info(f"  Skipped (P3, no task): {stats['skipped_p3_no_task']}")
+    logger.info(f"  Skipped (AI=None):     {stats['skipped_ai_action_none']}")
     logger.info(f"  AI priority overrides: {stats['ai_overrides_applied']}")
     logger.info(f"  Errors:                {stats['errors']}")
     logger.info(f"  Time:                  {elapsed:.1f}s")
