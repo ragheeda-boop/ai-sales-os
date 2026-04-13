@@ -46,12 +46,15 @@ MAX_WEIGHT_CHANGE = 0.10     # Max shift per calibration cycle
 MIN_WEIGHT = 0.05            # No component goes below 5%
 MIN_EMAILS_FOR_CALIBRATION = 100  # Minimum emails sent for valid analysis
 
-# Current weights (from lead_score.py)
+# Current weights (from lead_score.py v1.5 — updated 2026-04-14)
+# v1.1 had: intent=0.10, engagement=0.10, size=0.45, seniority=0.35
+# v1.5 added Industry Fit (15%), rebalanced Size (45→35%) and Seniority (35→30%)
 CURRENT_WEIGHTS = {
     "intent": 0.10,
     "engagement": 0.10,
-    "size": 0.45,
-    "seniority": 0.35,
+    "size": 0.35,
+    "seniority": 0.30,
+    "industry_fit": 0.15,
 }
 
 CALIBRATION_HISTORY_FILE = os.path.join(SCRIPT_DIR, "calibration_history.json")

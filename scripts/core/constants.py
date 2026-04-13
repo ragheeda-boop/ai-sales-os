@@ -892,6 +892,79 @@ ICP_INDUSTRY_SCORES = {
 # Default score for industries not in the map
 ICP_INDUSTRY_DEFAULT_SCORE = 30
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# COMPANY PRIORITY SCORE (CPS) — Decision Layer v7.0 (2026-04-14)
+# Single unified company-level score that drives all sales execution.
+# Computed by scripts/scoring/company_priority_scorer.py
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Notion field names (Companies DB)
+FIELD_COMPANY_PRIORITY_SCORE = "Company Priority Score"  # number 0-100
+FIELD_PRIORITY_TIER = "Priority Tier"                    # select: P1/P2/P3
+FIELD_BEST_CONTACT = "Best Contact"                      # rich_text (contact name + page ID)
+FIELD_NEXT_ACTION = "Next Action"                        # select: Call/Email/Sequence/Wait/Review
+FIELD_PRIORITY_REASON = "Priority Reason"                # rich_text (auto-generated top 3 reasons)
+FIELD_ACTION_OWNER = "Action Owner"                      # select: Ibrahim/Ragheed/Soha
+FIELD_ACTION_SLA = "Action SLA"                          # select: 24h/48h/7d/None
+FIELD_AI_RISK_FLAG = "AI Risk Flag"                      # checkbox
+
+# CPS Component Weights
+CPS_WEIGHT_BEST_CONTACT = 0.25    # Best Contact Score
+CPS_WEIGHT_ENGAGEMENT = 0.25      # Engagement Index
+CPS_WEIGHT_FIRMOGRAPHIC = 0.20    # Industry Fit + Size
+CPS_WEIGHT_AI_SIGNAL = 0.15       # AI Priority + AI Qualification + MUHIDE Fit
+CPS_WEIGHT_MOMENTUM = 0.15        # Stage movement + Freshness
+
+# Priority Tier thresholds
+CPS_TIER_P1 = 75        # P1: Act Now — Urgent Call or Strategic Email
+CPS_TIER_P2 = 50        # P2: Pursue — Follow-up Email or Sequence
+# P3: < 50 — Monitor only, auto-sequence if eligible
+
+# Priority Tier labels
+PRIORITY_P1 = "P1"
+PRIORITY_P2 = "P2"
+PRIORITY_P3 = "P3"
+
+# Next Action values
+ACTION_CALL = "Call"
+ACTION_EMAIL = "Email"
+ACTION_SEQUENCE = "Sequence"
+ACTION_WAIT = "Wait"
+ACTION_REVIEW = "Review"
+
+# SLA values
+SLA_24H = "24h"
+SLA_48H = "48h"
+SLA_7D = "7d"
+SLA_NONE = "None"
+
+# Firmographic sub-weights within the FIT component
+CPS_FIT_INDUSTRY_WEIGHT = 0.60   # Industry Fit score
+CPS_FIT_SIZE_WEIGHT = 0.40       # Employee size score
+
+# AI Signal sub-weights
+CPS_AI_PRIORITY_WEIGHT = 0.40    # AI Priority (P1=100, P2=70, P3=40)
+CPS_AI_QUAL_WEIGHT = 0.30        # AI Qualification (Qualified=100, Possible=60, Disqualified=0)
+CPS_AI_MUHIDE_WEIGHT = 0.30      # MUHIDE Fit Score (direct 0-100)
+
+# AI Priority → numeric score mapping
+AI_PRIORITY_SCORE = {"P1": 100, "P2": 70, "P3": 40}
+
+# AI Qualification → numeric score mapping
+AI_QUAL_SCORE = {"Qualified": 100, "Possible Fit": 60, "Disqualified": 0}
+
+# Momentum scoring constants
+MOMENTUM_STAGE_ADVANCED_7D = 40     # Stage moved up in last 7 days
+MOMENTUM_ACTIVITY_3D = 30           # Activity within 3 days
+MOMENTUM_ACTIVITY_7D = 20           # Activity within 7 days
+MOMENTUM_ACTIVITY_14D = 10          # Activity within 14 days
+MOMENTUM_MULTI_ENGAGED = 20         # Multiple contacts engaged
+MOMENTUM_NEW_CONTACT_7D = 10        # New contact added in last 7 days
+
+# CPS caps and guards
+CPS_AI_DISQUALIFIED_CAP = 74        # If AI Qual = Disqualified, cap CPS at P2 max
+CPS_MIN_COMPONENTS = 2              # Min populated components to receive a CPS score
+
 # ─── Contact Stage Auto-Inference (T8) ──────────────────────────────────────
 # Maps Outreach Status → Contact Stage when Apollo returns empty Stage.
 # Applied ONLY when Stage is empty — never overwrites manual or Apollo-set values.

@@ -61,6 +61,8 @@ from core.constants import (
     FIELD_AI_CALL_HOOK,
     AI_ACTION_CALL, AI_ACTION_EMAIL, AI_ACTION_SEQUENCE, AI_ACTION_NONE,
     AI_PRIORITY_P1, AI_PRIORITY_P2, AI_PRIORITY_P3,
+    # Reply Intelligence downstream inputs (P1-C patch)
+    FIELD_AI_CLOSE_PROBABILITY, FIELD_AI_NEXT_ACTION, FIELD_AI_REPLY_STATUS,
 )
 
 # ── AI Priority → Task Priority map ──
@@ -260,6 +262,10 @@ def extract_contact_info(page: Dict) -> Dict:
         "company_ids": get_relation_ids("Company"),
         "company_name": get_text("Company Name for Emails"),
         "contact_owner": get_text(FIELD_CONTACT_OWNER),
+        # Reply Intelligence fields (P1-C: downstream inputs)
+        "ai_close_probability": get_number(FIELD_AI_CLOSE_PROBABILITY),
+        "ai_next_action": get_select(FIELD_AI_NEXT_ACTION),
+        "ai_reply_status": get_select(FIELD_AI_REPLY_STATUS),
     }
 
 
@@ -516,6 +522,45 @@ def create_company_task(
             ai_lines.append("Call Hooks:\n" + ai_data["ai_call_hook"])
         if ai_lines:
             ai_desc_block = "\n\n── Apollo AI Sales Actions ──\n" + "\n".join(ai_lines)
+
+    # ── Reply Intelligence override (P1-C patch) ──
+    # Three downstream inputs from reply_intelligence.py:
+    #   1. AI Close Probability ≥ 60 → boost WARM priority to Critical (high-intent signal)
+    #   2. AI Next Action = "Call Now" → escalate WARM task type to "Urgent Call"
+    #   3. AI Reply Status → appended to description for rep context
+    reply_desc_lines: List[str] = []
+    close_prob = best_contact.get("ai_close_probability", 0) or 0
+    ai_next_action = (best_contact.get("ai_next_action") or "").strip()
+    ai_reply_status = (best_contact.get("ai_reply_status") or "").strip()
+
+    if close_prob >= 60 and task_priority in ("High", "Medium"):
+        task_priority = "Critical"
+        logger.info(
+            f"  [Reply Intel] {best_contact['name']}: Close Probability {close_prob}% "
+            f"→ priority boosted to Critical"
+        )
+    if close_prob > 0:
+        reply_desc_lines.append(f"Close Probability: {close_prob}%")
+
+    if ai_next_action == "Call Now" and rule["task_type"] == "Follow-up":
+        # Escalate WARM follow-up to urgent call when AI says "Call Now"
+        rule = dict(rule)  # shallow copy to avoid mutating the shared PRIORITY_RULES
+        rule["task_type"] = "Urgent Call"
+        rule["action"] = "CALL"
+        rule["channel"] = "Phone"
+        rule["title_template"] = "🔥 AI ESCALATION: {company} — {name}"
+        rule["expected_outcome"] = "AI recommends immediate call — schedule meeting within 24h"
+        logger.info(
+            f"  [Reply Intel] {best_contact['name']}: AI Next Action = 'Call Now' "
+            f"→ escalated Follow-up to Urgent Call"
+        )
+    if ai_next_action:
+        reply_desc_lines.append(f"AI Recommended Action: {ai_next_action}")
+    if ai_reply_status:
+        reply_desc_lines.append(f"Reply Status: {ai_reply_status}")
+
+    if reply_desc_lines:
+        ai_desc_block += "\n\n── Reply Intelligence ──\n" + "\n".join(reply_desc_lines)
 
     description_body = (
         f"Company-level task for {company_name}. "

@@ -55,6 +55,8 @@ from core.constants import (
     FIELD_FULL_NAME, FIELD_EMAIL, FIELD_LEAD_SCORE, FIELD_LEAD_TIER,
     FIELD_SENIORITY, FIELD_OPPORTUNITY_CREATED, FIELD_COMPANY_RELATION,
     FIELD_CONTACT_OWNER,
+    # Reply Intelligence downstream inputs (P1-C patch)
+    FIELD_AI_CLOSE_PROBABILITY,
     # Company fields
     FIELD_COMPANY_NAME, FIELD_PRIMARY_COMPANY_OWNER, FIELD_COMPANY_STAGE,
     COMPANY_STAGE_OPPORTUNITY,
@@ -216,7 +218,11 @@ def fetch_contact_info(contact_id: str) -> Optional[Dict]:
         seniority_sel = props.get(FIELD_SENIORITY, {}).get("select")
         seniority = seniority_sel.get("name", "") if seniority_sel else ""
 
-        return {"name": name, "tier": tier, "score": score, "seniority": seniority}
+        # Reply Intelligence: AI Close Probability (P1-C downstream input)
+        ai_close_prob = props.get(FIELD_AI_CLOSE_PROBABILITY, {}).get("number", 0) or 0
+
+        return {"name": name, "tier": tier, "score": score, "seniority": seniority,
+                "ai_close_probability": ai_close_prob}
     except Exception as e:
         logger.warning(f"Could not fetch contact {contact_id}: {e}")
         return None
@@ -439,6 +445,32 @@ def create_opportunity(
 
     initial_stage = STAGE_ADVANCE_MAP.get(best_meeting_type, OPP_STAGE_DISCOVERY)
     probability = STAGE_PROBABILITY.get(initial_stage, "25%")
+
+    # ── Reply Intelligence override (P1-C patch) ──
+    # If the best stakeholder has a high AI Close Probability from reply_intelligence.py,
+    # use it to override the default stage-based probability (when it's higher).
+    best_ai_prob = max(
+        (s.get("ai_close_probability", 0) or 0 for s in stakeholder_infos if s),
+        default=0,
+    )
+    if best_ai_prob > 0:
+        # Map numeric probability to select option: 10%/25%/50%/75%/90%
+        ai_prob_label = (
+            "90%" if best_ai_prob >= 80 else
+            "75%" if best_ai_prob >= 60 else
+            "50%" if best_ai_prob >= 40 else
+            "25%" if best_ai_prob >= 20 else
+            "10%"
+        )
+        # Only upgrade, never downgrade probability from the stage default
+        prob_order = ["10%", "25%", "50%", "75%", "90%"]
+        if prob_order.index(ai_prob_label) > prob_order.index(probability):
+            logger.info(
+                f"  [Reply Intel] AI Close Probability {best_ai_prob}% → "
+                f"upgrading opportunity probability {probability} → {ai_prob_label}"
+            )
+            probability = ai_prob_label
+
     opp_name = f"{company_name} — {initial_stage}"
 
     # Expected close: 90 days from most recent meeting

@@ -1,4 +1,4 @@
-name: "🔄 Apollo → Notion Daily Pipeline v3.0"
+name: "🔄 Apollo → Notion Daily Pipeline v7.0"
 
 on:
   # Daily at 7 AM KSA (UTC+3 = 04:00 UTC)
@@ -42,6 +42,16 @@ on:
         options:
           - 'yes'
           - 'no'
+      enrich_mode:
+        description: 'Enrichment mode (organizations/enrich)'
+        required: true
+        default: 'missing'
+        type: choice
+        options:
+          - missing    # Only enrich accounts with empty Industry/Employees/Revenue
+          - all        # Enrich all accounts with a domain
+          - force      # Enrich all, ignore cache
+          - skip       # Disable enrichment entirely
 
 permissions:
   contents: write
@@ -85,20 +95,32 @@ jobs:
         working-directory: scripts
         run: pip install -r requirements.txt
 
-      # ─── 4. Run Sync (daily_sync.py v4.0) ─────────────────────────────────
-      - name: "🚀 Run Sync"
+      # ─── 4. Run Sync + Enrichment (daily_sync.py v5.3) ────────────────────
+      - name: "🚀 Run Sync + Enrich"
         working-directory: scripts
         run: |
           MODE="${{ github.event.inputs.sync_mode || 'incremental' }}"
-          echo "🔄 Sync mode: $MODE"
+          ENRICH="${{ github.event.inputs.enrich_mode || 'missing' }}"
+          echo "🔄 Sync mode: $MODE | Enrich mode: $ENRICH"
           case $MODE in
-            incremental)    python core/daily_sync.py --mode incremental --hours 26 --gate strict ;;
-            backfill_week)  python core/daily_sync.py --mode backfill --days 7 ;;
-            backfill_month) python core/daily_sync.py --mode backfill --days 30 ;;
-            full)           python core/daily_sync.py --mode full ;;
+            incremental)    python core/daily_sync.py --mode incremental --hours 26 --gate strict --enrich-mode $ENRICH ;;
+            backfill_week)  python core/daily_sync.py --mode backfill --days 7 --enrich-mode $ENRICH ;;
+            backfill_month) python core/daily_sync.py --mode backfill --days 30 --enrich-mode $ENRICH ;;
+            full)           python core/daily_sync.py --mode full --enrich-mode $ENRICH ;;
           esac
 
-      # ─── 5. Analytics Tracker (engagement sync — MUST run before scoring) ─
+      # ─── 5. AI Sales Actions Enricher (v7.0 — parse AI fields pre-score) ──
+      # Parses Apollo AI Sales Actions raw block → structured sub-fields
+      # (AI Priority, AI Action Type, AI Call Hook, etc.) used by Decision Layer.
+      # Added in v7.0 Blueprint — was previously manual-only.
+      - name: "🤖 AI Sales Actions Enricher"
+        working-directory: scripts
+        continue-on-error: true
+        run: |
+          echo "🤖 Parsing AI Sales Actions into structured fields..."
+          python enrichment/ai_sales_actions_enricher.py --execute --limit 200
+
+      # ─── 6. Analytics Tracker (engagement sync — MUST run before scoring) ─
       # Pulls Apollo Analytics → Notion: email_open_count, replied, opened.
       # Lead Score reads these fields; scoring before analytics = stale scores.
       - name: "📊 Analytics Tracker (pre-score)"
@@ -161,13 +183,25 @@ jobs:
           echo "🎯 Running Lead Score (reads fresh signals from steps 5–8)..."
           python scoring/lead_score.py
 
-      # ─── 11. Update Action Ready ──────────────────────────────────────────
+      # ─── 12. Update Action Ready ──────────────────────────────────────────
       - name: "✅ Update Action Ready"
         if: ${{ github.event.inputs.run_lead_score != 'no' }}
         working-directory: scripts
         run: |
           echo "✅ Updating Action Ready flags..."
           python scoring/action_ready_updater.py
+
+      # ─── 13. Company Priority Scorer (Decision Layer v7.0) ────────────────
+      # Computes Company Priority Score (CPS) → Priority Tier (P1/P2/P3)
+      # → Best Contact → Next Action → Priority Reason → SLA.
+      # Must run AFTER lead_score (needs contact scores) and action_ready.
+      - name: "🏆 Company Priority Scorer"
+        if: ${{ github.event.inputs.run_lead_score != 'no' }}
+        working-directory: scripts
+        continue-on-error: true
+        run: |
+          echo "🏆 Computing Company Priority Scores (Decision Layer v7.0)..."
+          python scoring/company_priority_scorer.py --execute --force
 
       # ─── Pass sync stats to Job 2 ─────────────────────────────────────────
       - name: "📤 Upload Sync Stats"
@@ -178,6 +212,7 @@ jobs:
           path: |
             scripts/core/last_sync_stats.json
             scripts/core/daily_sync.log
+            scripts/core/enrich_cache.json
             scripts/scoring/lead_score.log
             scripts/scoring/action_ready.log
             scripts/enrichment/last_job_postings_stats.json
@@ -190,6 +225,9 @@ jobs:
             scripts/meetings/meeting_tracker.log
             scripts/meetings/last_opportunity_stats.json
             scripts/meetings/opportunity_manager.log
+            scripts/scoring/last_cps_stats.json
+            scripts/scoring/company_priority_scorer.log
+            scripts/enrichment/ai_sales_actions_enricher.log
           retention-days: 1
           if-no-files-found: ignore
 
@@ -344,6 +382,9 @@ jobs:
             scripts/**/last_meeting_tracker_stats.json
             scripts/**/last_analyzer_stats.json
             scripts/**/last_opportunity_stats.json
+            scripts/**/last_cps_stats.json
+            scripts/**/company_priority_scorer.log
+            scripts/**/ai_sales_actions_enricher.log
             scripts/**/dashboard_stats.json
             scripts/**/morning_brief_*.md
           retention-days: 30

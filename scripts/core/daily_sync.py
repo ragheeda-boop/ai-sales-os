@@ -118,6 +118,10 @@ class SyncStats:
         self.duplicates_prevented = 0
         self.failed_contacts = 0
         self.failed_companies = 0
+        self.enrichment_attempted = 0
+        self.enrichment_success = 0
+        self.enrichment_skipped = 0
+        self.enrichment_failed = 0
         self.earliest_updated_at: Optional[str] = None
         self.latest_updated_at: Optional[str] = None
         # Run metadata — set by main() before save() is called
@@ -143,6 +147,7 @@ class SyncStats:
             f"  Notion updated:     {self.notion_updated_contacts} contacts, {self.notion_updated_companies} companies",
             f"  Duplicates prevented: {self.duplicates_prevented}",
             f"  Failed:             {self.failed_contacts} contacts, {self.failed_companies} companies",
+            f"  Enrichment:         {self.enrichment_success}/{self.enrichment_attempted} enriched, {self.enrichment_skipped} skipped, {self.enrichment_failed} failed",
             f"  Earliest updated_at: {self.earliest_updated_at or 'N/A'}",
             f"  Latest updated_at:   {self.latest_updated_at or 'N/A'}",
             "────────────────────────────────────────────────────────",
@@ -165,6 +170,10 @@ class SyncStats:
             "duplicates_prevented":    self.duplicates_prevented,
             "failed_contacts":         self.failed_contacts,
             "failed_companies":        self.failed_companies,
+            "enrichment_attempted":    self.enrichment_attempted,
+            "enrichment_success":      self.enrichment_success,
+            "enrichment_skipped":      self.enrichment_skipped,
+            "enrichment_failed":       self.enrichment_failed,
             "skipped_unchanged":       self.skipped_unchanged,
             "earliest_updated_at":     self.earliest_updated_at,
             "latest_updated_at":       self.latest_updated_at,
@@ -217,6 +226,287 @@ def apollo_request(url: str, body: dict, max_retries: int = 5) -> Optional[dict]
         except requests.exceptions.RequestException as e:
             logger.error(f"Apollo API error: {e}")
             return None
+
+
+# ─── Enrichment Layer (v5.3 — organizations/enrich) ──────────────────────────
+
+# Enrichment cache file: skip re-enriching accounts that were enriched recently.
+ENRICH_CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "enrich_cache.json")
+ENRICH_CACHE_MAX_AGE_DAYS = 30  # Re-enrich after 30 days
+
+
+def _load_enrich_cache() -> Dict[str, str]:
+    """Load enrichment cache: {domain: ISO timestamp of last enrichment}."""
+    if os.path.exists(ENRICH_CACHE_FILE):
+        try:
+            with open(ENRICH_CACHE_FILE, "r") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            logger.warning("[Enrich] Cache file corrupt, starting fresh")
+    return {}
+
+
+def _save_enrich_cache(cache: Dict[str, str]):
+    """Persist enrichment cache to disk."""
+    tmp = ENRICH_CACHE_FILE + ".tmp"
+    try:
+        with open(tmp, "w") as f:
+            json.dump(cache, f, indent=2)
+        os.replace(tmp, ENRICH_CACHE_FILE)
+    except IOError as e:
+        logger.warning(f"[Enrich] Could not save cache: {e}")
+
+
+def _is_cache_fresh(cache: Dict[str, str], domain: str) -> bool:
+    """Check if a domain was enriched within the cache window."""
+    ts = cache.get(domain)
+    if not ts:
+        return False
+    try:
+        cached_at = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        age = datetime.now(timezone.utc) - cached_at
+        return age.days < ENRICH_CACHE_MAX_AGE_DAYS
+    except (ValueError, TypeError):
+        return False
+
+
+def _account_needs_enrichment(account: Dict, mode: str) -> bool:
+    """Determine if an account needs enrichment based on mode and data presence.
+
+    Modes:
+      - 'missing': enrich only if key fields (industry, num_employees, annual_revenue) are empty
+      - 'all': enrich every account that has a domain
+      - 'force': enrich every account (ignore cache too)
+      - 'skip': never enrich
+    """
+    if mode == "skip":
+        return False
+    if mode in ("all", "force"):
+        return True
+    # mode == 'missing' (default): enrich only if critical fields are absent
+    has_industry = bool(account.get("industry"))
+    has_employees = bool(account.get("num_employees") or account.get("estimated_num_employees"))
+    has_revenue = bool(account.get("annual_revenue"))
+    # If ANY of the 3 critical fields is missing, enrich
+    return not (has_industry and has_employees and has_revenue)
+
+
+def enrich_single_account(domain: str, max_retries: int = 3) -> Optional[Dict]:
+    """Call Apollo organizations/enrich for a single domain.
+
+    Returns the 'organization' dict from the response, or None on failure.
+    Uses GET endpoint with exponential backoff on 429/5xx.
+    """
+    url = f"{APOLLO_BASE_URL}/organizations/enrich"
+    params = {"domain": domain}
+
+    for attempt in range(max_retries):
+        try:
+            resp = requests.get(
+                url, params=params, headers=apollo_headers(), timeout=30
+            )
+            if resp.status_code == 429:
+                wait = min(2 ** (attempt + 1), 30)
+                logger.warning(
+                    f"[Enrich] Rate limited on {domain} (attempt {attempt + 1}/{max_retries}), "
+                    f"waiting {wait}s"
+                )
+                time.sleep(wait)
+                continue
+            if resp.status_code >= 500:
+                wait = min(2 ** attempt, 15)
+                logger.warning(
+                    f"[Enrich] Server error {resp.status_code} on {domain}, retrying in {wait}s"
+                )
+                time.sleep(wait)
+                continue
+            resp.raise_for_status()
+            data = resp.json()
+            org = data.get("organization")
+            if org:
+                return org
+            logger.debug(f"[Enrich] No organization data returned for {domain}")
+            return None
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            if attempt < max_retries - 1:
+                wait = min(2 ** attempt, 15)
+                logger.warning(
+                    f"[Enrich] Connection error on {domain} (attempt {attempt + 1}): "
+                    f"{type(e).__name__}, retrying in {wait}s"
+                )
+                time.sleep(wait)
+                continue
+            logger.error(f"[Enrich] Failed to enrich {domain} after {max_retries} retries: {e}")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"[Enrich] API error for {domain}: {e}")
+            return None
+    return None
+
+
+def _merge_enrichment_into_account(account: Dict, org: Dict):
+    """Merge enrichment data from organizations/enrich into an account dict.
+
+    Only fills fields that are currently empty/None in the account.
+    The enriched account dict is then processed by format_company_from_api()
+    which already maps all these fields correctly to Notion.
+    """
+    # Field mapping: enrich response key → account dict key
+    # (some field names differ between accounts/search and organizations/enrich)
+    merge_map = {
+        "industry": "industry",
+        "estimated_num_employees": "num_employees",
+        "annual_revenue": "annual_revenue",
+        "keywords": "keywords",
+        "technology_names": "technologies",
+        "short_description": "short_description",
+        "phone": "phone",
+        "raw_address": "raw_address",
+        "city": "city",
+        "state": "state",
+        "country": "country",
+        "founded_year": "founded_year",
+        "total_funding": "total_funding",
+        "sic_codes": "sic_codes",
+        "naics_codes": "naics_codes",
+    }
+
+    fields_filled = []
+    for enrich_key, account_key in merge_map.items():
+        enrich_val = org.get(enrich_key)
+        if enrich_val is None:
+            continue
+        # For lists, check if non-empty
+        if isinstance(enrich_val, list) and not enrich_val:
+            continue
+        # Only fill if account field is empty/None/zero
+        current = account.get(account_key)
+        if current is None or current == "" or current == 0 or (isinstance(current, list) and not current):
+            account[account_key] = enrich_val
+            fields_filled.append(account_key)
+
+    # Special handling: estimated_annual_revenue (revenue range string like "$20.2B")
+    if not account.get("estimated_annual_revenue"):
+        rev_printed = org.get("annual_revenue_printed") or org.get("organization_revenue_printed")
+        if rev_printed:
+            account["estimated_annual_revenue"] = rev_printed
+            fields_filled.append("estimated_annual_revenue")
+
+    return fields_filled
+
+
+def enrich_accounts_from_apollo(
+    accounts: List[Dict],
+    stats: SyncStats,
+    enrich_mode: str = "missing",
+    enrich_limit: Optional[int] = None,
+    dry_run: bool = False,
+) -> List[Dict]:
+    """Enrich a batch of accounts using Apollo organizations/enrich endpoint.
+
+    Called AFTER accounts are fetched from accounts/search but BEFORE sync_companies().
+    Mutates account dicts in-place by merging enrichment data.
+
+    Args:
+        accounts: List of account dicts from Apollo accounts/search
+        stats: SyncStats instance for tracking
+        enrich_mode: 'missing' (default) | 'all' | 'force' | 'skip'
+        enrich_limit: Max accounts to enrich (None = no limit)
+        dry_run: If True, log what would be enriched but don't call API
+
+    Returns:
+        The same accounts list (mutated in-place for convenience).
+    """
+    if enrich_mode == "skip":
+        logger.info("[Enrich] Enrichment SKIPPED (--enrich-mode skip)")
+        return accounts
+
+    # Load cache (skip for 'force' mode)
+    cache = {} if enrich_mode == "force" else _load_enrich_cache()
+
+    # Build enrichment queue
+    queue = []
+    for acct in accounts:
+        domain = acct.get("domain")
+        if not domain or not domain.strip():
+            continue
+        domain = domain.strip().lower()
+        if not _account_needs_enrichment(acct, enrich_mode):
+            stats.enrichment_skipped += 1
+            continue
+        if enrich_mode != "force" and _is_cache_fresh(cache, domain):
+            stats.enrichment_skipped += 1
+            continue
+        queue.append((acct, domain))
+
+    if enrich_limit and len(queue) > enrich_limit:
+        logger.info(f"[Enrich] Limiting enrichment to {enrich_limit} of {len(queue)} eligible accounts")
+        queue = queue[:enrich_limit]
+
+    if not queue:
+        logger.info(f"[Enrich] No accounts need enrichment (mode={enrich_mode}, {stats.enrichment_skipped} skipped)")
+        return accounts
+
+    logger.info(
+        f"[Enrich] Starting enrichment: {len(queue)} accounts to enrich "
+        f"(mode={enrich_mode}, {stats.enrichment_skipped} skipped, dry_run={dry_run})"
+    )
+
+    if dry_run:
+        for acct, domain in queue:
+            name = acct.get("name", "?")
+            logger.info(f"[Enrich DRY-RUN] Would enrich: {name} ({domain})")
+            stats.enrichment_attempted += 1
+        return accounts
+
+    enriched_count = 0
+    for i, (acct, domain) in enumerate(queue, 1):
+        name = acct.get("name", "?")
+        stats.enrichment_attempted += 1
+
+        try:
+            org = enrich_single_account(domain)
+            if org:
+                fields_filled = _merge_enrichment_into_account(acct, org)
+                if fields_filled:
+                    logger.info(
+                        f"[Enrich] [{i}/{len(queue)}] {name} ({domain}): "
+                        f"filled {len(fields_filled)} fields → {', '.join(fields_filled)}"
+                    )
+                    enriched_count += 1
+                else:
+                    logger.debug(f"[Enrich] [{i}/{len(queue)}] {name} ({domain}): no new fields to fill")
+                stats.enrichment_success += 1
+                # Update cache
+                cache[domain] = datetime.now(timezone.utc).isoformat()
+            else:
+                logger.warning(f"[Enrich] [{i}/{len(queue)}] {name} ({domain}): no data returned")
+                stats.enrichment_failed += 1
+        except Exception as e:
+            logger.error(f"[Enrich] [{i}/{len(queue)}] {name} ({domain}): error — {e}")
+            stats.enrichment_failed += 1
+
+        # Rate limiting: 0.3s between requests to stay well under Apollo limits
+        if i < len(queue):
+            time.sleep(0.3)
+
+        # Progress heartbeat every 50 accounts
+        if i % 50 == 0:
+            logger.info(
+                f"[Enrich] Progress: {i}/{len(queue)} | "
+                f"success={stats.enrichment_success} failed={stats.enrichment_failed}"
+            )
+
+    # Save cache
+    _save_enrich_cache(cache)
+
+    logger.info(
+        f"[Enrich] Complete: {stats.enrichment_success} enriched "
+        f"({enriched_count} had new fields), "
+        f"{stats.enrichment_failed} failed, "
+        f"{stats.enrichment_skipped} skipped"
+    )
+    return accounts
 
 
 # ─── Fetch Functions: Date-Filtered (incremental / backfill) ─────────────────
@@ -840,8 +1130,15 @@ def format_contact_from_api(contact: Dict, company_page_id: Optional[str] = None
     props["Record Source"] = {"select": {"name": "Apollo"}}
     props["Data Status"] = {"select": {"name": "Raw"}}
 
-    # NEW: Engagement booleans — SAFE: only writes if Apollo actually returns the field
-    # Does NOT write False for missing fields (prevents overwriting True with False)
+    # Engagement booleans — SAFE: only writes if Apollo explicitly returns the field.
+    # NOTE (v5.3 audit): Apollo contacts/search does NOT include these keys in its
+    # response (email_sent, email_open, replied, etc. are never present), so this
+    # block effectively never fires. The ACTUAL source for engagement booleans is
+    # enrichment/analytics_tracker.py which reads engagement data from Apollo's
+    # analytics endpoints and writes directly to Notion. This block is kept as a
+    # defensive safety net in case Apollo changes its contacts/search response in
+    # the future to include these fields — it will not overwrite True with False
+    # because of the `apollo_key in contact` guard.
     bool_fields = {
         "Email Sent": "email_sent",
         "Email Opened": "email_open",
@@ -1491,15 +1788,19 @@ def compute_company_stage(contacts: List[Dict], company_lookup: Dict):
 
 # ─── Mode Runners ────────────────────────────────────────────────────────────
 
-def run_incremental(since: datetime, stats: SyncStats, gate_mode: str = "off"):
+def run_incremental(since: datetime, stats: SyncStats, gate_mode: str = "off",
+                    enrich_mode: str = "missing", enrich_limit: Optional[int] = None,
+                    dry_run: bool = False):
     """
     Incremental mode: fetch records updated since `since` and sync to Notion.
     Designed for daily/hourly runs (GitHub Actions, cron).
 
     v4.0: Integrated Ingestion Gate between Apollo fetch and Notion write.
+    v5.3: Added enrichment layer (organizations/enrich) between fetch and sync.
     """
     logger.info(f"MODE: INCREMENTAL — syncing changes since {since.strftime('%Y-%m-%d %H:%M')} UTC")
     logger.info(f"  Ingestion Gate: {gate_mode.upper()}")
+    logger.info(f"  Enrichment: mode={enrich_mode}" + (f", limit={enrich_limit}" if enrich_limit else ""))
 
     # Pre-load Notion data
     logger.info("Step 1: Pre-loading Notion data...")
@@ -1514,6 +1815,13 @@ def run_incremental(since: datetime, stats: SyncStats, gate_mode: str = "off"):
     if not accounts and not contacts:
         logger.info("No updates found in Apollo. Done!")
         return
+
+    # ── Enrichment Layer (v5.3) ──────────────────────────────────────
+    if accounts and enrich_mode != "skip":
+        logger.info(f"Step 2.3: Enriching {len(accounts)} accounts via organizations/enrich...")
+        enrich_accounts_from_apollo(accounts, stats, enrich_mode=enrich_mode,
+                                    enrich_limit=enrich_limit, dry_run=dry_run)
+    # ─────────────────────────────────────────────────────────────────
 
     # ── Ingestion Gate (v6.0) ────────────────────────────────────────
     if gate_mode != "off" and accounts:
@@ -1557,12 +1865,16 @@ def run_incremental(since: datetime, stats: SyncStats, gate_mode: str = "off"):
         compute_company_stage(contacts, company_lookup)
 
 
-def run_backfill(since: datetime, stats: SyncStats):
+def run_backfill(since: datetime, stats: SyncStats, enrich_mode: str = "missing",
+                 enrich_limit: Optional[int] = None, dry_run: bool = False):
     """
     Backfill mode: same as incremental but designed for large historical ranges.
     Saves checkpoints so interrupted runs can be resumed.
+
+    v5.3: Added enrichment layer.
     """
     logger.info(f"MODE: BACKFILL — syncing changes since {since.strftime('%Y-%m-%d %H:%M')} UTC")
+    logger.info(f"  Enrichment: mode={enrich_mode}" + (f", limit={enrich_limit}" if enrich_limit else ""))
 
     # Check for existing checkpoint
     checkpoint = load_checkpoint()
@@ -1581,6 +1893,13 @@ def run_backfill(since: datetime, stats: SyncStats):
     if not (checkpoint and checkpoint.get("companies_done")):
         logger.info("Step 2: Fetching ALL updated accounts from Apollo...")
         accounts = fetch_updated_accounts(since, stats)
+
+        # ── Enrichment Layer (v5.3) ──────────────────────────────────
+        if accounts and enrich_mode != "skip":
+            logger.info(f"Step 2.5: Enriching {len(accounts)} accounts via organizations/enrich...")
+            enrich_accounts_from_apollo(accounts, stats, enrich_mode=enrich_mode,
+                                        enrich_limit=enrich_limit, dry_run=dry_run)
+        # ─────────────────────────────────────────────────────────────
 
         if accounts:
             logger.info(f"Step 3: Syncing {len(accounts)} companies to Notion...")
@@ -1620,14 +1939,18 @@ def run_backfill(since: datetime, stats: SyncStats):
     clear_checkpoint()
 
 
-def run_full(stats: SyncStats):
+def run_full(stats: SyncStats, enrich_mode: str = "missing",
+             enrich_limit: Optional[int] = None, dry_run: bool = False):
     """
     Full mode: fetch ALL records from Apollo (no date filter) and sync everything.
     Uses alphabetical partitioning to bypass pagination limits.
     Complete rebuild of Notion data from Apollo.
+
+    v5.3: Added enrichment layer.
     """
     logger.info("MODE: FULL — complete sync of ALL Apollo records to Notion")
     logger.info("WARNING: This will take a long time. Estimated: 2-4 hours for ~45k contacts + ~15k companies.")
+    logger.info(f"  Enrichment: mode={enrich_mode}" + (f", limit={enrich_limit}" if enrich_limit else ""))
 
     # Pre-load Notion data (for dedup / update-vs-create decisions)
     logger.info("Step 1: Pre-loading Notion data...")
@@ -1638,6 +1961,13 @@ def run_full(stats: SyncStats):
     # Fetch ALL accounts
     logger.info("Step 2: Fetching ALL accounts from Apollo (no date filter)...")
     accounts = fetch_all_accounts(stats)
+
+    # ── Enrichment Layer (v5.3) ──────────────────────────────────────
+    if accounts and enrich_mode != "skip":
+        logger.info(f"Step 2.5: Enriching {len(accounts)} accounts via organizations/enrich...")
+        enrich_accounts_from_apollo(accounts, stats, enrich_mode=enrich_mode,
+                                    enrich_limit=enrich_limit, dry_run=dry_run)
+    # ─────────────────────────────────────────────────────────────────
 
     if accounts:
         logger.info(f"Step 3: Syncing {len(accounts)} companies to Notion...")
@@ -1697,6 +2027,27 @@ Examples:
         default="off",
         help="Ingestion gate mode: strict=block, review=flag, audit=log only, off=disabled (default: off)",
     )
+    parser.add_argument(
+        "--enrich-mode",
+        choices=["missing", "all", "force", "skip"],
+        default="missing",
+        dest="enrich_mode",
+        help="Enrichment mode: missing=only empty fields (default), all=all with domain, force=ignore cache, skip=disable",
+    )
+    parser.add_argument(
+        "--enrich-limit",
+        type=int,
+        default=None,
+        dest="enrich_limit",
+        help="Max accounts to enrich per run (default: no limit)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=False,
+        dest="dry_run",
+        help="Log enrichment actions without calling API or writing to Notion",
+    )
     args = parser.parse_args()
 
     # Validate args
@@ -1728,12 +2079,17 @@ Examples:
     logger.info("=" * 80)
 
     try:
+        enrich_kwargs = dict(
+            enrich_mode=args.enrich_mode,
+            enrich_limit=args.enrich_limit,
+            dry_run=args.dry_run,
+        )
         if args.mode == "incremental":
-            run_incremental(since, stats, gate_mode=args.gate)
+            run_incremental(since, stats, gate_mode=args.gate, **enrich_kwargs)
         elif args.mode == "backfill":
-            run_backfill(since, stats)
+            run_backfill(since, stats, **enrich_kwargs)
         elif args.mode == "full":
-            run_full(stats)
+            run_full(stats, **enrich_kwargs)
     except Exception as e:
         logger.error(f"Sync failed: {e}", exc_info=True)
         sys.exit(1)
