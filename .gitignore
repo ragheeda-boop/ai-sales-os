@@ -88,3 +88,7 @@ data/snapshots/notion_companies.json
 # ─── Per-module runtime stats (not for git) ────────────────
 last_reply_intelligence_stats.json
 last_full_reset_stats.json
+
+# Runtime cache/stats
+enrich_cache.json
+last_*_stats.json
