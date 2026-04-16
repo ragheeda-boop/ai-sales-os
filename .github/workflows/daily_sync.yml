@@ -103,7 +103,7 @@ jobs:
           ENRICH="${{ github.event.inputs.enrich_mode || 'missing' }}"
           echo "🔄 Sync mode: $MODE | Enrich mode: $ENRICH"
           case $MODE in
-            incremental)    python core/daily_sync.py --mode incremental --hours 26 --gate strict --enrich-mode $ENRICH ;;
+            incremental)    python core/daily_sync.py --mode incremental --hours 26 --gate audit --enrich-mode $ENRICH ;;
             backfill_week)  python core/daily_sync.py --mode backfill --days 7 --enrich-mode $ENRICH ;;
             backfill_month) python core/daily_sync.py --mode backfill --days 30 --enrich-mode $ENRICH ;;
             full)           python core/daily_sync.py --mode full --enrich-mode $ENRICH ;;

@@ -7,7 +7,7 @@ This is a production-grade Sales Operating System, not a hobby project.
 
 **System:** Apollo.io → Python Engine → Notion CRM → GitHub Actions → Odoo (future)
 **Owner:** Ragheed
-**Version:** 7.0 | April 2026 | Modular Architecture + Company-Centric Operating Model + Phase 3.5 Complete + Decision Layer (Company Priority Scorer) + 7 scripts archived + Safe Execution Order + Stage Conflict Guards + Freshness Guard + Enrichment Layer v5.3 + **Score Calibrator: v1.5 weights fixed**
+**Version:** 8.0 | April 2026 | **Activation-First Mode** — removed pre-outreach contact block (Decision #35), gate strict→audit, CPS min components 2→1 + sparse-data cap (Decision #36). Modular Architecture + Company-Centric Operating Model + Phase 3.5 Complete + Decision Layer v7.0 + Action Engine v3.0 (CPS-Driven) + Safe Execution Order + Stage Conflict Guards + Freshness Guard + Enrichment Layer v5.3 + Score Calibrator v1.5
 
 ---
 
@@ -60,7 +60,7 @@ AI Sales OS/
 │   ├── core/
 │   │   ├── constants.py              → Unified field names & thresholds (single source of truth)
 │   │   ├── notion_helpers.py         → Shared Notion API utilities
-│   │   ├── daily_sync.py             → Main sync engine v5.1 (3 modes + local timestamp filter + Company-Centric)
+│   │   ├── daily_sync.py             → Main sync engine v8.0 (3 modes + Activation-First contact filter + Company-Centric)
 │   │   ├── doc_sync_checker.py       → Documentation drift validator [v4.1]
 │   │   └── ai_sales_actions_parser.py → Parses Apollo AI Sales Actions typed_custom_field (Decision #26)
 │   ├── scoring/
@@ -187,13 +187,13 @@ AI Sales OS/
 |--------|--------|---------|--------|
 | `core/constants.py` | core | Unified field names, score thresholds, SLA hours, seniority normalization map, ICP_INDUSTRY_SCORES, STAGE_INFER_FROM_OUTREACH | **ACTIVE** |
 | `core/notion_helpers.py` | core | Shared Notion API utilities (create, update, preload, rate limiter) | **ACTIVE** |
-| `core/daily_sync.py` | core | Apollo → Notion sync engine (**v5.3**, Company-Centric: Apollo-First Ownership Priority, Primary/Supporting Owner, Company Metrics, Company Stage derivation, 3 modes, local timestamp filter, seniority normalization, safe booleans, Apollo signals + AI fields, **AI Sales Actions raw block** from typed_custom_fields, **Enrichment Layer** via `organizations/enrich` — fills Industry/Employees/Revenue/Keywords/Technologies) | **ACTIVE** |
+| `core/daily_sync.py` | core | Apollo → Notion sync engine (**v8.0**, Company-Centric: **Activation-First contact filter** — requires owner+email only, no prior outreach needed (Decision #35). Apollo-First Ownership Priority, Primary/Supporting Owner, Company Metrics, Company Stage derivation, 3 modes, local timestamp filter, seniority normalization, safe booleans, Apollo signals + AI fields, **AI Sales Actions raw block** from typed_custom_fields, **Enrichment Layer** via `organizations/enrich` — fills Industry/Employees/Revenue/Keywords/Technologies) | **ACTIVE** |
 | `core/doc_sync_checker.py` | core | Documentation drift validator [v4.1] | **ACTIVE** |
 | `scoring/lead_score.py` | scoring | Lead Score v1.5 (0-100) + Lead Tier (HOT/WARM/COLD) + Sort Score — v1.5 adds Industry Fit (15%) + Recency Tiebreaker | **ACTIVE** |
 | `scoring/action_ready_updater.py` | scoring | Evaluates 5 conditions to set Action Ready checkbox | **ACTIVE** |
 | `scoring/score_calibrator.py` | scoring | Self-learning weight adjustment based on actual outcomes (v1.5 weights fixed) | **ACTIVE (v4.0)** |
 | `scoring/company_priority_scorer.py` | scoring | Company Priority Score (Decision Layer v7.0) — computes CPS + Priority Tier + Best Contact + Next Action per company | **ACTIVE (v7.0)** |
-| `automation/auto_tasks.py` | automation | Action Engine v2.0 — Company-Centric: ONE task per company per tier (HOT→"Urgent Call", WARM→"Follow-up"), Task Owner from Primary Company Owner, company-level dedup, bulk preload for owners | **ACTIVE** |
+| `automation/auto_tasks.py` | automation | Action Engine v3.0 — CPS-Driven: routes tasks by Priority Tier (P1→Urgent Call/Strategic Email, P2→Follow-up/Scheduled Call, P3→No task), AI Action Type variants, CPS+Priority Reason+AI Call Hook in description, targeted per-page fetch, legacy Lead Tier fallback | **ACTIVE (v3.0)** |
 | `automation/auto_sequence.py` | automation | Auto-enrolls Action Ready contacts into Apollo Sequences | **ACTIVE (v4.0)** |
 | `automation/outcome_tracker.py` | automation | Outcome Tracker v1.0 — closes Task → Contact loop: sets Contact Responded, Last Contacted, Meeting Booked. Filters auto-closed bulk tasks. Idempotent. Requires NOTION_DATABASE_ID_TASKS + NOTION_DATABASE_ID_CONTACTS (no hardcoded fallbacks). | **ACTIVE** |
 | `automation/lead_inbox_mover.py` | automation | **v0.2** — Moves Qualified leads from 📥 Lead Inbox into real Company + Contact records. Two modes: `backfill` (retroactive for already-Moved leads missing CRM refs) and `forward` (new Qualified leads). Dedup: Company by Domain → Name, Contact by Email. Writes CRM Company Ref, CRM Contact Ref, CRM Sync State, CRM Synced At back to Lead Inbox. Generic email domains excluded from domain dedup. Pipe-separated multi-person emails are stripped and flagged in Notes. | **ACTIVE (v0.2)** |
@@ -246,7 +246,7 @@ Superseded scripts (still in archive/ but replaced by core/daily_sync.py):
 - **Rate Limiting:** 5x exponential backoff on 429/500 errors.
 - **Parallel Workers:** `MAX_WORKERS = 3` for Notion writes.
 - **Local Timestamp Filter (v4.2):** After Apollo fetch, a client-side filter drops any record whose `updated_at` is before the requested `since` datetime. Fixes issue where Apollo's date-only API filter was returning all 44,877 contacts on every incremental run, causing 4-5 hour runtimes instead of minutes.
-- **Contact Qualification Filter (v4.4):** After fetching contacts, applies two hard gates before sync: (1) `owner_id` must exist, (2) `emailer_campaign_ids` must be non-empty with at least one non-failed campaign. Contacts that fail either condition are skipped entirely. This ensures only real, owned, outreached contacts enter Notion.
+- **Contact Qualification Filter (v8.0 — Activation-First):** After fetching contacts, applies two hard gates before sync: (1) `owner_id` must exist, (2) must have an email address. **v8.0 change (Decision #35):** Removed the v4.4 requirement for `emailer_campaign_ids` (prior email outreach). That gate was the #1 root cause of 0 tasks / 0 sequences / all-P3 scores — it blocked ALL pre-outreach contacts from entering Notion, preventing the system from ever creating tasks or enrolling contacts in sequences. Pre-outreach contacts now sync with Outreach Status = empty, making them eligible for scoring, Action Ready evaluation, and sequence enrollment.
 - **Contact Owner Sync (v4.4):** Maps Apollo `owner_id` to display names (Ibrahim/Ragheed/Soha) via `APOLLO_OWNER_MAP` in core/constants.py. Writes to `Contact Owner` field in Notion as **rich_text**. The Notion schema confirms the field type is `text` (rich_text) — code and schema are aligned. Written via `_rt()` helper in core/daily_sync.py.
 - **Company Ownership (v5.1 — Apollo-First):** After contact sync, runs `compute_company_ownership(contacts, company_lookup, accounts=accounts)` with priority logic: **(1)** if the Apollo Account has `owner_id` → mapped via `APOLLO_OWNER_MAP` becomes Primary Company Owner and Supporting Owners is cleared (Apollo is authoritative); **(2)** otherwise falls back to v5.0 contact-based logic (owner with most contacts, tie-break: most recent activity → Primary; others → Supporting). Unknown `owner_id` values log a warning and drop to fallback. Writes Primary Company Owner as select, Supporting Owners as rich_text. See Decision #27.
 - **Company Metrics (v5.0):** `compute_company_metrics()` writes Active Contacts count, Emailed Contacts count, Engaged Contacts count, Last Engagement Date, and Sales OS Active checkbox per company.
@@ -327,30 +327,46 @@ python scoring/lead_score.py --dry-run      # calculate but don't write
 
 ---
 
-## automation/auto_tasks.py — Action Engine v2.0 (Company-Centric)
+## automation/auto_tasks.py — Action Engine v3.0 (CPS-Driven)
 
-Creates Notion tasks at the **company level** for Action Ready contacts. ONE task per company per tier, not one per contact.
+Creates Notion tasks at the **company level** using CPS Priority Tier routing. ONE task per company per task type, not one per contact. Falls back to legacy Lead Tier logic if CPS data is absent.
 
-### Priority Rules
+### CPS Priority Rules (v3.0 — Primary)
 
-| Tier | Min Score | Priority | Task Type | Action | Channel | SLA |
-|------|-----------|----------|-----------|--------|---------|-----|
-| **HOT** | ≥ 80 | Critical | **Urgent Call** | CALL | Phone | 24 hours |
-| **WARM** | ≥ 50 | High | **Follow-up** | FOLLOW-UP | Email | 48 hours |
+| Priority Tier | AI Action Type | Priority | Task Type | Action | Channel | SLA |
+|---------------|---------------|----------|-----------|--------|---------|-----|
+| **P1** | default | Critical | **Urgent Call** | CALL | Phone | 24 hours |
+| **P1** | Email | Critical | **Strategic Email** | EMAIL | Email | 24 hours |
+| **P2** | default | High | **Follow-up** | FOLLOW-UP | Email | 48 hours |
+| **P2** | Call | High | **Scheduled Call** | CALL | Phone | 48 hours |
+| **P3** | — | — | — | — | — | No task created |
 
-**IMPORTANT:** HOT uses task_type = "Urgent Call" and WARM uses "Follow-up". These MUST be different so company-level dedup does not block HOT tasks when a WARM task already exists for the same company. (Fixed in C-03.)
+**AI Action Type** is derived from the company's `Next Action` field (set by Company Priority Scorer). If it contains "Email" → Strategic Email variant; if it contains "Call" → Scheduled Call variant; otherwise → default for that tier.
 
-### Company-Centric Rules (v5.0)
+### Legacy Fallback Rules (when CPS data absent)
+
+| Tier | Min Score | Priority | Task Type | SLA |
+|------|-----------|----------|-----------|-----|
+| **HOT** | ≥ 80 | Critical | **Urgent Call** | 24 hours |
+| **WARM** | ≥ 50 | High | **Follow-up** | 48 hours |
+
+### Company-Centric Rules (v5.0+)
 
 - **ONE task per company per task type** — contacts are grouped by company, best-scored contact selected as primary
-- **Task Owner** = Primary Company Owner (from Companies DB) → fallback to Contact Owner
+- **Task Owner** = CPS Action Owner → Primary Company Owner → Contact Owner fallback
 - **Owner Source** field tracks provenance: "Company Primary" or "Contact Owner"
-- **Company context** in task description shows all contacts at the company with scores
+- **CPS context** in task description includes: CPS score, Priority Tier, Priority Reason, AI Call Hook (when available)
+- **Company context** shows all contacts at the company with scores
 - **Company Stage at Creation** recorded for audit trail
 
 ### Duplicate Prevention
 
 Before creating a task, checks the Tasks DB for any existing open task (Status ≠ "Completed") linked to the same **company** with the same task type. If one exists, the company is skipped.
+
+### Performance (v3.0)
+
+- **Targeted per-page fetch** — only fetches company pages for companies that have Action Ready contacts (~53 pages), NOT the full 16K Companies DB. Reduces preload from 15+ minutes to ~53 seconds.
+- Three data layers extracted per company in single pass: Owner data, AI data (AI Call Hook, AI Action Type), CPS data (CPS, Priority Tier, Next Action, Priority Reason, Action Owner, Action SLA).
 
 ### Commands
 
@@ -599,7 +615,7 @@ Activities, Email Hub — used for execution workflow.
 4. **Companies before Contacts.** Company sync must complete before contact sync.
 5. **No invented data.** Never guess or fabricate values for empty fields.
 6. **No unowned contacts.** Every contact synced MUST have an Apollo owner_id. Contacts without owners are filtered before sync.
-7. **No untouched contacts.** Every contact synced MUST have been enrolled in at least one email campaign with a non-failed status. Raw Apollo data with no outreach is not synced.
+7. **Pre-outreach contacts allowed (v8.0).** Contacts with an owner and email are synced even without prior outreach. The v4.4 rule requiring `emailer_campaign_ids` was removed in Decision #35 — it was the root cause of the system being unable to create tasks or enroll contacts in sequences. Pre-outreach contacts enter with Outreach Status = empty and are eligible for scoring, Action Ready, and sequence enrollment.
 8. **Company Owners = derived.** Company Owners multi-select is computed from Contact Owners, NOT from Apollo Account owner_id (which is usually null).
 
 ---
@@ -608,7 +624,7 @@ Activities, Email Hub — used for execution workflow.
 
 **File:** `.github/workflows/daily_sync.yml`
 **Schedule:** Daily at 7:00 AM KSA (04:00 UTC)
-**Version:** 7.0 (Decision Layer v7.0 — Decision #33 + AI Sales Actions Enricher in pipeline + Company Priority Scorer)
+**Version:** 8.0 (Activation-First — Decision #35 + Decision #36. Gate strict→audit. CPS min components 2→1. Prior: Decision Layer v7.0 + AI Sales Actions + CPS-Driven Action Engine v3.0)
 
 ### Why 2 Jobs?
 The pipeline was exceeding GitHub's 6-hour per-job limit. Splitting into 2 sequential jobs gives each its own 6-hour clock — total capacity: ~9 hours.
@@ -620,7 +636,7 @@ All signal-writing scripts (analytics_tracker, outcome_tracker, meeting_tracker,
 1. Checkout repository
 2. Setup Python 3.11 with pip cache
 3. Install dependencies
-4. `python scripts/core/daily_sync.py --mode incremental --hours 26 --enrich-mode missing` (sync + enrichment; fetches accounts, enriches missing firmographics via `organizations/enrich`, syncs to Notion; `compute_company_stage` guarded by `STAGE_TERMINAL` + `is_stage_regression`)
+4. `python scripts/core/daily_sync.py --mode incremental --hours 26 --gate audit --enrich-mode missing` (sync + enrichment; **v8.0: gate=audit** (was strict), **Activation-First contact filter** — owner+email only, no prior outreach needed; fetches accounts, enriches missing firmographics via `organizations/enrich`, syncs to Notion; `compute_company_stage` guarded by `STAGE_TERMINAL` + `is_stage_regression`)
 5. `python scripts/enrichment/ai_sales_actions_enricher.py` (**NEW v7.0** — parses Apollo AI Sales Actions block → writes AI Priority, AI Fit, AI Tone, AI Call Hook to Companies DB, continue-on-error)
 6. `python scripts/enrichment/analytics_tracker.py --days 7` (writes `email_open_count`, Replied, Email Opened before scoring reads them, continue-on-error)
 7. `python scripts/automation/outcome_tracker.py --execute` (writes Contact Responded, Last Contacted, Meeting Booked, continue-on-error)
@@ -1007,9 +1023,15 @@ See `pipelines/file_sync/00_START_HERE.md` for full setup and usage guide.
 
 33. **Decision Layer v7.0 (2026-04-14)** — Added `scripts/scoring/company_priority_scorer.py` as the unified Decision Layer v7.0. Computes Company Priority Score (CPS) per company using 5 weighted components: Best Contact Score (25%), Engagement Index (25%), Firmographic Fit (20%), AI Signal Strength (15%), Momentum (15%). Outputs: CPS (0-100), Priority Tier (P1/P2/P3), Best Contact, Next Action, Priority Reason, Action Owner, Action SLA, AI Risk Flag. P1 threshold = 75, P2 = 50. Decision Layer v7.0 replaces the dead ai_decision_engine (dead-code path). Activated `ai_sales_actions_enricher.py` in Job 1 Step 5 (was manual-only, now feeds scoring + decision layer). Archived 7 dead/redundant scripts: ai_decision_engine.py, ai_action_executor.py, ai_sequence_generator.py, call_script_builder.py, cleanup_overdue_tasks.py, archive_unqualified.py, fix_seniority.py. Fixed score_calibrator.py weights from v1.1 (Size 45%, Seniority 35%, ...) to v1.5 (Size 35%, Seniority 30%, Industry Fit 15%, Intent 10%, Engagement 10%). New fields added to constants.py (CPS thresholds, Decision Layer field constants). GitHub Actions workflow updated to v7.0 with new steps.
 
+34. **Action Engine v3.0 — CPS-Driven (2026-04-14)** — Upgraded `scripts/automation/auto_tasks.py` from Lead Tier routing (HOT/WARM/COLD) to CPS Priority Tier routing (P1/P2/P3). New `CPS_RULES` dict maps (Priority Tier × AI Action Type) to task configurations: P1 default→Urgent Call, P1+Email→Strategic Email, P2 default→Follow-up, P2+Call→Scheduled Call, P3→no task created. AI Action Type derived from CPS `Next Action` field. Task description now includes CPS score, Priority Tier, Priority Reason, and AI Call Hook. Legacy Lead Tier fallback preserved for companies without CPS data. Performance optimization: replaced 3× full-DB scan of 16K companies (~15+ min) with targeted per-page fetch for only relevant companies (~53 sec). CPS bugfixes in same release: AI Risk Flag changed from checkbox to rich_text, insufficient-data early-return now includes all required keys. Committed as v7.0.1.
+
+35. **Activation-First Contact Filter (v8.0 — 2026-04-17)** — **Critical operational fix.** The v4.4 Contact Qualification Filter required `emailer_campaign_ids` (proof that an email had been sent via Apollo) as a hard gate before ANY contact could sync to Notion. This was the **#1 root cause** of: (a) 0 tasks created, (b) 0 eligible contacts for auto_sequence, (c) all companies scoring P3 in CPS, (d) 0 Action Ready contacts. The filter silently dropped ~90% of Apollo contacts because they had an owner but had never been enrolled in an Apollo email campaign. **Fix:** Removed the `emailer_campaign_ids` requirement. New filter gates: (1) `owner_id` must exist (hard), (2) must have email address (hard). Pre-outreach contacts now sync with Outreach Status = empty, flow through scoring (Lead Score, Action Ready, CPS), and become eligible for task creation and sequence enrollment. The `_contact_has_email_sent()` function is retained as a utility for downstream scripts (analytics_tracker) but is no longer a sync gate. **Impact:** Expected 10-40x increase in contacts entering Notion, proportional increase in scored contacts, Action Ready contacts, tasks, and sequence enrollments. **Also changed:** GitHub Actions workflow `--gate strict` → `--gate audit` (gate still logs results but doesn't block companies). Data Rule #7 updated.
+
+36. **CPS Sparse-Data Handling (v8.0 — 2026-04-17)** — `CPS_MIN_COMPONENTS` reduced from 2 → 1 in `core/constants.py`. With pre-outreach data, most companies only have 1 populated CPS component (Firmographic Fit or Best Contact Score), because Engagement, AI Signal, and Momentum are all empty. The previous minimum of 2 caused ALL companies to return `P3 / insufficient data`, killing the entire Decision Layer → Action Engine pipeline. **Sparse-data cap added** in `company_priority_scorer.py`: when only 1 component is populated, CPS is capped at 65 (can reach P2 but not P1); when 2 components are populated, capped at 80. This prevents weight-redistribution inflation while still allowing companies to receive actionable priority tiers. **Expected impact:** Companies with strong firmographic fit (target industry + large size) will now score P2 (50-65 CPS), generating Follow-up tasks. Companies with strong firmographic fit AND a high-scoring contact will reach P1 (65-80), generating Urgent Call tasks.
+
 ---
 
-## Module Architecture (v7.0 — Decision Layer Complete)
+## Module Architecture (v8.0 — Activation-First)
 
 All 22 active production scripts organized into 8 functional modules under `scripts/`. Each script writes logs to its own module subdirectory.
 
@@ -1024,7 +1046,7 @@ All 22 active production scripts organized into 8 functional modules under `scri
 | `scripts/monitoring/` | health_check.py, dashboard_generator.py, morning_brief.py | Observability |
 | `scripts/webhooks/` | webhook_server.py, verify_links.py | Integration |
 
-**Status:** v7.0 deployed — 7 scripts archived (ai_decision_engine, ai_action_executor, ai_sequence_generator, call_script_builder, cleanup_overdue_tasks, archive_unqualified, fix_seniority). Company Priority Scorer added as unified Decision Layer. GitHub Actions v7.0 deployed.
+**Status:** v8.0 deployed — Activation-First mode (Decision #35 + #36). 7 scripts archived. Company Priority Scorer as unified Decision Layer. GitHub Actions v8.0 with gate=audit.
 
 ---
 
@@ -1068,8 +1090,8 @@ Every feature classified by its actual implementation status.
 | Lead Scoring v1.5 | scripts/scoring/lead_score.py | Lead Score, Lead Tier, Sort Score | Job1 Step 11 | ✅ Active |
 | Action Ready Eval | scripts/scoring/action_ready_updater.py | Action Ready checkbox | Job1 Step 12 | ✅ Active |
 | Company Priority Score (Decision Layer) | scripts/scoring/company_priority_scorer.py | CPS, Priority Tier, Best Contact, Next Action, Action Owner, Action SLA | Job1 Step 13 | ✅ Active (v7.0) |
-| HOT Task (Urgent Call) | scripts/automation/auto_tasks.py | Task Type = "Urgent Call" | Job2 Step 1 | ✅ Active (Fixed C-03) |
-| WARM Task (Follow-up) | scripts/automation/auto_tasks.py | Task Type = "Follow-up" | Job2 Step 1 | ✅ Active |
+| P1 Task (Urgent Call / Strategic Email) | scripts/automation/auto_tasks.py v3.0 | Task Type = "Urgent Call" or "Strategic Email" | Job2 Step 1 | ✅ Active (v3.0 CPS-Driven) |
+| P2 Task (Follow-up / Scheduled Call) | scripts/automation/auto_tasks.py v3.0 | Task Type = "Follow-up" or "Scheduled Call" | Job2 Step 1 | ✅ Active (v3.0 CPS-Driven) |
 | Apollo Sequence Enrollment | scripts/automation/auto_sequence.py | Outreach Status = "In Sequence" | Job2 Step 2 | ✅ Active |
 | Meeting AI Analysis | scripts/meetings/meeting_analyzer.py | Key Takeaways, Next Steps | Job2 Step 3 | ✅ Active (needs ANTHROPIC_API_KEY) |
 | Health Check | scripts/monitoring/health_check.py | — (stdout only) | Job2 Step 4 | ✅ Active |

@@ -906,7 +906,7 @@ FIELD_NEXT_ACTION = "Next Action"                        # select: Call/Email/Se
 FIELD_PRIORITY_REASON = "Priority Reason"                # rich_text (auto-generated top 3 reasons)
 FIELD_ACTION_OWNER = "Action Owner"                      # select: Ibrahim/Ragheed/Soha
 FIELD_ACTION_SLA = "Action SLA"                          # select: 24h/48h/7d/None
-FIELD_AI_RISK_FLAG = "AI Risk Flag"                      # checkbox
+FIELD_AI_RISK_FLAG = "AI Risk Flag"                      # rich_text (was checkbox, changed to text in v7.0.1)
 
 # CPS Component Weights
 CPS_WEIGHT_BEST_CONTACT = 0.25    # Best Contact Score
@@ -963,7 +963,11 @@ MOMENTUM_NEW_CONTACT_7D = 10        # New contact added in last 7 days
 
 # CPS caps and guards
 CPS_AI_DISQUALIFIED_CAP = 74        # If AI Qual = Disqualified, cap CPS at P2 max
-CPS_MIN_COMPONENTS = 2              # Min populated components to receive a CPS score
+CPS_MIN_COMPONENTS = 1              # Min populated components to receive a CPS score
+                                    # v8.0: reduced from 2 → 1. With pre-outreach data,
+                                    # most companies only have Firmographic Fit or BCS.
+                                    # CPS_MIN_COMPONENTS=2 caused ALL companies to return
+                                    # P3/insufficient-data, killing the entire Action Engine.
 
 # ─── Contact Stage Auto-Inference (T8) ──────────────────────────────────────
 # Maps Outreach Status → Contact Stage when Apollo returns empty Stage.

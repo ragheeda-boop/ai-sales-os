@@ -759,9 +759,12 @@ def fetch_all_accounts(stats: SyncStats) -> List[Dict]:
 
 
 # ─── Contact Qualification Filter ────────────────────────────────────────────
-# Only sync contacts that have:
-#   1. An owner assigned (owner_id not null)
-#   2. At least one email actually sent (enrolled in campaign + not all failed)
+# v8.0 — Activation-First Mode:
+#   Gate 1: owner_id must exist (hard requirement — no unowned contacts)
+#   Gate 2: Must have email address (need a way to reach them)
+# Previously also required emailer_campaign_ids (email already sent), which
+# blocked ALL pre-outreach contacts and prevented the system from ever
+# creating tasks or enrolling contacts in sequences. Removed in v8.0.
 
 def _contact_has_email_sent(contact: Dict) -> bool:
     """Check if a contact has had at least one email actually sent.
@@ -770,6 +773,11 @@ def _contact_has_email_sent(contact: Dict) -> bool:
     campaign status is not 'failed'. This ensures we only sync
     contacts who received real outreach, not just enrolled ones
     that bounced/failed.
+
+    NOTE (v8.0): This function is NO LONGER used as a hard gate in
+    filter_qualified_contacts(). It is retained as a utility for
+    downstream scripts that need to distinguish outreached vs.
+    pre-outreach contacts (e.g., analytics_tracker, scoring).
     """
     campaigns = contact.get("emailer_campaign_ids") or []
     if not campaigns:
@@ -791,17 +799,26 @@ def _contact_has_email_sent(contact: Dict) -> bool:
 
 
 def filter_qualified_contacts(contacts: List[Dict], stats: SyncStats) -> List[Dict]:
-    """Filter contacts to only those with an owner AND email actually sent.
+    """Filter contacts to only those meeting minimum data quality gates.
 
-    This is the core data quality gate:
-    - No contact syncs without an owner (owner_id must exist)
-    - No contact syncs without real outreach (at least one non-failed campaign)
+    v8.0 Activation-First gates (relaxed from v4.4):
+    - Gate 1: owner_id must exist (hard — no unowned contacts)
+    - Gate 2: Must have an email address (hard — need contact method)
+
+    The previous v4.4 gate also required emailer_campaign_ids (prior outreach).
+    That gate was the #1 root cause of 0 tasks / 0 sequences / all-P3 scores
+    because it prevented pre-outreach contacts from entering the system entirely.
+
+    Contacts without prior outreach are now synced with an Outreach Status of
+    empty/None, which downstream scripts (auto_sequence) use to identify them
+    as candidates for first-touch enrollment.
 
     Logs detailed breakdown of why contacts were filtered.
     """
     qualified = []
     skipped_no_owner = 0
     skipped_no_email = 0
+    pre_outreach_count = 0
 
     for c in contacts:
         owner_id = c.get("owner_id")
@@ -809,16 +826,23 @@ def filter_qualified_contacts(contacts: List[Dict], stats: SyncStats) -> List[Di
             skipped_no_owner += 1
             continue
 
-        if not _contact_has_email_sent(c):
+        # Must have an email address
+        email = c.get("email")
+        if not email or not email.strip():
             skipped_no_email += 1
             continue
+
+        # Track pre-outreach vs. outreached contacts for logging
+        if not _contact_has_email_sent(c):
+            pre_outreach_count += 1
 
         qualified.append(c)
 
     total_skipped = skipped_no_owner + skipped_no_email
     logger.info(
         f"📋 Contact qualification filter: {len(qualified)} passed / {len(contacts)} total "
-        f"({total_skipped} filtered: {skipped_no_owner} no owner, {skipped_no_email} no email sent)"
+        f"({total_skipped} filtered: {skipped_no_owner} no owner, {skipped_no_email} no email) "
+        f"| {pre_outreach_count} pre-outreach, {len(qualified) - pre_outreach_count} outreached"
     )
 
     return qualified

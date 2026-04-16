@@ -213,6 +213,8 @@ def update_page(page_id: str, properties: dict):
         logger.warning(f"Rate limited on update, waiting {retry}s...")
         time.sleep(retry)
         return update_page(page_id, properties)
+    if resp.status_code >= 400:
+        logger.error(f"  Notion API {resp.status_code} for page {page_id}: {resp.text[:500]}")
     resp.raise_for_status()
     return resp.json()
 
@@ -491,6 +493,21 @@ def score_company(company: dict, contacts: list) -> Optional[dict]:
             adjusted_weight = weight / total_populated_weight
             cps += value * adjusted_weight
 
+    # ── Sparse-data cap (v8.0) ──────────────────────────────────────
+    # When fewer than 3 components are populated, cap CPS to prevent
+    # single-component weight redistribution from inflating scores.
+    # E.g., Firmographic Fit alone (industry=100, size=100) would
+    # redistribute to CPS=100 → P1, which is too aggressive for a
+    # company with zero engagement or contact signals.
+    #
+    # With 1 component: max CPS = 65 (can reach P2 but not P1)
+    # With 2 components: max CPS = 80 (can reach P1 with strong signals)
+    SPARSE_DATA_CAPS = {1: 65.0, 2: 80.0}
+    sparse_cap = SPARSE_DATA_CAPS.get(populated_count)
+    if sparse_cap is not None and cps > sparse_cap:
+        cps = sparse_cap
+    # ────────────────────────────────────────────────────────────────
+
     # ── Apply guards ──
     cps = min(cps, 100)
 
@@ -558,23 +575,31 @@ def build_update_payload(result: dict) -> dict:
     props = {}
 
     # Number field
-    props[FIELD_COMPANY_PRIORITY_SCORE] = {"number": result["score"]}
+    props[FIELD_COMPANY_PRIORITY_SCORE] = {"number": result.get("score", 0)}
 
     # Select fields
-    props[FIELD_PRIORITY_TIER] = {"select": {"name": result["tier"]}}
-    props[FIELD_NEXT_ACTION] = {"select": {"name": result["next_action"]}}
-    props[FIELD_ACTION_SLA] = {"select": {"name": result["sla"]}}
+    tier = result.get("tier", PRIORITY_P3)
+    next_action = result.get("next_action", ACTION_WAIT)
+    sla = result.get("sla", SLA_NONE)
 
-    if result["owner"] and result["owner"] in TEAM_MEMBERS:
-        props[FIELD_ACTION_OWNER] = {"select": {"name": result["owner"]}}
+    props[FIELD_PRIORITY_TIER] = {"select": {"name": tier}}
+    props[FIELD_NEXT_ACTION] = {"select": {"name": next_action}}
+    props[FIELD_ACTION_SLA] = {"select": {"name": sla}}
+
+    owner = result.get("owner", "")
+    if owner and owner in TEAM_MEMBERS:
+        props[FIELD_ACTION_OWNER] = {"select": {"name": owner}}
 
     # Rich text fields
-    best_text = f"{result['best_contact_name']} ({result['best_contact_id'][:8]})" if result.get("best_contact_id") else result.get("best_contact_name", "")
+    best_name = result.get("best_contact_name", "Unknown")
+    best_id = result.get("best_contact_id", "")
+    best_text = f"{best_name} ({best_id[:8]})" if best_id else best_name
     props[FIELD_BEST_CONTACT] = {
         "rich_text": [{"text": {"content": best_text[:2000]}}]
     }
+    reason = result.get("reason", "")
     props[FIELD_PRIORITY_REASON] = {
-        "rich_text": [{"text": {"content": result["reason"][:2000]}}]
+        "rich_text": [{"text": {"content": reason[:2000]}}]
     }
 
     # AI Risk Flag as rich_text (Notion field type is rich_text)
